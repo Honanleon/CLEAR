@@ -55,7 +55,7 @@ All licenses must be compatible with Apache-2.0. Re-check them with `pip-license
 | pyproj | MIT | Coordinate transforms | used |
 | Pillow | MIT-CMU | PNG export | used |
 | PyYAML | MIT | Config file | used |
-| requests | Apache-2.0 | NASA POWER API | planned |
+| requests | Apache-2.0 | NASA POWER API | used |
 | pytest | MIT | Tests | used |
 | ruff | MIT | Lint and format | used |
 | Vite 8.3.5 | MIT | Web build and dev server | used |
