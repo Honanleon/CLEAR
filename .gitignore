@@ -1,0 +1,31 @@
+# Parts of this file were generated with AI assistance (Claude Code). See docs/AI_USAGE.md
+
+# Secrets
+.env
+.env.*
+
+# Raw downloads (never committed)
+data/raw/*
+!data/raw/.gitkeep
+
+# NISAR crops are ~25-55 MB each: share them outside git
+data/interim/*
+!data/interim/.gitkeep
+
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.ipynb_checkpoints/
+
+# Web
+node_modules/
+web/dist/
+*.local
+
+# OS / editors
+.DS_Store
+.vscode/
+.idea/
