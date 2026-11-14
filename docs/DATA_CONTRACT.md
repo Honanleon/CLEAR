@@ -18,13 +18,13 @@ Loaded on startup.
 {
   "schema_version": 2,
   "generated_at": "2026-11-14T18:00:00-03:00",
-  "aoi": { "id": "chaco-central-norte", "bbox": [-60.78, -21.73, -60.18, -21.33] },
+  "aoi": { "id": "boqueron-norte", "bbox": [-61.6, -20.9, -61.0, -20.5] },
   "nisar": { "track": 161, "direction": "ASCENDING", "frame": 167, "mode": "20+5 DHDH" },
   "scenes": [
     { "date": "2026-06-01", "id": "NISAR_L2_PR_GCOV_021_...", "maturity": "PROVISIONAL", "crid": "P05023",
       "rgb": "rgb/2026-06-01.webp" }
   ],
-  "image_coordinates": [[-60.78, -21.33], [-60.18, -21.33], [-60.18, -21.73], [-60.78, -21.73]],
+  "image_coordinates": [[-61.6, -20.5], [-61.0, -20.5], [-61.0, -20.9], [-61.6, -20.9]],
   "detection": { "threshold_db": -3.0, "persistence": 2, "min_area_ha": 5, "n_polygons": 0, "area_ha_total": 0 },
   "validation": { "agreement_pct": 28.3, "coverage_pct": 30.9, "agreement_pct_24d": 9.5, "coverage_pct_24d": 10.4,
                   "median_lead_days": 36, "polygons_confirmed": 7, "polygons_total": 23, "reference": "OPERA DIST-ALERT-HLS V1" },
@@ -79,7 +79,7 @@ Time series shown when the user taps the map. Lazy-loaded on the first tap.
 - One row per date, aligned with `dates`.
 - Each row holds `nx × ny` cells in row-major order, starting at `origin` (top-left corner).
 - Values are integers in dB × 10, or `null`. Each cell is the mean of linear γ⁰ inside it, converted to dB (no normalization).
-- `cell_deg` is exact: bbox width / `nx` and −(bbox height) / `ny`. For `chaco-central-norte` it is `[0.0048, -0.0044944]` (the example above rounds it).
+- `cell_deg` is exact: bbox width / `nx` and −(bbox height) / `ny`. For `boqueron-norte` it is `[0.0048, -0.0044944]` (the example above rounds it).
 - The file is minified; about 2.7 MB raw and ~530 KB gzip for 26 dates.
 - Cell of a point: `col = floor((lon - origin[0]) / cell_deg[0])`, `row = floor((lat - origin[1]) / cell_deg[1])`, index `row * nx + col`.
 

@@ -254,7 +254,7 @@
     "coverage_desc_any": "del área con alertas ópticas en bosque (≥ 5 ha) también la detecta el radar",
     "lead": "días antes que los satélites ópticos: es lo que el radar se adelanta, en la mediana",
     "lag": "días después que los satélites ópticos, en la mediana",
-    "window24": "Si además exigimos que las fechas coincidan (±24 días): acuerdo {a} %, cobertura {c} %. Es bajo porque el radar suele ver el desmonte antes."
+    "window24": "Si además exigimos que las fechas coincidan (±24 días): acuerdo {a} %, cobertura {c} %. Baja porque el radar y el óptico suelen fechar el mismo desmonte con semanas de diferencia."
   },
   "next": {
     "kicker": "Qué sigue",
