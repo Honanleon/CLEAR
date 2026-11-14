@@ -11,6 +11,9 @@ const DEFAULT_DATES = [
   "2026-09-05", "2026-09-17", "2026-09-29", "2026-10-11", "2026-10-23",
 ];
 const PASS_MS = 2300;
+/** Test build only: draw the cover ground as a honeycomb of hexagons (like the map) instead of square pixels. */
+const HEX_COVER = import.meta.env.MODE === "lab";
+const SQRT3 = Math.sqrt(3);
 const HOLD_MS = 2600;
 
 type RGB = [number, number, number];
@@ -128,6 +131,50 @@ export function initHero(canvas: HTMLCanvasElement): Hero {
   let visible = true;
   let raf = 0;
   let lastPass = -1;
+  let hexR = 10;
+
+  /** Honeycomb version of draw(): one filled hexagon per landscape cell, a hairline gap between them. */
+  function drawHex(pass: number, sweep: number) {
+    if (!land) return;
+    const { cols, rows } = land;
+    const W = canvas.width;
+    const H = canvas.height;
+    const r = hexR;
+    const inner = r * 0.9;
+    const lineY = sweep * H;
+    ctx!.clearRect(0, 0, W, H);
+    for (let y = 0; y < rows; y++) {
+      const cy = r + y * 1.5 * r;
+      const acquired = cy >= lineY;
+      const statePass = acquired ? pass : pass - 1;
+      const fresh = acquired ? Math.max(0, 1 - (cy - lineY) / (H * 0.35)) : 0;
+      for (let x = 0; x < cols; x++) {
+        const cx = (x + (y % 2 ? 0.5 : 0)) * SQRT3 * r;
+        const [cr, cg, cb] = color(y * cols + x, statePass, fresh);
+        ctx!.fillStyle = `rgb(${cr | 0},${cg | 0},${cb | 0})`;
+        ctx!.beginPath();
+        for (let k = 0; k < 6; k++) {
+          const a = ((60 * k - 30) * Math.PI) / 180;
+          const px = cx + inner * Math.cos(a);
+          const py = cy + inner * Math.sin(a);
+          if (k) ctx!.lineTo(px, py);
+          else ctx!.moveTo(px, py);
+        }
+        ctx!.closePath();
+        ctx!.fill();
+      }
+    }
+    if (sweep > 0 && sweep < 1) {
+      const band = H * 0.22;
+      const grad = ctx!.createLinearGradient(0, lineY, 0, lineY + band);
+      grad.addColorStop(0, "rgba(150,210,255,0.35)");
+      grad.addColorStop(1, "rgba(150,210,255,0)");
+      ctx!.fillStyle = grad;
+      ctx!.fillRect(0, lineY, W, band);
+      ctx!.fillStyle = "rgba(225,240,255,0.9)";
+      ctx!.fillRect(0, lineY - 1.5, W, 3);
+    }
+  }
 
   function resize() {
     const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
@@ -136,8 +183,13 @@ export function initHero(canvas: HTMLCanvasElement): Hero {
     if (!w || !h) return;
     canvas.width = Math.round(w * dpr);
     canvas.height = Math.round(h * dpr);
-    const cols = w < 700 ? 72 : 128;
-    const rows = Math.max(24, Math.round((cols * h) / w));
+    let cols = w < 700 ? 72 : 128;
+    let rows = Math.max(24, Math.round((cols * h) / w));
+    if (HEX_COVER) {
+      cols = w < 700 ? 26 : 46;
+      hexR = canvas.width / ((cols - 0.5) * SQRT3);
+      rows = Math.ceil(canvas.height / (1.5 * hexR)) + 1;
+    }
     land = buildLandscape(cols, rows, dates.length);
     off.width = cols;
     off.height = rows;
@@ -159,6 +211,7 @@ export function initHero(canvas: HTMLCanvasElement): Hero {
 
   /** pass: current pass index; sweep: 1 = line at the bottom (start), 0 = at the top (done). */
   function draw(pass: number, sweep: number) {
+    if (HEX_COVER) return drawHex(pass, sweep);
     if (!land || !image) return;
     const { cols, rows } = land;
     const data = image.data;
@@ -258,7 +311,8 @@ export function initHero(canvas: HTMLCanvasElement): Hero {
   return {
     setDates(next: string[]) {
       if (next.length < 3) return;
-      dates = next;
+      // keep the cover loop short: at most 11 evenly spaced passes
+      dates = next.length > 11 ? Array.from({ length: 11 }, (_, i) => next[Math.round((i * (next.length - 1)) / 10)] as string) : next;
       resize();
       start = performance.now();
       if (reduced) hud(dates.length - 1);

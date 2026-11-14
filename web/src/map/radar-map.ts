@@ -1,24 +1,23 @@
 // Parts of this file were generated with AI assistance (Claude Code). See docs/AI_USAGE.md
 //
 // One MapLibre map of Paraguay: real satellite imagery, place names / roads / borders from
-// OpenStreetMap, the study area, the clearing polygons up to a date (newest ones pulse) and,
-// on demand, the NISAR RGB scene of a date. The map section uses one instance in timeline mode
+// OpenStreetMap, the study area divided into hexagons coloured by hectares cleared up to a date
+// (cells that grew in the current pass pulse), optional exact clearing outlines and, on demand,
+// the NISAR RGB scene of a date. The map section uses one instance in timeline mode
 // and two (synced, one clipped) in before/after mode.
 
 import {
   AttributionControl,
   FullscreenControl,
-  type GeoJSONSource,
-  type LngLat,
   Map as MLMap,
-  type MapGeoJSONFeature,
   NavigationControl,
   setWorkerUrl,
   type StyleSpecification,
 } from "maplibre-gl";
 import workerUrl from "maplibre-gl/dist/maplibre-gl-worker.mjs?url";
 import "maplibre-gl/dist/maplibre-gl.css";
-import { type BBox, type Dataset, DATE_PALETTE, type PolygonCollection } from "../data";
+import { type BBox, type Dataset, HEX_STOPS, type PolygonCollection } from "../data";
+import type { HexGrid } from "./hexgrid";
 import { type Lang, lang, t } from "../i18n";
 
 setWorkerUrl(workerUrl);
@@ -40,14 +39,12 @@ export interface RadarMapOptions {
   container: HTMLElement;
   ds: Dataset;
   polygons: PolygonCollection;
+  hex: HexGrid;
   bbox: BBox;
   controls: boolean;
   start: "country" | "study";
-}
-
-export interface PolygonHit {
-  id: number;
-  props: Record<string, unknown>;
+  /** Test (lab) build only: satellite tiles shipped with the page, no OpenStreetMap labels. */
+  offline?: { tiles: string; attribution: string; maxzoom: number; bounds: BBox };
 }
 
 const preloaded = new Map<string, Promise<void>>();
@@ -69,7 +66,19 @@ export function preload(url: string): Promise<void> {
 
 const nameExpr = (l: Lang) => ["coalesce", ["get", `name:${l}`], ["get", "name"]];
 
-function style(): StyleSpecification {
+function style(offline?: RadarMapOptions["offline"]): StyleSpecification {
+  if (offline) {
+    return {
+      version: 8,
+      sources: {
+        satellite: { type: "raster", tiles: [offline.tiles], tileSize: 256, maxzoom: offline.maxzoom, bounds: offline.bounds, attribution: offline.attribution },
+      },
+      layers: [
+        { id: "bg", type: "background", paint: { "background-color": "#0b0f14" } },
+        { id: "satellite", type: "raster", source: "satellite", paint: { "raster-contrast": 0.06, "raster-fade-duration": 200 } },
+      ],
+    };
+  }
   return {
     version: 8,
     glyphs: GLYPHS,
@@ -94,18 +103,16 @@ export class RadarMap {
   private radarOpacity = 0.9;
   private pulseRaf = 0;
   private pulsing = false;
-  private tMin: number;
-  private tMax: number;
 
   constructor(private opts: RadarMapOptions) {
-    const start = opts.start === "country" ? PARAGUAY_BBOX : opts.bbox;
+    const start = opts.start === "country" && !opts.offline ? PARAGUAY_BBOX : opts.bbox;
     this.map = new MLMap({
       container: opts.container,
-      style: style(),
+      style: style(opts.offline),
       bounds: start,
       fitBoundsOptions: { padding: 30 },
-      maxBounds: MAX_BOUNDS,
-      minZoom: 3.5,
+      maxBounds: opts.offline?.bounds ?? MAX_BOUNDS,
+      minZoom: opts.offline ? 8 : 3.5,
       maxZoom: 17,
       attributionControl: false,
       dragRotate: false,
@@ -132,16 +139,17 @@ export class RadarMap {
       this.map.addControl(new AttributionControl({ compact: true }), "bottom-right");
     }
 
-    const ts = opts.polygons.features.map((f) => f.properties.t ?? 0);
-    this.tMin = ts.length ? Math.min(...ts) : 0;
-    this.tMax = ts.length ? Math.max(...ts) : 1;
-
     this.ready = new Promise((resolve) => {
       this.map.once("load", () => {
         this.addLayers();
         resolve();
       });
     });
+  }
+
+  /** Colour of a hexagon by the hectares cleared up to scene t. */
+  private hexColor(t: number): string {
+    return ["interpolate", ["linear"], ["coalesce", ["get", `a${t}`], 0], ...HEX_STOPS.flat()] as unknown as string;
   }
 
   private addLayers() {
@@ -156,19 +164,17 @@ export class RadarMap {
       },
     });
     m.addSource("polys", { type: "geojson", data: this.opts.polygons as never });
-
-    const stops: (number | string)[] = [];
-    DATE_PALETTE.forEach((c, i) => {
-      const v = this.tMin + ((this.tMax - this.tMin) * i) / (DATE_PALETTE.length - 1 || 1);
-      if (stops.length && v <= (stops[stops.length - 2] as number)) return;
-      stops.push(v, c);
-    });
-    const color = (stops.length >= 4
-      ? ["interpolate", ["linear"], ["get", "t"], ...stops]
-      : (DATE_PALETTE[DATE_PALETTE.length - 1] as string)) as unknown as string;
-    const selected = ["boolean", ["feature-state", "selected"], false] as never;
+    m.addSource("hexgrid", { type: "geojson", data: this.opts.hex.outline as never });
+    m.addSource("hexdata", { type: "geojson", data: this.opts.hex.data as never });
 
     // roads and borders (under the clearings, over the imagery)
+    if (!this.opts.offline) this.addOsmLines();
+    this.addOverlays();
+    if (!this.opts.offline) this.addLabels();
+  }
+
+  private addOsmLines() {
+    const m = this.map;
     m.addLayer({
       id: "roads",
       type: "line",
@@ -198,37 +204,62 @@ export class RadarMap {
       paint: { "line-color": "#ffffff", "line-opacity": 0.85, "line-width": ["interpolate", ["linear"], ["zoom"], 4, 1, 10, 2.5] },
     });
 
+  }
+
+  private addOverlays() {
+    const m = this.map;
+    // the study area divided into hexagons
     m.addLayer({
-      id: "poly-fill",
+      id: "hex-grid",
+      type: "line",
+      source: "hexgrid",
+      minzoom: 8,
+      paint: { "line-color": "#ffffff", "line-opacity": ["interpolate", ["linear"], ["zoom"], 8, 0.06, 11, 0.22], "line-width": 0.8 },
+    });
+    m.addLayer({
+      id: "hex-fill",
       type: "fill",
-      source: "polys",
-      filter: ["<=", ["get", "t"], -1],
-      // lighter fill when zoomed in, so the real ground stays visible under the area
-      paint: {
-        "fill-color": color,
-        "fill-opacity": ["interpolate", ["linear"], ["zoom"], 9, ["case", selected, 0.5, 0.45], 13, ["case", selected, 0.1, 0.18]] as never,
-      },
+      source: "hexdata",
+      filter: [">", ["get", "a0"], 0],
+      paint: { "fill-color": this.hexColor(0), "fill-opacity": ["interpolate", ["linear"], ["zoom"], 8, 0.88, 11, 0.72, 13, 0.36, 15, 0.2] as never },
     });
     m.addLayer({
-      id: "poly-glow",
+      id: "hex-line",
       type: "line",
-      source: "polys",
-      filter: ["<=", ["get", "t"], -1],
-      paint: { "line-color": color, "line-width": 8, "line-blur": 6, "line-opacity": 0.5 },
+      source: "hexdata",
+      filter: [">", ["get", "a0"], 0],
+      paint: { "line-color": this.hexColor(0), "line-width": 1.8 },
     });
     m.addLayer({
-      id: "poly-line",
+      id: "hex-hover",
       type: "line",
-      source: "polys",
-      filter: ["<=", ["get", "t"], -1],
-      paint: { "line-color": ["case", selected, "#ffffff", color], "line-width": ["case", selected, 3.5, 2] },
+      source: "hexgrid",
+      filter: ["==", ["get", "id"], -1],
+      paint: { "line-color": "#ffffff", "line-width": 2, "line-opacity": 0.8 },
     });
     m.addLayer({
-      id: "poly-new",
+      id: "hex-new",
       type: "line",
-      source: "polys",
-      filter: ["==", ["get", "t"], -1],
+      source: "hexdata",
+      filter: ["==", ["get", "id"], -1],
       paint: { "line-color": "#ffffff", "line-width": 2, "line-opacity": 0.9, "line-blur": 1 },
+    });
+    m.addLayer({
+      id: "hex-selected",
+      type: "line",
+      source: "hexgrid",
+      filter: ["==", ["get", "id"], -1],
+      paint: { "line-color": "#ffffff", "line-width": 3.5 },
+    });
+    // exact outline of each clearing (optional, for detail when zoomed in)
+    m.addLayer({
+      id: "poly-outline",
+      type: "line",
+      source: "polys",
+      minzoom: 10,
+      layout: { visibility: "none" },
+      filter: ["<=", ["get", "t"], -1],
+      paint: { "line-color": "#ffffff", "line-width": 1.5, "line-dasharray": [2, 1.5] },
     });
     m.addLayer({
       id: "aoi-glow",
@@ -243,6 +274,10 @@ export class RadarMap {
       paint: { "line-color": "#ffffff", "line-width": 1.8, "line-opacity": 0.95, "line-dasharray": [3, 2] },
     });
 
+  }
+
+  private addLabels() {
+    const m = this.map;
     // labels on top of everything
     const halo = { "text-halo-color": "rgba(5,8,12,0.85)", "text-halo-width": 1.6, "text-halo-blur": 0.5 };
     const name = nameExpr(lang()) as never;
@@ -307,6 +342,11 @@ export class RadarMap {
     });
   }
 
+  /** Radar scenes go under roads (official map) or under the hexagons (offline test map). */
+  private overlayStart(): string {
+    return this.map.getLayer("roads") ? "roads" : "hex-grid";
+  }
+
   private sceneLayer(i: number): string {
     return `scene-${i}`;
   }
@@ -327,7 +367,7 @@ export class RadarMap {
           "raster-resampling": "linear",
         },
       },
-      "roads",
+      this.overlayStart(),
     );
     this.present.add(i);
   }
@@ -347,7 +387,7 @@ export class RadarMap {
     await this.ready;
     if (req !== this.request) return;
     this.ensureScene(i);
-    this.map.moveLayer(this.sceneLayer(i), "roads");
+    this.map.moveLayer(this.sceneLayer(i), this.overlayStart());
     this.map.setPaintProperty(this.sceneLayer(i), "raster-opacity", this.radarOpacity);
     window.setTimeout(() => {
       if (req !== this.request) return;
@@ -365,12 +405,17 @@ export class RadarMap {
     for (const k of [i + 1, i - 1]) if (scenes[k]) void preload(this.opts.ds.sceneUrl(k)).catch(() => undefined);
   }
 
-  /** Polygons detected up to scene `upTo`; the ones after `newAfter` pulse. */
-  async setPolygons(upTo: number, newAfter = upTo - 1): Promise<void> {
+  /** Hexagons coloured by the hectares cleared up to scene `upTo`; cells that grew after `newAfter` pulse. */
+  async setTime(upTo: number, newAfter = upTo - 1): Promise<void> {
     await this.ready;
-    const shown = ["<=", ["get", "t"], upTo];
-    for (const id of ["poly-fill", "poly-line", "poly-glow"]) this.map.setFilter(id, shown as never);
-    this.map.setFilter("poly-new", ["all", [">", ["get", "t"], newAfter], ["<=", ["get", "t"], upTo]] as never);
+    const a = (k: number) => ["coalesce", ["get", `a${Math.max(0, k)}`], 0];
+    const shown = [">", a(upTo), 0] as never;
+    this.map.setFilter("hex-fill", shown);
+    this.map.setFilter("hex-line", shown);
+    this.map.setPaintProperty("hex-fill", "fill-color", this.hexColor(upTo));
+    this.map.setPaintProperty("hex-line", "line-color", this.hexColor(upTo));
+    this.map.setFilter("hex-new", (newAfter < 0 ? shown : [">", a(upTo), a(newAfter)]) as never);
+    this.map.setFilter("poly-outline", ["<=", ["get", "t"], upTo] as never);
   }
 
   /** Radar view on/off (satellite photo underneath stays). */
@@ -388,28 +433,20 @@ export class RadarMap {
     }
   }
 
-  async setPolygonsVisible(on: boolean): Promise<void> {
+  async setOutlines(on: boolean): Promise<void> {
     await this.ready;
-    for (const id of ["poly-fill", "poly-line", "poly-glow", "poly-new"]) this.map.setLayoutProperty(id, "visibility", on ? "visible" : "none");
+    this.map.setLayoutProperty("poly-outline", "visibility", on ? "visible" : "none");
   }
 
-  select(id: number | null, previous: number | null): void {
-    if (previous !== null) this.map.setFeatureState({ source: "polys", id: previous }, { selected: false });
-    if (id !== null) this.map.setFeatureState({ source: "polys", id }, { selected: true });
+  select(cellId: number | null): void {
+    if (this.map.getLayer("hex-selected")) this.map.setFilter("hex-selected", ["==", ["get", "id"], cellId ?? -1]);
   }
 
-  polygonAt(lngLat: LngLat): PolygonHit | null {
-    const p = this.map.project(lngLat);
-    const box: [[number, number], [number, number]] = [
-      [p.x - 4, p.y - 4],
-      [p.x + 4, p.y + 4],
-    ];
-    const hits: MapGeoJSONFeature[] = this.map.getLayer("poly-fill") ? this.map.queryRenderedFeatures(box, { layers: ["poly-fill"] }) : [];
-    const f = hits[0];
-    return f && typeof f.id === "number" ? { id: f.id, props: f.properties } : null;
+  hover(cellId: number | null): void {
+    if (this.map.getLayer("hex-hover")) this.map.setFilter("hex-hover", ["==", ["get", "id"], cellId ?? -1]);
   }
 
-  /** Animates the outline of the newest polygons while the map is on screen. */
+  /** Animates the outline of the hexagons that grew in the current pass while the map is on screen. */
   setPulse(on: boolean): void {
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) on = false;
     if (on === this.pulsing) return;
@@ -421,18 +458,15 @@ export class RadarMap {
     let last = 0;
     const tick = (now: number) => {
       if (!this.pulsing) return;
-      if (now - last > 50 && this.map.getLayer("poly-new")) {
+      if (now - last > 50 && this.map.getLayer("hex-new")) {
         last = now;
         const s = (Math.sin(now / 260) + 1) / 2;
-        this.map.setPaintProperty("poly-new", "line-width", 1.5 + s * 4);
-        this.map.setPaintProperty("poly-new", "line-opacity", 0.35 + s * 0.65);
+        this.map.setPaintProperty("hex-new", "line-width", 1.5 + s * 4);
+        this.map.setPaintProperty("hex-new", "line-opacity", 0.35 + s * 0.65);
       }
       this.pulseRaf = requestAnimationFrame(tick);
     };
     this.pulseRaf = requestAnimationFrame(tick);
   }
 
-  updatePolygons(fc: PolygonCollection): void {
-    (this.map.getSource("polys") as GeoJSONSource | undefined)?.setData(fc as never);
-  }
 }

@@ -67,6 +67,16 @@ NISAR L2 GCOV, frequency A (20 MHz, ~20 m), HH and HV, γ⁰ linear with radiome
 | `min_area_ha` | 5 | Matches the DIST-ALERT comparison filter |
 | `normalize` | `forest_median` | Step 5 |
 
+## Web visualization: hexagon aggregation
+
+Done in the browser (`web/src/map/hexgrid.ts`), so the data contract does not change.
+
+- The study area is tiled with pointy-top hexagons of 1.5 km radius (≈ 585 ha each; 447 hexagons, 21 with clearing in this data release), in a local equirectangular projection centred on the AOI (distortion < 0.5 % over 45 km). Only hexagons whose centre falls inside the AOI are drawn. The size was raised from 1 km (≈ 260 ha) so the clearing pattern reads at the scale of the whole study area; totals do not change.
+- Each polygon in `polygons.geojson` is sampled on a regular grid (step = √area / 10, between 15 and 100 m). Every sample is assigned to its hexagon, and the polygon's `area_ha` is shared out in proportion to the samples, so hexagon totals add up exactly to the polygon totals (checked: 565.9 ha in both).
+- Each share is dated with the polygon's `first_date`. The map colours a hexagon by the hectares cleared inside it up to the selected date (scale 1 · 10 · 25 · 50 · 100+ ha); hexagons that grew in the selected pass pulse.
+- The hexagon panel shows hectares and % of the hexagon, first detection date, how many of its clearings overlap an OPERA DIST-ALERT alert, and the hectares detected at each pass. The exact polygon outlines stay available as an option.
+- Hexagons make small clearings visible at the scale of the whole study area; they summarize, they do not add detections.
+
 ## Sanity checks
 
 - The forest HV median changes by more than 2 dB between two dates → check the product version, calibration or rain before going on.

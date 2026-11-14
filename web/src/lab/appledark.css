@@ -1,0 +1,271 @@
+/* Parts of this file were generated with AI assistance (Claude Code). See docs/AI_USAGE.md */
+/*
+  TEST (lab) build only — all-black apple.com look, loaded after apple.css and applecom.css.
+  Black page, graphite (#1d1d1f) cards, high-contrast type (#f5f5f7 / #d2d2d7), blue links (#2997ff),
+  one warm accent for eyebrows and data (#ff9f0a).
+*/
+
+.lab {
+  --bg: #000;
+  --bg-2: #1d1d1f;
+  --bg-3: #1d1d1f;
+  --text: #f5f5f7;
+  --muted: #d2d2d7;
+  --dim: #a1a1a6;
+  --line: rgba(255, 255, 255, 0.12);
+  --line-2: rgba(255, 255, 255, 0.22);
+  --link: #2997ff;
+  --ok: #30d158;
+  --warn: #ff9f0a;
+  --glass: rgba(28, 28, 30, 0.8);
+  --glass-line: rgba(255, 255, 255, 0.08);
+  --shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+  color-scheme: dark;
+  background: #000;
+}
+.lab body {
+  background: #000;
+  color: var(--text);
+}
+.lab a {
+  color: var(--link);
+}
+
+/* every band is black; a whisper of difference keeps the rhythm */
+.lab .chapter,
+.lab .next,
+.lab .map-section .guide,
+.lab .guide {
+  background: #0a0a0b;
+}
+.lab .radar,
+.lab .map-section,
+.lab .trust,
+.lab .footer {
+  background: #000;
+}
+.lab .map-section .guide {
+  --text: #f5f5f7;
+  --muted: #d2d2d7;
+  --dim: #a1a1a6;
+  --line: rgba(255, 255, 255, 0.12);
+  --line-2: rgba(255, 255, 255, 0.22);
+  --bg-2: #1d1d1f;
+  --link: #2997ff;
+  --ok: #30d158;
+  --warn: #ff9f0a;
+  color-scheme: dark;
+  color: var(--text);
+}
+.lab .kicker,
+.lab .map-section .guide .kicker,
+.lab .hero .kicker {
+  color: #ff9f0a;
+}
+.lab .hero .kicker {
+  color: #a1a1a6;
+}
+
+/* cards: graphite */
+.lab .stat,
+.lab .gstat,
+.lab .guide-card,
+.lab .guide-steps,
+.lab .use,
+.lab .use:nth-child(2),
+.lab .use:nth-child(3),
+.lab .driver,
+.lab .gauge,
+.lab .gauge-lead,
+.lab .case,
+.lab .radar-lab,
+.lab .lab-monthly {
+  background: #1d1d1f;
+  color: var(--text);
+  box-shadow: none;
+}
+.lab .stat span,
+.lab .gstat span,
+.lab .guide-card p,
+.lab .use p,
+.lab .driver p,
+.lab .case-meta,
+.lab .gstat small {
+  color: #a1a1a6;
+}
+.lab .stat b,
+.lab .gstat b,
+.lab .guide-card h4,
+.lab .use h3,
+.lab .driver h4 {
+  color: #f5f5f7;
+}
+.lab .stat:nth-child(2) b,
+.lab .gstat-hot b,
+.lab .use-num,
+.lab .use:nth-child(2) .use-num,
+.lab .use:nth-child(3) .use-num {
+  color: #2997ff;
+}
+.lab .gauge-lead b {
+  color: #2997ff;
+}
+.lab .gauge-lead span,
+.lab .gauge p {
+  color: #d2d2d7;
+}
+.lab .ticks li,
+.lab .swatches {
+  color: var(--text);
+}
+.lab .ticks li::before {
+  background: #6e6e73;
+}
+.lab .credits ul,
+.lab .footer {
+  color: #a1a1a6;
+}
+.lab .footer {
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+.lab .guide-chart {
+  background: #2c2c2e;
+}
+.lab .gc-line,
+.lab .gc-label {
+  stroke: #2997ff;
+}
+.lab .gc-label {
+  fill: #2997ff;
+  stroke: none;
+}
+.lab .gc-label-cut,
+.lab .gc-label-limit,
+.lab .gc-dot {
+  fill: #ff453a;
+}
+.lab .gc-limit {
+  stroke: #ff453a;
+}
+.lab .guide-steps li {
+  color: #d2d2d7;
+}
+.lab .guide-steps li::before {
+  background: #f5f5f7;
+  color: #1d1d1f;
+}
+.lab .chip-r {
+  color: #ff6961;
+  background: rgba(255, 69, 58, 0.16);
+}
+.lab .chip-g {
+  color: #30d158;
+  background: rgba(48, 209, 88, 0.16);
+}
+.lab .chip-b {
+  color: #64d2ff;
+  background: rgba(100, 210, 255, 0.16);
+}
+.lab .btn-ghost,
+.lab .trust .btn-ghost {
+  border-color: #2997ff;
+  color: #2997ff;
+}
+.lab .btn-ghost:hover {
+  background: rgba(41, 151, 255, 0.12);
+}
+.lab .map-status {
+  background: #1d1d1f;
+}
+.lab .dist {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* ------------------------------------------------------------------ "clearing and rain, month by month" */
+.lab-monthly {
+  margin: 0 0 16px;
+  padding: 24px 24px 18px;
+  border-radius: 22px;
+}
+.lab-monthly-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+  margin-bottom: 6px;
+}
+.lab-monthly-head h4 {
+  margin: 0;
+  font-family: var(--display);
+  font-size: 21px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+.lab-monthly-legend {
+  display: flex;
+  gap: 16px;
+  font-size: 13px;
+  color: #a1a1a6;
+}
+.lab-monthly-legend span::before {
+  content: "";
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  margin-right: 6px;
+  vertical-align: -1px;
+}
+.lm-ha::before {
+  background: #ff9f0a;
+}
+.lm-rain::before {
+  background: #64d2ff;
+}
+.lab-monthly-svg {
+  display: block;
+  height: auto;
+}
+.lm-bar-ha {
+  fill: #ff9f0a;
+}
+.lm-bar-rain {
+  fill: #64d2ff;
+  opacity: 0.75;
+}
+.lm-bar-zero {
+  fill: rgba(255, 255, 255, 0.12);
+}
+.lm-val {
+  font-family: var(--font);
+  font-size: 11px;
+  font-weight: 600;
+  fill: #f5f5f7;
+  font-variant-numeric: tabular-nums;
+}
+.lm-val-rain {
+  fill: #a1a1a6;
+  font-weight: 500;
+}
+.lm-month {
+  font-family: var(--font);
+  font-size: 12px;
+  fill: #a1a1a6;
+}
+.lab-monthly-note {
+  margin: 8px 0 0;
+  font-size: 13px;
+  color: #a1a1a6;
+}
+@media (max-width: 760px) {
+  .lab-monthly {
+    padding: 18px 12px 14px;
+  }
+  .lm-val {
+    font-size: 9px;
+  }
+  .lm-month {
+    font-size: 10px;
+  }
+}

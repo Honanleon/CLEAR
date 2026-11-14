@@ -19,10 +19,11 @@ Status: `used` = already in the code or the app; `planned` = listed in the plan,
 | OPERA DIST-ALERT-HLS V1 (`OPERA_L3_DIST-ALERT-HLS_V1`) | NASA JPL / LP DAAC | satellite | Validation: optical vegetation-loss alerts; also used to choose the study area | DOI 10.5067/SNWG/OPERA_L3_DIST-ALERT-HLS_V1.001 | used |
 | Harmonized Landsat Sentinel-2 (HLS) | NASA / USGS / ESA (Sentinel-2: partner data) | satellite | True-color context and visual checks | TODO: add HLS L30/S30 DOIs | planned |
 | MapBiomas Paraguay, Collection 2 | MapBiomas | modeled | 2023 forest mask | https://paraguay.mapbiomas.org/ | planned |
-| NASA POWER, daily `PRECTOTCORR` | NASA LaRC | modeled | Rain bars in the time-series chart | https://power.larc.nasa.gov/docs/services/api/temporal/daily/ | planned |
+| NASA POWER, daily `PRECTOTCORR` | NASA LaRC | modeled | Rain bars in the time-series chart | https://power.larc.nasa.gov/docs/services/api/temporal/daily/ | used in the test build (`npm run build:lab`, fetched at build time); planned for the official site |
 | Esri World Imagery (basemap tiles) | Esri, Maxar, Earthstar Geographics, GIS User Community | satellite | High-resolution satellite photo under the web map (default view). Optional: the map works without it | https://www.arcgis.com/home/item.html?id=10df2279f9684e4a9f6a7f08febac2a9 · attribution shown on the map | used |
 | OpenFreeMap vector tiles (OpenMapTiles schema) | OpenFreeMap; data © OpenStreetMap contributors (ODbL) | measured | Place names (country, department, city, town; no villages), main roads and borders over the satellite photo | https://openfreemap.org · https://www.openstreetmap.org/copyright | used |
 | OpenStreetMap Nominatim (one-off lookup) | OpenStreetMap contributors (ODbL) | measured | Coordinates of 4 reference towns (Mariscal Estigarribia, Filadelfia, Loma Plata, Neuland) in `web/src/map/places.json`, used to say "x km north of …" | https://nominatim.openstreetmap.org · looked up 2026-11-14 | used |
+| Sentinel-2 cloudless 2024 (basemap tiles, **test build only**) | EOX IT Services GmbH (contains modified Copernicus Sentinel data 2024) | satellite | Offline satellite background of the private test version (`npm run build:lab`); not used by the official site | https://s2maps.eu · CC BY-NC-SA 4.0 (non-commercial, attribution on the map) | used (test only) |
 | Sentinel-1 GRD (C-band, optional) | ESA / Copernicus | satellite | Frequency comparison | TODO | planned (optional) |
 | ESA WorldCover 2021 v200 (10 m) | ESA | satellite | Interim forest mask for detection (`pipeline/fetch/worldcover.py`) and the Paraguay-wide zone screening | Zanaga et al. (2022), doi:10.5281/zenodo.7254221; CC-BY 4.0 | used (screening) |
 | Natural Earth admin-0 / admin-1 boundaries (1:10m) | Natural Earth | modeled | Paraguay and department outlines for the zone screening | https://www.naturalearthdata.com/ (public domain) | used (screening) |
@@ -74,6 +75,7 @@ All licenses must be compatible with Apache-2.0. Re-check them with `pip-license
 |---|---|
 | ASF Vertex (https://search.asf.alaska.edu/) | Manual check of available dates |
 | Claude Code (Anthropic) | AI coding assistant; see `docs/AI_USAGE.md` |
+| Claude via claude.ai Artifacts (`sample` capability) | **Test build only:** AI assistant in the hexagon panel; runs on the viewer's own Claude account, no API key |
 | GitHub, GitHub Pages | Code hosting and backup mirror |
 | GitHub Actions, OpenSSH, tar | Deploy pipeline (`.github/workflows/deploy.yml`, `deploy/deploy.sh`) |
 

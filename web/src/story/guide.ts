@@ -3,8 +3,9 @@
 // "How to read the map", right under the map: a summary of the study area (totals) and the
 // date color scale of the clearing areas. The static explanations live in index.html + i18n.
 
-import { type Dataset, DATE_PALETTE, type PolygonCollection } from "../data";
+import { type Dataset, HEX_GRADIENT, HEX_STOPS, type PolygonCollection } from "../data";
 import { fmt, onLang, t } from "../i18n";
+import { buildHexGrid } from "../map/hexgrid";
 import { SOCCER_FIELD_HA } from "../map/zone";
 
 export function initGuide(ds: Dataset | null): void {
@@ -20,7 +21,8 @@ export function initGuide(ds: Dataset | null): void {
     if (!fc || !ds) return;
     const feats = fc.features;
     const total = feats.reduce((s, f) => s + f.properties.area_ha, 0);
-    const largest = feats.reduce((m, f) => Math.max(m, f.properties.area_ha), 0);
+    const grid = buildHexGrid(ds.index.aoi.bbox, fc, ds.index.scenes.length);
+    const hexWith = grid.data.features.length;
     const checked = feats.filter((f) => f.properties.dist_confirmed !== null);
     const yes = checked.filter((f) => f.properties.dist_confirmed === true).length;
 
@@ -46,28 +48,26 @@ export function initGuide(ds: Dataset | null): void {
       head,
       card(fmt.num(total), t("guide.stat_total"), t("guide.fields_total", { n: fmt.num(total / SOCCER_FIELD_HA) }), "gstat-hot"),
       card(fmt.num(feats.length), t("guide.stat_zones")),
-      card(fmt.num(largest), t("guide.stat_largest")),
+      card(`${fmt.num(hexWith)}/${fmt.num(grid.cells.length)}`, t("guide.stat_largest")),
       card(checked.length ? `${fmt.num(yes)}/${fmt.num(checked.length)}` : t("common.pending"), t("guide.stat_confirmed")),
     );
 
-    // date scale: the colors used on the map, with the first, middle and last detection dates
-    const ts = feats.map((f) => f.properties.t ?? 0);
-    const scenes = ds.index.scenes;
-    const lo = ts.length ? Math.min(...ts) : 0;
-    const hi = ts.length ? Math.max(...ts) : scenes.length - 1;
-    const mid = Math.round((lo + hi) / 2);
+    // the colour scale used on the map (hectares cleared per hexagon)
     ramp!.innerHTML = "";
     const bar = document.createElement("div");
     bar.className = "guide-ramp-bar";
-    bar.style.background = `linear-gradient(90deg, ${DATE_PALETTE.join(",")})`;
+    bar.style.background = HEX_GRADIENT;
     const labels = document.createElement("div");
     labels.className = "guide-ramp-labels";
-    for (const i of [lo, mid, hi]) {
+    HEX_STOPS.forEach(([v], i) => {
       const s = document.createElement("span");
-      s.textContent = fmt.date(scenes[i]?.date ?? "", true);
+      s.textContent = i === HEX_STOPS.length - 1 ? `${fmt.num(v)}+` : fmt.num(v);
       labels.append(s);
-    }
-    ramp!.append(bar, labels);
+    });
+    const unit = document.createElement("p");
+    unit.className = "guide-ramp-unit";
+    unit.textContent = t("guide.colors_scale");
+    ramp!.append(bar, labels, unit);
   }
 
   new IntersectionObserver(

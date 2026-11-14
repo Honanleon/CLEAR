@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "CLEAR · Chaco forest clearing seen by radar",
-    "description": "Where and when the Chaco forest is being cleared, with NISAR radar images every 12 days from June to October 2026."
+    "description": "Where and when the Chaco forest is being cleared, with 26 NISAR radar images taken every 12 days from November 2025 to October 2026."
   },
   "nav": {
     "skip": "Skip to the map",
@@ -34,10 +34,10 @@
     "kicker": "Chapter 1",
     "title": "The vanishing forest",
     "body": "In Paraguay's Chaco, north of Mariscal Estigarribia (Boquerón), forest turns into pasture in a matter of weeks. Ordinary satellite photos cannot see through clouds or the smoke from burning. Radar can.",
-    "why": "We chose this area because a lot of clearing happens there, it fits in a single NISAR image and it lies far from protected Indigenous territories.",
+    "why": "We chose this area because clearing happened there during the period, it fits in a single NISAR image and it lies outside protected Indigenous territories.",
     "stat_area_value": "60 × 45 km",
     "stat_area_label": "of Chaco forest observed",
-    "stat_scenes_label": "radar images from June to October 2026",
+    "stat_scenes_label": "radar images from November 2025 to October 2026",
     "stat_revisit_value": "12",
     "stat_revisit_label": "days between one pass and the next",
     "stat_wave_value": "24 cm",
@@ -81,7 +81,7 @@
   "map": {
     "kicker": "The map",
     "title": "Where and when forest was cleared",
-    "body": "This is the real Chaco seen from space. The colored patches are areas where radar detected clearing between June and October 2026. Press play to watch them appear, or tap any of them to see its data.",
+    "body": "This is the real Chaco seen from space. We divided the study area into hexagons: the colored ones had radar-detected clearing. The stronger the color, the more hectares were cleared inside. Press play or tap a hexagon.",
     "ethics": "We show radar-estimated changes in land cover, not whether they are legal. We use no cadastre and no owner names.",
     "mode_timeline": "Timeline",
     "mode_compare": "Before / after",
@@ -91,8 +91,8 @@
     "date_pm_help": "The radar passes every 12 days: the clearing happened some time between the previous pass and this one.",
     "gap": "No data: the satellite took no images",
     "stat_area": "hectares cleared",
-    "stat_polys": "areas",
-    "stat_new": "+{n} new on this date",
+    "stat_polys": "hexagons with clearing",
+    "stat_new": "+{n} new hexagons",
     "stat_new_none": "none new on this date",
     "before": "Before",
     "after": "After",
@@ -101,10 +101,10 @@
     "view": "Show the map as",
     "view_satellite": "Satellite photo",
     "view_radar": "NISAR radar",
-    "layer_polygons": "Cleared areas",
+    "layer_polygons": "Exact outline of each clearing",
     "opacity": "Radar transparency",
-    "legend_polys": "When it was detected",
-    "tap_hint": "Tap a colored area to see its data",
+    "legend_polys": "Hectares cleared in each hexagon",
+    "tap_hint": "Tap a colored hexagon to see what happened there",
     "loading": "Loading the map…",
     "no_data": "NISAR data is being processed. The map fills in when it is ready.",
     "error": "We could not load the map in this browser.",
@@ -123,7 +123,11 @@
     "study_area": "Study area",
     "go_country": "See all of Paraguay",
     "go_study": "Go to the study area",
-    "compare_hint": "In \"before / after\" we use the radar view: that is where the change between two dates shows."
+    "compare_hint": "In \"before / after\" we use the radar view: that is where the change between two dates shows.",
+    "coach": "👆 Tap a colored hexagon to see what happened there",
+    "help": "How do I read the map?",
+    "more": "More options",
+    "hex_size": "Each hexagon covers about {ha} ha."
   },
   "zone": {
     "title_cleared": "Cleared area",
@@ -151,7 +155,7 @@
     "status_forest": "Forest still standing",
     "status_low": "Low signal all season (already pasture)",
     "chart_title": "How the radar signal changed at this spot",
-    "chart_help": "When the blue line drops below the red line and stays there for two passes in a row, we flag clearing.",
+    "chart_help": "When the blue line drops below the red line and stays there, we flag clearing.",
     "tech": "Technical details",
     "polygon_id": "Area id: {id}",
     "cell": "500 m cell · {lat}, {lon}",
@@ -171,8 +175,8 @@
   "guide": {
     "kicker": "To analyze the map",
     "title": "How to read the map",
-    "colors_title": "The colored areas",
-    "colors_body": "Each patch is a radar-estimated clearing. Its color says when we detected it: yellow in winter, magenta in spring. The ones that pulse are new on that date.",
+    "colors_title": "The colored hexagons",
+    "colors_body": "We divided the study area into equal hexagons. Each hexagon where radar detected clearing is colored, and the color says how many hectares were cleared inside up to the chosen date. The pulsing ones grew in that pass.",
     "radar_title": "The radar view",
     "radar_body": "It is not a photo: it is the image NISAR builds from the radar echo. Each color mixes two channels.",
     "chart_title": "The chart of each area",
@@ -182,14 +186,15 @@
     "chart_demo_limit": "limit",
     "steps_title": "Try it in three steps",
     "step1": "Press play and watch the areas appear, pass after pass.",
-    "step2": "Tap a colored area: the map zooms in and shows its data.",
+    "step2": "Tap a colored hexagon: the map zooms in and shows how much was cleared and when.",
     "step3": "Switch to \"Before / after\" and drag the bar to compare two dates.",
     "stats_title": "Study area summary",
     "stat_total": "hectares cleared (radar estimate)",
     "stat_zones": "areas detected",
-    "stat_largest": "hectares in the largest area",
+    "stat_largest": "hexagons with clearing",
     "stat_confirmed": "confirmed by another satellite",
-    "fields_total": "≈ {n} soccer fields"
+    "fields_total": "≈ {n} soccer fields",
+    "colors_scale": "hectares cleared per hexagon"
   },
   "prov": {
     "source": "Source",
@@ -206,7 +211,8 @@
     "layer_rain": "Rain",
     "layer_basemap": "Satellite photo",
     "layer_labels": "Names and roads",
-    "scene": "Image of"
+    "scene": "Image of",
+    "layer_mask": "Forest mask"
   },
   "chart": {
     "title": "Radar signal",
@@ -216,7 +222,7 @@
     "baseline": "normal forest level",
     "threshold": "alert limit ({db} dB)",
     "gap": "no data",
-    "no_cell": "No data for this spot (it is outside the area or was not forest in 2023).",
+    "no_cell": "No data for this spot (it is outside the area or was not forest at the start).",
     "loading": "Loading…",
     "load_error": "We could not load the series for this spot.",
     "reading": "{date}: forest {hv} · ground {hh}",
@@ -242,7 +248,12 @@
     "case_meta": "{ha} ha · signal {db} dB",
     "case_date": "Detected on {date} ±12 days",
     "show_on_map": "Show on map",
-    "disclaimer": "These are radar-estimated results, not checked on the ground."
+    "disclaimer": "These are radar-estimated results, not checked on the ground.",
+    "agreement_desc_any": "of the area we flag also has an optical alert at some point in the period",
+    "coverage_desc_any": "of the optical-alert area in forest (≥ 5 ha) is also detected by radar",
+    "lead": "days before optical satellites: how far ahead the radar is, as a median",
+    "lag": "days after optical satellites, as a median",
+    "window24": "If dates must also match (±24 days): agreement {a}%, coverage {c}%. It is low because radar usually sees the clearing earlier."
   },
   "next": {
     "kicker": "What's next",
@@ -259,8 +270,9 @@
       "The date is the date of the satellite pass: ±12 days.",
       "We only see clearings of 5 hectares or more.",
       "Most data is provisional and the last date is validated: we adjust every date so they can be compared.",
-      "We only look at what was forest in 2023 (MapBiomas).",
-      "Rain and fire move the signal: that is why we require two passes in a row.",
+      "We only look at what was forest on a 2021 map (ESA WorldCover) and that radar also saw as forest at the start.",
+      "Rain and fire move the signal: that is why we require two out of three passes in a row.",
+      "Hexagons summarize the clearings: the exact outline is under \"More options\".",
       "We say nothing about whether a clearing is legal: that needs cadastre and permits we do not use."
     ],
     "steps_title": "Next steps",
@@ -273,7 +285,7 @@
     "credits_title": "Data and credits",
     "credit_nisar": "Data courtesy of NASA/JPL. NISAR L2 GCOV (NISAR_L2_GCOV_PROVISIONAL_V1 and NISAR_L2_GCOV_V1), distributed by the ASF DAAC.",
     "credit_opera": "OPERA DIST-ALERT-HLS V1 (NASA JPL, LP DAAC). DOI 10.5067/SNWG/OPERA_L3_DIST-ALERT-HLS_V1.001.",
-    "credit_mapbiomas": "MapBiomas Paraguay, Collection 2: 2023 forest mask.",
+    "credit_mapbiomas": "ESA WorldCover 2021 v200 (tree cover, provisional forest mask), CC BY 4.0.",
     "credit_power": "NASA POWER (NASA LaRC): daily PRECTOTCORR rainfall.",
     "credit_basemap": "Satellite photo: Esri World Imagery (Esri, Maxar, Earthstar Geographics and the GIS User Community).",
     "credit_labels": "Names, roads and borders: OpenFreeMap, © OpenMapTiles, data © OpenStreetMap contributors (ODbL).",
@@ -288,5 +300,25 @@
   },
   "common": {
     "pending": "—"
+  },
+  "hex": {
+    "title_cleared": "Clearing in this hexagon",
+    "title_later": "No clearing yet on this date",
+    "title_none": "No clearing detected",
+    "tooltip": "{ha} ha cleared · {pct}% of the hexagon",
+    "cleared": "Cleared up to this date",
+    "cleared_value": "{ha} ha",
+    "cleared_note": "{pct}% of the hexagon · ≈ {n} soccer fields",
+    "later_note": "{ha} ha are detected later (from {date})",
+    "first": "First detection",
+    "clearings": "Clearings inside",
+    "confirm_value": "{x} of {n}",
+    "confirm_note": "clearings with an optical alert",
+    "bars_title": "When it was cleared",
+    "bars_help": "Hectares detected at each radar pass. Colored bars are already past on the timeline.",
+    "signal": "Show the radar signal at the center of the hexagon",
+    "id": "Hexagon #{id} · {ha} ha",
+    "center": "Center: {lat}, {lon}",
+    "polys": "Clearings: {ids}"
   }
 }

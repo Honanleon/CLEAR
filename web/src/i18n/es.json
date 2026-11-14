@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "CLEAR · Desmonte en el Chaco visto por radar",
-    "description": "Dónde y cuándo se desmonta el monte chaqueño, con imágenes del radar NISAR cada 12 días entre junio y octubre de 2026."
+    "description": "Dónde y cuándo se desmonta el monte chaqueño, con 26 imágenes del radar NISAR tomadas cada 12 días entre noviembre de 2025 y octubre de 2026."
   },
   "nav": {
     "skip": "Ir al mapa",
@@ -34,10 +34,10 @@
     "kicker": "Capítulo 1",
     "title": "El monte que se va",
     "body": "En el Chaco paraguayo, al norte de Mariscal Estigarribia (Boquerón), el bosque se convierte en pastura en cuestión de semanas. Las fotos satelitales comunes no ven a través de las nubes ni del humo de las quemas. El radar sí.",
-    "why": "Elegimos esta zona porque ahí se desmonta mucho, entra entera en una sola imagen de NISAR y queda lejos de territorios indígenas protegidos.",
+    "why": "Elegimos esta zona porque ahí hubo desmonte durante el período, entra entera en una sola imagen de NISAR y queda fuera de territorios indígenas protegidos.",
     "stat_area_value": "60 × 45 km",
     "stat_area_label": "de bosque chaqueño observados",
-    "stat_scenes_label": "imágenes de radar entre junio y octubre de 2026",
+    "stat_scenes_label": "imágenes de radar entre noviembre de 2025 y octubre de 2026",
     "stat_revisit_value": "12",
     "stat_revisit_label": "días entre una pasada y la siguiente",
     "stat_wave_value": "24 cm",
@@ -81,7 +81,7 @@
   "map": {
     "kicker": "El mapa",
     "title": "Dónde y cuándo se desmontó",
-    "body": "Este es el Chaco real visto desde el espacio. Las manchas de color son zonas donde el radar detectó desmonte entre junio y octubre de 2026. Dale play para verlas aparecer o tocá cualquiera para ver sus datos.",
+    "body": "Este es el Chaco real visto desde el espacio. Dividimos la zona de estudio en hexágonos: los que se pintan son los que tuvieron desmonte detectado por radar. Cuanto más intenso el color, más hectáreas se desmontaron adentro. Dale play o tocá un hexágono.",
     "ethics": "Mostramos cambios en la cobertura del suelo estimados por radar, no si son legales o no. No usamos catastro ni nombres de propietarios.",
     "mode_timeline": "Línea de tiempo",
     "mode_compare": "Antes / después",
@@ -91,9 +91,9 @@
     "date_pm_help": "El radar pasa cada 12 días: el desmonte ocurrió en algún momento entre la pasada anterior y esta.",
     "gap": "Sin datos: el satélite no tomó imágenes",
     "stat_area": "hectáreas desmontadas",
-    "stat_polys": "zonas",
-    "stat_new": "+{n} nuevas en esta fecha",
-    "stat_new_none": "ninguna nueva en esta fecha",
+    "stat_polys": "hexágonos con desmonte",
+    "stat_new": "+{n} hexágonos nuevos",
+    "stat_new_none": "ninguno nuevo en esta fecha",
     "before": "Antes",
     "after": "Después",
     "swipe": "Arrastrá la barra para comparar",
@@ -101,10 +101,10 @@
     "view": "Ver el mapa como",
     "view_satellite": "Foto satelital",
     "view_radar": "Radar NISAR",
-    "layer_polygons": "Zonas desmontadas",
+    "layer_polygons": "Contorno exacto de cada desmonte",
     "opacity": "Transparencia del radar",
-    "legend_polys": "Cuándo se detectó",
-    "tap_hint": "Tocá una zona de color para ver sus datos",
+    "legend_polys": "Hectáreas desmontadas en cada hexágono",
+    "tap_hint": "Tocá un hexágono de color para ver qué pasó ahí",
     "loading": "Cargando el mapa…",
     "no_data": "Los datos NISAR se están procesando. El mapa se completa cuando estén listos.",
     "error": "No pudimos cargar el mapa en este navegador.",
@@ -123,7 +123,11 @@
     "study_area": "Zona de estudio",
     "go_country": "Ver todo Paraguay",
     "go_study": "Ir a la zona de estudio",
-    "compare_hint": "En «antes / después» usamos la vista de radar: ahí se ve el cambio de una fecha a otra."
+    "compare_hint": "En «antes / después» usamos la vista de radar: ahí se ve el cambio de una fecha a otra.",
+    "coach": "👆 Tocá un hexágono de color para ver qué pasó ahí",
+    "help": "¿Cómo leo el mapa?",
+    "more": "Más opciones",
+    "hex_size": "Cada hexágono mide unas {ha} ha."
   },
   "zone": {
     "title_cleared": "Zona desmontada",
@@ -151,7 +155,7 @@
     "status_forest": "El bosque sigue",
     "status_low": "Señal baja todo el período (ya era pastura)",
     "chart_title": "Cómo cambió la señal del radar en este punto",
-    "chart_help": "Cuando la línea azul baja de la línea roja y se queda abajo dos pasadas seguidas, marcamos desmonte.",
+    "chart_help": "Cuando la línea azul baja de la línea roja y se queda abajo, marcamos desmonte.",
     "tech": "Detalles técnicos",
     "polygon_id": "Identificador de la zona: {id}",
     "cell": "Celda de 500 m · {lat}, {lon}",
@@ -171,8 +175,8 @@
   "guide": {
     "kicker": "Para analizar el mapa",
     "title": "Cómo leer el mapa",
-    "colors_title": "Las zonas de color",
-    "colors_body": "Cada mancha es un desmonte estimado por radar. El color dice cuándo lo detectamos: amarillo en invierno, fucsia en primavera. Las que laten son las nuevas de esa fecha.",
+    "colors_title": "Los hexágonos de color",
+    "colors_body": "Dividimos la zona de estudio en hexágonos iguales. Se pinta cada hexágono donde el radar detectó desmonte, y el color dice cuántas hectáreas se desmontaron adentro hasta la fecha elegida. Los que laten son los que crecieron en esa pasada.",
     "radar_title": "La vista de radar",
     "radar_body": "No es una foto: es la imagen que arma NISAR con el eco del radar. Cada color mezcla dos canales.",
     "chart_title": "El gráfico de cada zona",
@@ -182,14 +186,15 @@
     "chart_demo_limit": "límite",
     "steps_title": "Probalo en tres pasos",
     "step1": "Dale play y mirá cómo aparecen las zonas, pasada a pasada.",
-    "step2": "Tocá una zona de color: el mapa se acerca y te muestra sus datos.",
+    "step2": "Tocá un hexágono de color: el mapa se acerca y te muestra cuánto y cuándo se desmontó.",
     "step3": "Pasá a «Antes / después» y arrastrá la barra para comparar dos fechas.",
     "stats_title": "Resumen de la zona de estudio",
     "stat_total": "hectáreas desmontadas (estimado por radar)",
     "stat_zones": "zonas detectadas",
-    "stat_largest": "hectáreas tiene la zona más grande",
+    "stat_largest": "hexágonos con desmonte",
     "stat_confirmed": "confirmadas por otro satélite",
-    "fields_total": "≈ {n} canchas de fútbol"
+    "fields_total": "≈ {n} canchas de fútbol",
+    "colors_scale": "hectáreas desmontadas por hexágono"
   },
   "prov": {
     "source": "Fuente",
@@ -206,7 +211,8 @@
     "layer_rain": "Lluvia",
     "layer_basemap": "Foto satelital",
     "layer_labels": "Nombres y rutas",
-    "scene": "Imagen del"
+    "scene": "Imagen del",
+    "layer_mask": "Máscara de bosque"
   },
   "chart": {
     "title": "Señal del radar",
@@ -216,7 +222,7 @@
     "baseline": "nivel normal del bosque",
     "threshold": "límite de alerta ({db} dB)",
     "gap": "sin datos",
-    "no_cell": "No hay datos para este punto (está fuera del área o no era bosque en 2023).",
+    "no_cell": "No hay datos para este punto (está fuera del área o no era bosque al inicio).",
     "loading": "Cargando…",
     "load_error": "No pudimos cargar la serie de este punto.",
     "reading": "{date}: bosque {hv} · suelo {hh}",
@@ -242,7 +248,12 @@
     "case_meta": "{ha} ha · señal {db} dB",
     "case_date": "Detectado el {date} ±12 días",
     "show_on_map": "Ver en el mapa",
-    "disclaimer": "Son resultados estimados por radar, no verificados en el terreno."
+    "disclaimer": "Son resultados estimados por radar, no verificados en el terreno.",
+    "agreement_desc_any": "del área que marcamos también tiene una alerta óptica en algún momento del período",
+    "coverage_desc_any": "del área con alertas ópticas en bosque (≥ 5 ha) también la detecta el radar",
+    "lead": "días antes que los satélites ópticos: es lo que el radar se adelanta, en la mediana",
+    "lag": "días después que los satélites ópticos, en la mediana",
+    "window24": "Si además exigimos que las fechas coincidan (±24 días): acuerdo {a} %, cobertura {c} %. Es bajo porque el radar suele ver el desmonte antes."
   },
   "next": {
     "kicker": "Qué sigue",
@@ -259,8 +270,9 @@
       "La fecha es la de la pasada del satélite: ±12 días.",
       "Solo vemos desmontes de 5 hectáreas o más.",
       "Casi todos los datos son provisionales y el último está validado: ajustamos cada fecha para poder compararlas.",
-      "Solo miramos lo que era bosque en 2023 (MapBiomas).",
-      "La lluvia y las quemas mueven la señal: por eso pedimos dos pasadas seguidas.",
+      "Solo miramos lo que era bosque según un mapa de 2021 (ESA WorldCover) y que el radar también veía como bosque al principio.",
+      "La lluvia y las quemas mueven la señal: por eso pedimos dos de tres pasadas seguidas.",
+      "Los hexágonos resumen los desmontes: el contorno exacto está en «Más opciones».",
       "No decimos nada sobre si un desmonte es legal: eso exige catastro y permisos que no usamos."
     ],
     "steps_title": "Siguientes pasos",
@@ -273,7 +285,7 @@
     "credits_title": "Datos y créditos",
     "credit_nisar": "Data courtesy of NASA/JPL. NISAR L2 GCOV (NISAR_L2_GCOV_PROVISIONAL_V1 y NISAR_L2_GCOV_V1), distribuido por ASF DAAC.",
     "credit_opera": "OPERA DIST-ALERT-HLS V1 (NASA JPL, LP DAAC). DOI 10.5067/SNWG/OPERA_L3_DIST-ALERT-HLS_V1.001.",
-    "credit_mapbiomas": "MapBiomas Paraguay, Colección 2: máscara de bosque 2023.",
+    "credit_mapbiomas": "ESA WorldCover 2021 v200 (cobertura arbórea, máscara de bosque provisoria), CC BY 4.0.",
     "credit_power": "NASA POWER (NASA LaRC): lluvia diaria PRECTOTCORR.",
     "credit_basemap": "Foto satelital: Esri World Imagery (Esri, Maxar, Earthstar Geographics y la comunidad de usuarios GIS).",
     "credit_labels": "Nombres, rutas y límites: OpenFreeMap, © OpenMapTiles, datos de © colaboradores de OpenStreetMap (ODbL).",
@@ -288,5 +300,25 @@
   },
   "common": {
     "pending": "—"
+  },
+  "hex": {
+    "title_cleared": "Desmonte en este hexágono",
+    "title_later": "Todavía sin desmonte en esta fecha",
+    "title_none": "Sin desmonte detectado",
+    "tooltip": "{ha} ha desmontadas · {pct} % del hexágono",
+    "cleared": "Desmontado hasta esta fecha",
+    "cleared_value": "{ha} ha",
+    "cleared_note": "{pct} % del hexágono · ≈ {n} canchas de fútbol",
+    "later_note": "Más adelante se detectan {ha} ha (desde el {date})",
+    "first": "Primera detección",
+    "clearings": "Desmontes adentro",
+    "confirm_value": "{x} de {n}",
+    "confirm_note": "desmontes con alerta óptica",
+    "bars_title": "Cuándo se desmontó",
+    "bars_help": "Hectáreas detectadas en cada pasada del radar. Las barras de color ya pasaron en la línea de tiempo.",
+    "signal": "Ver la señal del radar en el centro del hexágono",
+    "id": "Hexágono n.º {id} · {ha} ha",
+    "center": "Centro: {lat}, {lon}",
+    "polys": "Desmontes: {ids}"
   }
 }

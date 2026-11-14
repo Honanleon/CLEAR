@@ -31,7 +31,17 @@ export interface IndexData {
   scenes: Scene[];
   image_coordinates: [LngLat, LngLat, LngLat, LngLat];
   detection: { threshold_db: number; persistence: number; min_area_ha: number; n_polygons: number; area_ha_total: number };
-  validation: { agreement_pct: number | null; coverage_pct: number | null; reference: string };
+  validation: {
+    agreement_pct: number | null;
+    coverage_pct: number | null;
+    reference: string;
+    /** schema v2: the ±24-day numbers, the median radar lead and the confirmed-polygon count. */
+    agreement_pct_24d?: number | null;
+    coverage_pct_24d?: number | null;
+    median_lead_days?: number | null;
+    polygons_confirmed?: number | null;
+    polygons_total?: number | null;
+  };
   provenance: Provenance[];
 }
 
@@ -79,13 +89,14 @@ export interface Rain {
   point: LngLat;
 }
 
-export const SUPPORTED_SCHEMA = 1;
+/** v2 only adds optional validation fields (docs/DATA_CONTRACT.md, "Changes"). */
+export const SUPPORTED_SCHEMA = 2;
 /** Baseline = median of the first N dates (CLAUDE.md §9 step 6, config.yaml detection.baseline_dates). */
 export const BASELINE_DATES = 3;
 /** Instrument gap with no acquisitions (CLAUDE.md §8.1). */
 export const INSTRUMENT_GAP: [string, string] = ["2026-07-27", "2026-08-10"];
-/** Study area, used only when no data has been exported yet. */
-export const DEFAULT_BBOX: BBox = [-61.0, -21.95, -60.4, -21.55];
+/** Study area, used only when no data has been exported yet (CLAUDE.md §8.2). */
+export const DEFAULT_BBOX: BBox = [-60.78, -21.73, -60.18, -21.33];
 
 async function fetchJson<T>(url: string): Promise<T> {
   const res = await fetch(url);
@@ -157,7 +168,7 @@ export async function loadDataset(): Promise<Dataset | null> {
     try {
       const index = await fetchJson<IndexData>(`${base}index.json`);
       if (!Array.isArray(index.scenes) || index.scenes.length === 0) continue;
-      if (index.schema_version !== SUPPORTED_SCHEMA) {
+      if (index.schema_version > SUPPORTED_SCHEMA) {
         console.warn(`CLEAR: index.json schema_version ${index.schema_version}, web expects ${SUPPORTED_SCHEMA}`);
       }
       // Defensive: also flag fixtures that were copied into public/data by mistake.
@@ -192,11 +203,13 @@ export function median(values: number[]): number | null {
   return s.length % 2 ? (s[m] as number) : ((s[m - 1] as number) + (s[m] as number)) / 2;
 }
 
-/** Sequential palette for detection dates (early = pale gold, late = hot magenta). */
-export const DATE_PALETTE = ["#ffe07a", "#ffb03a", "#ff6b3d", "#ff2f6d", "#d63cff"];
+/** Hexagon colour scale: hectares cleared inside a hexagon (pale gold → orange → red → magenta). */
+export const HEX_STOPS: [number, string][] = [
+  [1, "#ffe07a"],
+  [10, "#ffb03a"],
+  [25, "#ff6b3d"],
+  [50, "#ff2f6d"],
+  [100, "#c13cff"],
+];
 
-export function dateColor(t: number, tMin: number, tMax: number): string {
-  const n = DATE_PALETTE.length - 1;
-  const f = tMax > tMin ? Math.min(1, Math.max(0, (t - tMin) / (tMax - tMin))) : 1;
-  return DATE_PALETTE[Math.round(f * n)] as string;
-}
+export const HEX_GRADIENT = `linear-gradient(90deg, ${HEX_STOPS.map(([, c]) => c).join(", ")})`;

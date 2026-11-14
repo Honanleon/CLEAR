@@ -1,0 +1,448 @@
+/* Parts of this file were generated with AI assistance (Claude Code). See docs/AI_USAGE.md */
+/*
+  TEST (lab) build only — apple.com layer, on top of apple.css.
+  Layout: full-width tiles that alternate black and light grey (#f5f5f7), centred headlines, darker body
+  copy for readability. The map chapter is a black tile; its floating panels become dark frosted glass
+  (Apple Maps dark). Blue stays the only accent (#0071e3 fills, #2997ff links on black).
+*/
+
+/* ------------------------------------------------------------------ type: more contrast, calmer tracking */
+.lab {
+  --text: #1d1d1f;
+  --muted: #424245;
+  --dim: #6e6e73;
+  --link: #0066cc;
+}
+.lab .display {
+  font-size: clamp(40px, 5.6vw, 64px);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.07;
+  max-width: 18ch;
+}
+.lab .lede {
+  font-size: clamp(19px, 1.9vw, 24px);
+  font-weight: 400;
+  line-height: 1.4;
+  letter-spacing: -0.012em;
+  color: var(--muted);
+  max-width: 36em;
+}
+.lab .kicker {
+  font-size: 21px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+.lab .note,
+.lab .ethics {
+  font-size: 15px;
+  color: var(--dim);
+}
+.lab .section-sub {
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+/* centred section intros, like apple.com tiles */
+.lab .chapter .wrap > .kicker,
+.lab .chapter .wrap > .display,
+.lab .chapter .wrap > .lede,
+.lab .chapter .wrap > .note,
+.lab .radar .wrap > .kicker,
+.lab .radar .wrap > .display,
+.lab .radar .wrap > .lede,
+.lab .radar .wrap > .section-sub,
+.lab .map-intro > *,
+.lab .guide .wrap > .kicker,
+.lab .guide-title,
+.lab .trust .wrap > .kicker,
+.lab .trust .wrap > .display,
+.lab .trust .wrap > .lede,
+.lab .trust .wrap > .section-sub,
+.lab .cases-sentence,
+.lab .trust .wrap > .fineprint,
+.lab .next .wrap > .kicker,
+.lab .next .wrap > .display,
+.lab .next .wrap > .lede {
+  text-align: center;
+  margin-left: auto;
+  margin-right: auto;
+}
+.lab .map-intro .ethics {
+  display: block;
+  max-width: 40em;
+}
+.lab .map-intro {
+  padding-bottom: 48px;
+}
+
+/* ------------------------------------------------------------------ tiles: black / light grey */
+.lab .chapter,
+.lab .guide,
+.lab .next,
+.lab .footer {
+  background: #f5f5f7;
+}
+.lab .radar,
+.lab .map-section,
+.lab .trust {
+  --text: #f5f5f7;
+  --muted: #d2d2d7;
+  --dim: #a1a1a6;
+  --line: rgba(255, 255, 255, 0.12);
+  --line-2: rgba(255, 255, 255, 0.22);
+  --bg-2: #1d1d1f;
+  --link: #2997ff;
+  --ok: #30d158;
+  --warn: #ff9f0a;
+  background: #000;
+  color: var(--text);
+  color-scheme: dark;
+}
+.lab .radar .kicker,
+.lab .map-section .kicker,
+.lab .trust .kicker {
+  color: #ff9f0a;
+}
+
+/* chapter: white tiles on grey */
+.lab .stat {
+  background: #fff;
+  text-align: center;
+  padding: 34px 20px 30px;
+}
+.lab .stat span {
+  color: var(--dim);
+}
+
+/* radar: graphite card on black */
+.lab .radar-lab {
+  background: #1d1d1f;
+}
+.lab .driver {
+  background: #1d1d1f;
+  text-align: left;
+}
+.lab .driver h4 {
+  color: #f5f5f7;
+}
+.lab .driver p {
+  color: #a1a1a6;
+}
+.lab .driver svg,
+.lab .driver:nth-child(n) svg {
+  stroke: #2997ff;
+}
+
+/* ------------------------------------------------------------------ map: dark frosted glass */
+.lab .map-section {
+  --glass: rgba(28, 28, 30, 0.78);
+  --glass-line: rgba(255, 255, 255, 0.08);
+  --shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
+}
+.lab .map-shell {
+  background: #000;
+}
+.lab .map-card,
+.lab .zone,
+.lab .map-dock .tl,
+.lab .compare-bar,
+.lab .map-modes,
+.lab .lab-drawer,
+.lab .map-toast,
+.lab .hex-tip {
+  color: #f5f5f7;
+}
+.lab .map-section .seg,
+.lab .map-section .aud-switch {
+  background: rgba(118, 118, 128, 0.24);
+}
+.lab .map-section .seg button,
+.lab .map-section .aud-switch button {
+  color: #f5f5f7;
+}
+.lab .map-section .seg button[aria-pressed="true"],
+.lab .map-section .aud-switch button[aria-pressed="true"],
+.aud-expert .map-section .aud-switch button[aria-pressed="true"] {
+  background: #636366;
+  color: #fff;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3);
+}
+.lab .map-section .icon-btn {
+  background: rgba(255, 255, 255, 0.1);
+  color: #f5f5f7;
+}
+.lab .map-section .switch i {
+  background: rgba(120, 120, 128, 0.32);
+}
+.lab .map-section .ptype,
+.lab .map-section .ai-badge,
+.lab .map-section .dist {
+  background: rgba(255, 255, 255, 0.1);
+  color: #d2d2d7;
+}
+.lab .map-section .dist-true {
+  color: #30d158;
+}
+.lab .map-section .dist-false {
+  color: #ff9f0a;
+}
+.lab .map-section .more summary,
+.lab .map-section .sources summary,
+.lab .map-section .zone-signal summary,
+.lab .map-section .zone-tech summary,
+.lab .map-section .btn-link,
+.lab .map-section .ai-clear {
+  color: #2997ff;
+}
+.lab .map-section .maplibregl-ctrl-group {
+  background: rgba(28, 28, 30, 0.78) !important;
+}
+.lab .map-section .maplibregl-ctrl-group button + button {
+  border-top: 0.5px solid rgba(255, 255, 255, 0.12) !important;
+}
+.lab .map-section .maplibregl-ctrl-group button .maplibregl-ctrl-icon {
+  filter: invert(1);
+}
+.lab .map-section .maplibregl-ctrl-attrib {
+  background: rgba(28, 28, 30, 0.7) !important;
+  color: #a1a1a6;
+}
+.lab .map-section .maplibregl-ctrl-attrib a {
+  color: #a1a1a6;
+}
+.lab .map-section .maplibregl-ctrl-attrib-button {
+  filter: invert(1);
+}
+
+/* timeline */
+.lab .map-section .tl-play,
+.lab .map-section .tl-play.is-playing {
+  background: #f5f5f7;
+  color: #1d1d1f;
+}
+.lab .map-section .tl-rail {
+  background: rgba(255, 255, 255, 0.16);
+}
+.lab .map-section .tl-fill {
+  background: #2997ff;
+}
+.lab .map-section .tl-dot {
+  background: rgba(255, 255, 255, 0.28);
+}
+.lab .map-section .tl-tick.is-past .tl-dot {
+  background: #2997ff;
+}
+.lab .map-section .tl-tick.is-current .tl-dot {
+  background: #fff;
+  box-shadow:
+    0 0 0 2px #2997ff,
+    0 2px 6px rgba(0, 0, 0, 0.4);
+}
+.lab .map-section .tl-bar {
+  background: rgba(255, 255, 255, 0.2);
+}
+.lab .map-section .tl-gap {
+  background: repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.08) 0 3px, transparent 3px 6px);
+}
+.lab .map-section .badge {
+  background: rgba(255, 159, 10, 0.18);
+  color: #ffb340;
+}
+.lab .map-section .badge[data-maturity="VALIDATED"] {
+  background: rgba(48, 209, 88, 0.18);
+  color: #30d158;
+}
+.lab .map-section .cmp select {
+  background: rgba(255, 255, 255, 0.08);
+  color: #f5f5f7;
+}
+
+/* hexagon panel */
+.lab .map-section .fact,
+.lab .map-section .glance {
+  background: rgba(255, 255, 255, 0.07);
+}
+.lab .map-section .glance-rows {
+  border-top-color: rgba(255, 255, 255, 0.12);
+}
+.lab .map-section .glance-label,
+.lab .map-section .glance-sub {
+  color: #a1a1a6;
+}
+.lab .map-section .glance-no svg {
+  color: #ff9f0a;
+}
+.lab .map-section .glance-yes svg {
+  color: #30d158;
+}
+
+/* assistant: Messages, dark appearance */
+.lab .map-section .ai-bot .ai-text {
+  background: #3a3a3c;
+  color: #f5f5f7;
+}
+.lab .map-section .ai-user .ai-text {
+  background: #0a84ff;
+  color: #fff;
+}
+.lab .map-section .ai-thinking {
+  color: #a1a1a6;
+}
+.lab .map-section .ai-chip {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.12);
+  color: #2997ff;
+}
+.lab .map-section .ai-chip:hover:not(:disabled) {
+  background: rgba(41, 151, 255, 0.14);
+  border-color: #2997ff;
+}
+.lab .map-section .ai-form input {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.16);
+  color: #f5f5f7;
+}
+.lab .map-section .ai-form input::placeholder {
+  color: #8e8e93;
+}
+.lab .map-section .ai-form .btn,
+.lab .map-section .ai-expert .btn-primary {
+  background: #0a84ff;
+}
+.lab .map-section .ai-error {
+  color: #ff9f0a;
+}
+.lab .map-section .lab-ask-btn,
+.aud-expert .map-section .lab-ask-btn {
+  background: #f5f5f7;
+  color: #1d1d1f;
+}
+
+/* charts on dark glass */
+.lab .map-section .series .grid {
+  stroke: rgba(255, 255, 255, 0.08);
+}
+.lab .map-section .series .rain rect {
+  fill: rgba(255, 255, 255, 0.2);
+}
+.lab .map-section .series .guide {
+  stroke: rgba(255, 255, 255, 0.5);
+}
+.lab .map-section .series .line-hv,
+.lab .map-section .series .pt-hv,
+.lab .map-section .lg-hv::before {
+  stroke: #2997ff;
+}
+.lab .map-section .series .pt-hv {
+  fill: #2997ff;
+}
+.lab .map-section .lg-hv::before {
+  background: #2997ff;
+}
+.lab .map-section .bars .bar {
+  fill: rgba(255, 255, 255, 0.2);
+}
+.lab .map-section .bars-axis {
+  stroke: rgba(255, 255, 255, 0.16);
+}
+.lab .map-section .bars-dot {
+  fill: rgba(255, 255, 255, 0.25);
+}
+.lab .map-section .xp-json {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+/* ------------------------------------------------------------------ guide (grey tile) */
+.lab .guide-stats h4 {
+  text-align: center;
+}
+.lab .gstat {
+  text-align: center;
+}
+.lab .guide-card p,
+.lab .gstat span {
+  color: var(--muted);
+}
+
+/* ------------------------------------------------------------------ trust (black tile) */
+.lab .gauge {
+  background: #1d1d1f;
+}
+.lab .gauge-track {
+  stroke: rgba(255, 255, 255, 0.12);
+}
+.lab .gauge-arc {
+  stroke: #2997ff;
+}
+.lab .gauge-b .gauge-arc {
+  stroke: #f5f5f7;
+}
+.lab .gauge h4,
+.lab .gauge-b h4 {
+  color: #a1a1a6;
+}
+.lab .gauge p {
+  color: #f5f5f7;
+}
+.lab .gauge-lead {
+  background: #f5f5f7;
+  color: #1d1d1f;
+}
+.lab .gauge-lead b {
+  color: #0071e3;
+}
+.lab .gauge-lead span {
+  color: #1d1d1f;
+}
+.lab .gauge-ref {
+  text-align: center;
+  color: #a1a1a6;
+}
+.lab .case {
+  background: #1d1d1f;
+  box-shadow: none;
+}
+.lab .case-meta {
+  color: #a1a1a6;
+}
+.lab .trust .btn-ghost {
+  border-color: #2997ff;
+  color: #2997ff;
+}
+.lab .trust .dist {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* ------------------------------------------------------------------ next (grey tile) + footer */
+.lab .use {
+  text-align: left;
+}
+.lab .ticks li {
+  color: #1d1d1f;
+}
+.lab .credits ul {
+  color: var(--muted);
+}
+.lab .footer {
+  color: #6e6e73;
+}
+
+/* the guide lives inside the map section but is a light tile: restore the light palette */
+.lab .map-section .guide {
+  --text: #1d1d1f;
+  --muted: #424245;
+  --dim: #6e6e73;
+  --line: rgba(0, 0, 0, 0.08);
+  --line-2: rgba(0, 0, 0, 0.14);
+  --bg-2: #f5f5f7;
+  --link: #0066cc;
+  --ok: #248a3d;
+  --warn: #b25000;
+  color-scheme: light;
+  color: var(--text);
+  background: #f5f5f7;
+}
+.lab .map-section .guide .kicker {
+  color: #f56300;
+}
