@@ -18,7 +18,9 @@ import numpy as np
 import yaml
 
 from pipeline.export import rgb_png, to_json
-from pipeline.fetch import nisar
+from pipeline.fetch import nisar, worldcover
+from pipeline.process import detect, normalize, polygons
+from pipeline.process.calibrate import boxcar_mean, to_db
 
 log = logging.getLogger("pipeline")
 
@@ -63,8 +65,10 @@ def stage_fetch(cfg: dict[str, Any], only_dates: list[str] | None = None) -> boo
     for s in todo:
         out = nisar.crop_path(interim, aoi_id, s.date)
         if out.exists():
-            log.info("%s: crop exists, skipping (%s)", s.date, out)
-            continue
+            if nisar.crop_bbox(out) == list(bbox):
+                log.info("%s: crop exists, skipping (%s)", s.date, out)
+                continue
+            log.warning("%s: existing crop was made for another bbox; cropping again", s.date)
         t0 = time.monotonic()
         try:
             crop = nisar.read_crop(s.url, token, bbox, nisar_cfg["frequency"], nisar_cfg["polarizations"])
@@ -72,7 +76,7 @@ def stage_fetch(cfg: dict[str, Any], only_dates: list[str] | None = None) -> boo
             log.error("%s: crop failed: %s", s.date, e)
             failed.append(s.date)
             continue
-        nisar.write_crop(out, crop, s)
+        nisar.write_crop(out, crop, s, bbox)
         log.info(
             "%s: wrote %s, %dx%d px, %.0f s, %.1f MB",
             s.date,
@@ -84,6 +88,130 @@ def stage_fetch(cfg: dict[str, Any], only_dates: list[str] | None = None) -> boo
     if failed:
         log.error("failed dates (re-run to try again): %s", ", ".join(failed))
     return not failed
+
+
+def stage_process(cfg: dict[str, Any], ignore_sanity: bool = False) -> bool:
+    """Forest mask, normalization, detection and polygons. Writes to data/interim/<aoi>/."""
+    import json
+
+    import rasterio
+
+    aoi_id = cfg["aoi"]
+    bbox = cfg["aois"][aoi_id]["bbox"]
+    interim = Path(cfg["paths"]["interim"])
+    det = cfg["detection"]
+    scenes = nisar.read_manifest(interim / "nisar_scenes.json")
+    paths = [nisar.crop_path(interim, aoi_id, s.date) for s in scenes]
+    missing = [s.date for s, p in zip(scenes, paths, strict=True) if not p.exists() or nisar.crop_bbox(p) != list(bbox)]
+    if missing:
+        log.error("crops missing or made for another bbox: %s (run --stage fetch)", ", ".join(missing))
+        return False
+    dates = [s.date for s in scenes]
+
+    layers = []
+    for s, p in zip(scenes, paths, strict=True):
+        with rasterio.open(p) as src:
+            hv = src.read(list(src.descriptions).index("HVHV") + 1)
+            transform, crs, shape = src.transform, src.crs.to_string(), (src.height, src.width)
+        layers.append(to_db(boxcar_mean(hv, det["speckle_window"])))
+        log.info("%s: HV loaded and filtered", s.date)
+    stack = np.stack(layers)
+    del layers
+
+    forest = worldcover.forest_mask(bbox, transform, shape, crs) & np.all(np.isfinite(stack), axis=0)
+    log.info("forest mask (%s): %.0f%% of the AOI", worldcover.SOURCE, forest.mean() * 100)
+
+    medians = normalize.forest_medians(stack, forest)
+    log.info(
+        "forest HV median per date (dB): %s", " ".join(f"{d[5:]}:{m:.2f}" for d, m in zip(dates, medians, strict=True))
+    )
+    stack = normalize.normalize(stack, medians)
+    base = detect.baseline(stack, det["baseline_dates"])
+    delta = stack - base[None]
+    del stack
+    forest_like = base >= det["min_baseline_db"]
+    log.info(
+        "radar forest-like at baseline (normalized HV >= %s dB): %.0f%% of the mask",
+        det["min_baseline_db"],
+        np.mean(forest_like[forest]) * 100,
+    )
+    first = detect.first_detection(delta, det["threshold_db"], det["persistence"], start=det["baseline_dates"])
+    first[~(forest & forest_like)] = detect.NO_DETECTION
+
+    report = detect.sanity_checks(dates, medians, first, forest)
+    feats = polygons.polygons(first, delta, transform, crs, dates, det["min_area_ha"])
+    total_ha = round(sum(f["properties"]["area_ha"] for f in feats), 1)
+    by_date = {
+        d: round(sum(f["properties"]["area_ha"] for f in feats if f["properties"]["first_date"] == d), 1) for d in dates
+    }
+    log.info("%d polygons >= %s ha, %.0f ha in total", len(feats), det["min_area_ha"], total_ha)
+    for d, a in by_date.items():
+        if a:
+            log.info("  %s: %.0f ha", d, a)
+
+    out = interim / aoi_id
+    to_json.write_json({"type": "FeatureCollection", "features": feats}, out / "polygons.geojson", compact=True)
+    profile = {
+        "driver": "GTiff",
+        "width": shape[1],
+        "height": shape[0],
+        "count": 2,
+        "dtype": "int16",
+        "crs": crs,
+        "transform": transform,
+        "nodata": -32768,
+        "compress": "deflate",
+        "tiled": True,
+    }
+    with rasterio.open(out / "detection.tif", "w", **profile) as dst:
+        dst.write(first, 1)
+        dst.write(forest.astype(np.int16), 2)
+        dst.set_band_description(1, "first_detection_date_index")
+        dst.set_band_description(2, "forest_mask")
+        dst.update_tags(dates=json.dumps(dates))
+    summary = {
+        "dates": dates,
+        "forest_median_hv_db": [round(float(m), 3) for m in medians],
+        "forest_mask_source": worldcover.SOURCE,
+        "forest_pct_of_aoi": round(float(forest.mean() * 100), 1),
+        "n_polygons": len(feats),
+        "area_ha_total": total_ha,
+        "area_ha_by_date": by_date,
+        "sanity": {
+            "max_median_jump_db": round(report.max_median_jump_db, 2),
+            "jump_dates": report.jump_dates,
+            "max_flagged_pct": round(report.max_flagged_pct, 2),
+            "max_flagged_date": report.max_flagged_date,
+            "problems": list(report.problems),
+        },
+        "params": {
+            k: det[k]
+            for k in (
+                "speckle_window",
+                "baseline_dates",
+                "min_baseline_db",
+                "threshold_db",
+                "persistence",
+                "min_area_ha",
+            )
+        },
+    }
+    to_json.write_json(summary, out / "detection_summary.json")
+    log.info(
+        "sanity: median jump max %.2f dB (%s -> %s), max flagged %.2f%% of forest (%s)",
+        report.max_median_jump_db,
+        *report.jump_dates,
+        report.max_flagged_pct,
+        report.max_flagged_date,
+    )
+    if report.problems:
+        for prob in report.problems:
+            log.error("SANITY: %s", prob)
+        if not ignore_sanity:
+            log.error("stopping: fix the cause or re-run with --ignore-sanity once it is understood")
+            return False
+        log.warning("continuing despite sanity problems (--ignore-sanity)")
+    return True
 
 
 def stage_export(cfg: dict[str, Any]) -> bool:
@@ -136,7 +264,19 @@ def stage_export(cfg: dict[str, Any]) -> bool:
     to_json.write_json(to_json.build_grid(bbox, dates, hv, hh), grid_path, compact=True)
     log.info("wrote %s (%d dates, %.0f KB)", grid_path, len(dates), grid_path.stat().st_size / 1e3)
 
-    index = to_json.build_index(aoi_id, bbox, cfg["nisar"], exported, cfg["detection"])
+    summary_path = interim / aoi_id / "detection_summary.json"
+    summary = None
+    if summary_path.exists():
+        import json
+        import shutil
+
+        summary = json.loads(summary_path.read_text())
+        shutil.copyfile(interim / aoi_id / "polygons.geojson", web_data / "polygons.geojson")
+        log.info("copied polygons.geojson (%d polygons)", summary["n_polygons"])
+    else:
+        log.warning("no detection yet (run --stage process): index.json will report 0 polygons")
+
+    index = to_json.build_index(aoi_id, bbox, cfg["nisar"], exported, cfg["detection"], summary=summary)
     to_json.write_json(index, web_data / "index.json")
     log.info("wrote %s (%d scenes)", web_data / "index.json", len(exported))
     return True
@@ -147,6 +287,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--config", type=Path, default=Path("pipeline/config.yaml"))
     parser.add_argument("--stage", choices=(*STAGES, "all"), default="all")
     parser.add_argument("--date", action="append", dest="dates", metavar="YYYY-MM-DD", help="only crop these dates")
+    parser.add_argument("--ignore-sanity", action="store_true", help="continue after a failed sanity check")
     parser.add_argument("-v", "--verbose", action="store_true")
     args = parser.parse_args(argv)
 
@@ -163,12 +304,14 @@ def main(argv: list[str] | None = None) -> int:
         if stage == "fetch":
             if not stage_fetch(cfg, args.dates):
                 return 1
+        elif stage == "process":
+            if not stage_process(cfg, args.ignore_sanity):
+                return 1
         elif stage == "export":
             if not stage_export(cfg):
                 return 1
         else:
-            log.error("stage %r is not implemented yet", stage)
-            return 1
+            log.warning("stage %r is not implemented yet, skipping", stage)
     return 0
 
 

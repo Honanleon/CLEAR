@@ -7,7 +7,7 @@ import numpy as np
 from pipeline.export.rgb_png import Stretch, channels_db, fit_stretch, grid_4326, to_rgba, write_webp
 from pipeline.export.to_json import build_grid, build_index, db_x10, image_coordinates
 
-BBOX = [-61.0, -21.95, -60.4, -21.55]
+BBOX = [-60.78, -21.73, -60.18, -21.33]
 
 
 def test_grid_4326_size():
@@ -63,8 +63,8 @@ def test_index_follows_contract():
     assert idx["generated_at"] == "2026-11-14T18:00:00-03:00"
     assert [s["date"] for s in idx["scenes"]] == ["2026-06-01", "2026-06-13"]
     assert set(idx["scenes"][0]) == {"date", "id", "maturity", "crid", "rgb"}
-    assert idx["image_coordinates"] == [[-61.0, -21.55], [-60.4, -21.55], [-60.4, -21.95], [-61.0, -21.95]]
-    assert image_coordinates(BBOX)[0] == [-61.0, -21.55]
+    assert idx["image_coordinates"] == [[-60.78, -21.33], [-60.18, -21.33], [-60.18, -21.73], [-60.78, -21.73]]
+    assert image_coordinates(BBOX)[0] == [-60.78, -21.33]
     assert idx["validation"]["agreement_pct"] is None
     assert idx["provenance"][0]["type"] == "satellite"
 
@@ -90,7 +90,7 @@ def test_grid_layout_follows_contract():
     hh = [np.full((89, 125), 0.1), np.full((89, 125), 0.1)]
     hv[0][0, 1] = np.nan
     g = build_grid(BBOX, ["2026-06-01", "2026-06-13"], hv, hh)
-    assert g["origin"] == [-61.0, -21.55]
+    assert g["origin"] == [-60.78, -21.33]
     assert g["nx"] == 125 and g["ny"] == 89
     assert g["cell_deg"][0] == 0.0048 and round(g["cell_deg"][1], 4) == -0.0045
     assert len(g["hv_db_x10"]) == 2 and len(g["hv_db_x10"][0]) == 125 * 89

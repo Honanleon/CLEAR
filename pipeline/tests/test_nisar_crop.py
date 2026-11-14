@@ -51,5 +51,5 @@ def test_bbox_to_projected_utm20s():
     xmin, ymin, xmax, ymax = bbox_to_projected((-63.0, 0.0, -63.0, 0.0), 32720)
     assert xmin == pytest.approx(500000.0) and ymin == pytest.approx(10000000.0)
     # The chapter 1 AOI lies inside the frame-167 grid seen in the product (x 492490..822230, y 7512490..7832150)
-    xmin, ymin, xmax, ymax = bbox_to_projected((-61.0, -21.95, -60.4, -21.55), 32720)
+    xmin, ymin, xmax, ymax = bbox_to_projected((-60.78, -21.73, -60.18, -21.33), 32720)
     assert 492490 < xmin < xmax < 822230 and 7512490 < ymin < ymax < 7832150

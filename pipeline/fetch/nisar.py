@@ -296,7 +296,16 @@ def crop_path(interim: Path, aoi_id: str, day: str) -> Path:
     return interim / aoi_id / f"nisar_{day}.tif"
 
 
-def write_crop(path: Path, crop: Crop, scene: Scene) -> None:
+def crop_bbox(path: Path) -> list[float] | None:
+    """The AOI bbox a crop was made for (tag written by `write_crop`), or None if unknown."""
+    import rasterio
+
+    with rasterio.open(path) as src:
+        tag = src.tags().get("aoi_bbox")
+    return json.loads(tag) if tag else None
+
+
+def write_crop(path: Path, crop: Crop, scene: Scene, bbox: Sequence[float]) -> None:
     """Write a multi-band GeoTIFF (gamma0 linear, NaN nodata). Atomic: tmp file, then rename."""
     import rasterio
 
@@ -324,6 +333,7 @@ def write_crop(path: Path, crop: Crop, scene: Scene) -> None:
             dst.write(crop.bands[name], i)
             dst.set_band_description(i, name)
         dst.update_tags(
+            aoi_bbox=json.dumps(list(bbox)),
             date=scene.date,
             granule_id=scene.granule_id,
             crid=scene.crid,

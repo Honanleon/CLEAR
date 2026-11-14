@@ -17,21 +17,30 @@ Other drivers we expect to see, to be discussed in the app:
 
 ## Study area
 
-`chaco-central-norte`, bbox `[-61.0, -21.95, -60.4, -21.55]` (EPSG:4326), north of Mariscal Estigarribia, Boquerón, Paraguay. It fits inside NISAR track 161, ascending, frame 167. The area deliberately excludes the PNCAT (Ayoreo Totobiegosode territory). TODO: write down the evidence from OPERA DIST-ALERT that clearing happened inside this box in Jun–Oct 2026.
+`chaco-central-norte`, bbox `[-60.78, -21.73, -60.18, -21.33]` (EPSG:4326), north-east of Mariscal Estigarribia, Boquerón, Paraguay (about 60 × 45 km). It lies fully inside NISAR track 161, ascending, frame 167 (checked against the product footprint), which has 11 dates from 2026-06-01 to 2026-10-23.
+
+How it was chosen (2026-11-14):
+- The first box, `[-61.0, -21.95, -60.4, -21.55]`, showed almost no clearing in Jun–Oct 2026: 22 ha of confirmed ≥ 50 % vegetation loss in OPERA DIST-ALERT (latest product, 2026-11-04) and about 86 ha of sustained HV drop ≤ −3 dB in our NISAR crops.
+- Sliding a box of the same size over the 4 DIST-ALERT tiles around it, the activity was to the north and east, inside the same frame. The chosen box had about 320 ha of confirmed ≥ 50 % loss, about 80 % of it after the radar baseline (late June).
+- Boxes further north had more loss (~500 ha) but were rejected: they are closer to the PNCAT (Ayoreo Totobiegosode territory), whose exact boundary we could not verify. The study area must stay clear of it.
+- A Paraguay-wide scan (DIST-ALERT masked with ESA WorldCover 2021 tree cover, ~210 m) found more forest loss in southern Boquerón (frame 166), but it happened in June–July, before the radar baseline, so the method cannot detect it.
+
+These DIST-ALERT figures are coarse screening numbers, not validation results.
 
 ## Data
 
-NISAR L2 GCOV, frequency A (20 MHz, ~20 m), HH and HV, γ⁰ linear with radiometric terrain correction. There are 11 dates from 2026-06-01 to 2026-10-23, every 12 days, with a gap between 2026-07-27 and 2026-08-10 (instrument) and a missing 2026-08-12 acquisition. See `CLAUDE.md` §8.1 for the date table and de-duplication rules.
+NISAR L2 GCOV, frequency A (20 MHz, ~20 m), HH and HV, γ⁰ linear with radiometric terrain correction. There are 26 dates from 2025-11-21 to 2026-10-23, every 12 days, with missing acquisitions on 2026-04-14 and 2026-08-12 and an instrument gap between 2026-07-27 and 2026-08-10. All are PROVISIONAL (CRID P05023) except 2026-10-23 (VALIDATED, P05036). The series first started on 2026-06-01; it was extended back to November 2025 because, in the study area, the radar already saw the clearings that OPERA DIST-ALERT reported in June–October as non-forest on 2026-06-01 (normalized HV about −5.6 dB at baseline): the trees had been felled before June, and the optical product noticed the loss later, when the felled vegetation dried or burned. See `CLAUDE.md` §8.1 for the date table and de-duplication rules.
 
 ## Processing steps
 
 1. **Subset.** Read only the AOI window of `HHHH` and `HVHV` (frequency A) from each HDF5 file over HTTPS, without downloading the ~1.9 GB file. The AOI bbox is projected to the product grid (EPSG:32720, UTM 20S, 20 m) with densified edges, and the window keeps the pixels whose centers fall inside it (`xCoordinates` / `yCoordinates` are pixel centers). For `chaco-central-norte` the window is 2262 × 3137 pixels and the read takes about 1 minute (~75 MB) per date. Values that are 0, negative or not finite are set to NaN. Each crop is saved as a GeoTIFF (γ⁰ linear, bands `HHHH`, `HVHV`) in `data/interim/<aoi>/nisar_<date>.tif`, with the granule id, CRID and maturity as tags. Implementation: `pipeline/fetch/nisar.py` (`read_crop`).
 2. **Speckle.** 5 × 5 pixel (100 m) moving mean, computed on linear γ⁰.
 3. **dB.** `10·log10(γ⁰)`.
-4. **Forest mask.** MapBiomas Paraguay Collection 2, forest classes in 2023.
+4. **Forest mask.** Planned: MapBiomas Paraguay Collection 2, forest in 2023. **Interim:** ESA WorldCover 2021 v200 tree cover (class 10), averaged onto the 20 m crop grid and kept where the tree fraction is ≥ 0.5 (`pipeline/fetch/worldcover.py`). Because this mask is from 2021, a second condition uses the radar itself: at baseline the pixel's normalized HV must be ≥ `min_baseline_db` (−3 dB; the forest 10th percentile was −3.3 dB). Without it, the first run flagged 57 polygons (1,456 ha) that were already pasture at baseline (median −4.5 dB) and lost further HV when burned or ploughed; only 2 % of their area matched DIST-ALERT.
 5. **Normalization.** For each date, subtract the median HV of all forest pixels in the AOI. This removes most of the effect of rain and of the PROVISIONAL → VALIDATED change, because almost all forest stays unchanged over five months.
 6. **Detection.**
-   - baseline = median of the first 3 dates;
+   - baseline = median of the first 3 dates (2025-11-21, 12-03, 12-15);
+   - only pixels that look like forest at baseline (see step 4);
    - a pixel is flagged when ΔHV ≤ `threshold_db` for `persistence` consecutive dates;
    - the detection date is the first of those dates.
 7. **Polygons.** Connected flagged pixels are grouped and polygons smaller than `min_area_ha` are dropped. Properties: first date, area (ha) and mean drop (dB).

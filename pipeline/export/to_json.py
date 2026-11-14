@@ -29,6 +29,7 @@ def build_index(
     scenes: Sequence[Mapping[str, Any]],
     detection_cfg: Mapping[str, Any],
     generated_at: datetime | None = None,
+    summary: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     """`scenes`: dicts with date, granule_id, maturity, crid and rgb (path relative to web/public/data)."""
     when = generated_at or datetime.now(ZoneInfo("America/Asuncion"))
@@ -51,11 +52,19 @@ def build_index(
             "threshold_db": detection_cfg["threshold_db"],
             "persistence": detection_cfg["persistence"],
             "min_area_ha": detection_cfg["min_area_ha"],
-            "n_polygons": 0,
-            "area_ha_total": 0,
+            "n_polygons": summary["n_polygons"] if summary else 0,
+            "area_ha_total": summary["area_ha_total"] if summary else 0,
         },
         "validation": {"agreement_pct": None, "coverage_pct": None, "reference": "OPERA DIST-ALERT-HLS V1"},
-        "provenance": [{"layer": "rgb", "type": "satellite", "source": NISAR_SOURCE}],
+        "provenance": [{"layer": "rgb", "type": "satellite", "source": NISAR_SOURCE}]
+        + (
+            [
+                {"layer": "polygons", "type": "satellite", "source": f"CLEAR change detection on {NISAR_SOURCE}, HV"},
+                {"layer": "forest_mask", "type": "satellite", "source": summary["forest_mask_source"]},
+            ]
+            if summary
+            else []
+        ),
     }
 
 
