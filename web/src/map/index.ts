@@ -12,7 +12,7 @@ import { Swipe } from "../compare/swipe";
 import { BASELINE_DATES, type Dataset, HEX_GRADIENT, HEX_STOPS, INSTRUMENT_GAP, median, type PolygonCollection } from "../data";
 import { fmt, lang, onLang, t } from "../i18n";
 import { Timeline } from "../timeline/timeline";
-import { buildHexGrid, HEX_RADIUS_M, type HexCell } from "./hexgrid";
+import { buildHexGrid, HEX_RADIUS_M, type HexCell, type HexGrid, MINI_HEX_RADIUS_M, MINI_ZOOM } from "./hexgrid";
 import paraguay from "./paraguay.json";
 import { PARAGUAY_BBOX, RadarMap } from "./radar-map";
 import { center, nearestTown, SOCCER_FIELD_HA } from "./zone";
@@ -64,6 +64,10 @@ export async function initMapSection(ds: Dataset): Promise<void> {
   const byId = new Map(polygons.features.map((f) => [f.id as number, f]));
   // hexagons over all of Paraguay; only the ones over the study area have radar data
   const hex = buildHexGrid(aoi, polygons, scenes.length, HEX_RADIUS_M, paraguay as [number, number][]);
+  // mini hexagons over the study area, shown inside the big ones when zoomed in
+  const mini = buildHexGrid(aoi, polygons, scenes.length, MINI_HEX_RADIUS_M);
+  const isMini = (cell: HexCell) => mini.cells[cell.id] === cell;
+  const gridAt = (m: RadarMap): HexGrid => (m.map.getZoom() >= MINI_ZOOM ? mini : hex);
   const newArea = scenes.map(() => 0);
   for (const f of polygons.features) {
     const k = f.properties.t ?? 0;
@@ -90,7 +94,7 @@ export async function initMapSection(ds: Dataset): Promise<void> {
         })
       : null;
 
-  const mapA = new RadarMap({ container: containerA, ds, polygons, hex, bbox: aoi, controls: true, start: "country", offline: lab?.offline });
+  const mapA = new RadarMap({ container: containerA, ds, polygons, hex, mini, bbox: aoi, controls: true, start: "country", offline: lab?.offline });
   let mapB: RadarMap | null = null;
   let swipe: Swipe | null = null;
   let mode: Mode = "timeline";
@@ -115,7 +119,7 @@ export async function initMapSection(ds: Dataset): Promise<void> {
   // ------------------------------------------------------------------ UI skeleton
   const modeBar = h("div", "map-modes seg");
   const panel = h("aside", "map-card map-panel");
-  const timeline = new Timeline({ scenes, newArea, newCount: hex.newCells, onChange: (i) => showTimeline(i) });
+  const timeline = new Timeline({ scenes, newArea, newCount: mini.newCells, onChange: (i) => showTimeline(i) });
   const compareBar = h("div", "compare-bar");
   const zone = h("aside", "zone");
   zone.hidden = true;
@@ -205,7 +209,7 @@ export async function initMapSection(ds: Dataset): Promise<void> {
     body.append(seg);
 
     body.append(h("p", "panel-label", t("map.legend_polys")), hexLegend());
-    body.append(h("p", "panel-note", t("map.hex_size", { ha: fmt.num(hex.cells[0]?.areaHa ?? 0) })));
+    body.append(h("p", "panel-note", t("map.hex_size", { ha: fmt.num(hex.cells[0]?.areaHa ?? 0), mini: fmt.num(mini.cells[0]?.areaHa ?? 0) })));
     body.append(h("p", "panel-note", t("map.hex_nodata")));
 
     const zoomedOut = mapA.map.getZoom() < 8.5;
@@ -348,7 +352,7 @@ export async function initMapSection(ds: Dataset): Promise<void> {
       containerB.hidden = false;
       swipeEl.hidden = false;
       if (!mapB) {
-        mapB = new RadarMap({ container: containerB, ds, polygons, hex, bbox: aoi, controls: false, start: "study", offline: lab?.offline });
+        mapB = new RadarMap({ container: containerB, ds, polygons, hex, mini, bbox: aoi, controls: false, start: "study", offline: lab?.offline });
         mapB.map.on("click", (e) => focusZone(e.lngLat));
         mapB.setPulse(true);
       }
@@ -371,14 +375,15 @@ export async function initMapSection(ds: Dataset): Promise<void> {
 
   // ------------------------------------------------------------------ hover tooltip (mouse only)
   const finePointer = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
-  let hovered: number | null = null;
+  let hovered: string | null = null;
   function onMove(e: { lngLat: LngLat; point: { x: number; y: number } }, from: RadarMap) {
-    const cell = hex.locate(e.lngLat.lng, e.lngLat.lat);
-    const id = cell?.id ?? null;
-    if (id !== hovered) {
-      hovered = id;
-      mapA.hover(id);
-      mapB?.hover(id);
+    const cell = gridAt(from).locate(e.lngLat.lng, e.lngLat.lat);
+    const key = cell ? `${isMini(cell) ? "m" : "h"}${cell.id}` : null;
+    if (key !== hovered) {
+      hovered = key;
+      const small = cell ? isMini(cell) : false;
+      mapA.hover(cell?.id ?? null, small);
+      mapB?.hover(cell?.id ?? null, small);
     }
     const ha = cell ? (cell.cumHa[from === mapB ? after : upTo()] ?? 0) : 0;
     from.map.getCanvas().style.cursor = cell ? "pointer" : "";
@@ -421,7 +426,7 @@ export async function initMapSection(ds: Dataset): Promise<void> {
     timeline.pause();
     toast.hidden = true;
     coachShown = true;
-    const cell = hex.locate(lngLat.lng, lngLat.lat);
+    const cell = gridAt(mapA).locate(lngLat.lng, lngLat.lat);
     if (!cell) {
       renderOutside();
       return;
@@ -457,8 +462,8 @@ export async function initMapSection(ds: Dataset): Promise<void> {
 
   function renderHex(cell: HexCell, animate: boolean) {
     selected = cell;
-    mapA.select(cell.id);
-    mapB?.select(cell.id);
+    mapA.select(cell.id, isMini(cell));
+    mapB?.select(cell.id, isMini(cell));
     if (!marker) marker = new Marker({ element: h("div", "probe-marker") });
     marker.setLngLat(cell.center).addTo(mapA.map);
 

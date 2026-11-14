@@ -17,7 +17,7 @@ import {
 import workerUrl from "maplibre-gl/dist/maplibre-gl-worker.mjs?url";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { type BBox, type Dataset, HEX_STOPS, type PolygonCollection } from "../data";
-import type { HexGrid } from "./hexgrid";
+import { type HexGrid, MINI_ZOOM } from "./hexgrid";
 import { type Lang, lang, t } from "../i18n";
 
 setWorkerUrl(workerUrl);
@@ -40,6 +40,8 @@ export interface RadarMapOptions {
   ds: Dataset;
   polygons: PolygonCollection;
   hex: HexGrid;
+  /** Small hexagons over the study area, shown from MINI_ZOOM. */
+  mini: HexGrid;
   bbox: BBox;
   controls: boolean;
   start: "country" | "study";
@@ -166,6 +168,8 @@ export class RadarMap {
     m.addSource("polys", { type: "geojson", data: this.opts.polygons as never });
     m.addSource("hexgrid", { type: "geojson", data: this.opts.hex.outline as never });
     m.addSource("hexdata", { type: "geojson", data: this.opts.hex.data as never });
+    m.addSource("minigrid", { type: "geojson", data: this.opts.mini.outline as never });
+    m.addSource("minidata", { type: "geojson", data: this.opts.mini.data as never });
 
     // roads and borders (under the clearings, over the imagery)
     if (!this.opts.offline) this.addOsmLines();
@@ -208,8 +212,9 @@ export class RadarMap {
 
   private addOverlays() {
     const m = this.map;
-    // Paraguay divided into hexagons: the ones without radar data are shaded so they never read as "no clearing"
+    // Paraguay divided into big hexagons: the ones without radar data are shaded so they never read as "no clearing"
     const studied = ["==", ["get", "s"], 1];
+    const [z0, z1] = [MINI_ZOOM - 0.4, MINI_ZOOM + 0.4];
     m.addLayer({
       id: "hex-nodata",
       type: "fill",
@@ -227,41 +232,74 @@ export class RadarMap {
         "line-width": ["interpolate", ["linear"], ["zoom"], 5, 0.5, 10, 1] as never,
       },
     });
+    // big hexagons fill: fades out as the mini hexagons fade in
     m.addLayer({
       id: "hex-fill",
       type: "fill",
       source: "hexdata",
       filter: [">", ["get", "a0"], 0],
-      paint: { "fill-color": this.hexColor(0), "fill-opacity": ["interpolate", ["linear"], ["zoom"], 8, 0.88, 11, 0.72, 13, 0.36, 15, 0.2] as never },
+      paint: { "fill-color": this.hexColor(0), "fill-opacity": ["interpolate", ["linear"], ["zoom"], 5, 0.88, z0, 0.85, z1, 0] as never },
     });
+    // mini hexagons inside the study area, shown when zoomed in
+    m.addLayer({
+      id: "mini-grid",
+      type: "line",
+      source: "minigrid",
+      minzoom: z0,
+      paint: { "line-color": "#ffffff", "line-opacity": ["interpolate", ["linear"], ["zoom"], z0, 0, z1, 0.22, 12, 0.3] as never, "line-width": 0.8 },
+    });
+    m.addLayer({
+      id: "mini-fill",
+      type: "fill",
+      source: "minidata",
+      minzoom: z0,
+      filter: [">", ["get", "a0"], 0],
+      paint: { "fill-color": this.hexColor(0), "fill-opacity": ["interpolate", ["linear"], ["zoom"], z0, 0, z1, 0.85, 11, 0.72, 13, 0.36, 15, 0.2] as never },
+    });
+    m.addLayer({
+      id: "mini-line",
+      type: "line",
+      source: "minidata",
+      minzoom: z0,
+      filter: [">", ["get", "a0"], 0],
+      paint: { "line-color": this.hexColor(0), "line-width": 1.4, "line-opacity": ["interpolate", ["linear"], ["zoom"], z0, 0, z1, 1] as never },
+    });
+    // big hexagon outline stays on top as a frame around its mini hexagons
     m.addLayer({
       id: "hex-line",
       type: "line",
       source: "hexdata",
       filter: [">", ["get", "a0"], 0],
-      paint: { "line-color": this.hexColor(0), "line-width": 1.8 },
+      paint: { "line-color": this.hexColor(0), "line-width": ["interpolate", ["linear"], ["zoom"], z0, 1.8, z1, 3] as never },
     });
-    m.addLayer({
-      id: "hex-hover",
-      type: "line",
-      source: "hexgrid",
-      filter: ["==", ["get", "id"], -1],
-      paint: { "line-color": "#ffffff", "line-width": 2, "line-opacity": 0.8 },
-    });
-    m.addLayer({
-      id: "hex-new",
-      type: "line",
-      source: "hexdata",
-      filter: ["==", ["get", "id"], -1],
-      paint: { "line-color": "#ffffff", "line-width": 2, "line-opacity": 0.9, "line-blur": 1 },
-    });
-    m.addLayer({
-      id: "hex-selected",
-      type: "line",
-      source: "hexgrid",
-      filter: ["==", ["get", "id"], -1],
-      paint: { "line-color": "#ffffff", "line-width": 3.5 },
-    });
+    for (const [prefix, src] of [["hex", "hexgrid"], ["mini", "minigrid"]] as const) {
+      m.addLayer({
+        id: `${prefix}-hover`,
+        type: "line",
+        source: src,
+        filter: ["==", ["get", "id"], -1],
+        paint: { "line-color": "#ffffff", "line-width": 2, "line-opacity": 0.8 },
+      });
+    }
+    for (const [prefix, src] of [["hex", "hexdata"], ["mini", "minidata"]] as const) {
+      m.addLayer({
+        id: `${prefix}-new`,
+        type: "line",
+        source: src,
+        ...(prefix === "mini" ? { minzoom: z0 } : { maxzoom: z1 }),
+        filter: ["==", ["get", "id"], -1],
+        paint: { "line-color": "#ffffff", "line-width": 2, "line-opacity": 0.9, "line-blur": 1 },
+      });
+    }
+    for (const [prefix, src] of [["hex", "hexgrid"], ["mini", "minigrid"]] as const) {
+      m.addLayer({
+        id: `${prefix}-selected`,
+        type: "line",
+        source: src,
+        filter: ["==", ["get", "id"], -1],
+        paint: { "line-color": "#ffffff", "line-width": 3.5 },
+      });
+    }
     // exact outline of each clearing (optional, for detail when zoomed in)
     m.addLayer({
       id: "poly-outline",
@@ -421,11 +459,13 @@ export class RadarMap {
     await this.ready;
     const a = (k: number) => ["coalesce", ["get", `a${Math.max(0, k)}`], 0];
     const shown = [">", a(upTo), 0] as never;
-    this.map.setFilter("hex-fill", shown);
-    this.map.setFilter("hex-line", shown);
-    this.map.setPaintProperty("hex-fill", "fill-color", this.hexColor(upTo));
-    this.map.setPaintProperty("hex-line", "line-color", this.hexColor(upTo));
-    this.map.setFilter("hex-new", (newAfter < 0 ? shown : [">", a(upTo), a(newAfter)]) as never);
+    for (const p of ["hex", "mini"]) {
+      this.map.setFilter(`${p}-fill`, shown);
+      this.map.setFilter(`${p}-line`, shown);
+      this.map.setPaintProperty(`${p}-fill`, "fill-color", this.hexColor(upTo));
+      this.map.setPaintProperty(`${p}-line`, "line-color", this.hexColor(upTo));
+      this.map.setFilter(`${p}-new`, (newAfter < 0 ? shown : [">", a(upTo), a(newAfter)]) as never);
+    }
     this.map.setFilter("poly-outline", ["<=", ["get", "t"], upTo] as never);
   }
 
@@ -449,12 +489,19 @@ export class RadarMap {
     this.map.setLayoutProperty("poly-outline", "visibility", on ? "visible" : "none");
   }
 
-  select(cellId: number | null): void {
-    if (this.map.getLayer("hex-selected")) this.map.setFilter("hex-selected", ["==", ["get", "id"], cellId ?? -1]);
+  /** Highlights one hexagon of the big grid, or of the mini grid when `mini` is true (the other is cleared). */
+  select(cellId: number | null, mini = false): void {
+    this.highlight("selected", cellId, mini);
   }
 
-  hover(cellId: number | null): void {
-    if (this.map.getLayer("hex-hover")) this.map.setFilter("hex-hover", ["==", ["get", "id"], cellId ?? -1]);
+  hover(cellId: number | null, mini = false): void {
+    this.highlight("hover", cellId, mini);
+  }
+
+  private highlight(kind: "selected" | "hover", cellId: number | null, mini: boolean) {
+    if (!this.map.getLayer(`hex-${kind}`)) return;
+    this.map.setFilter(`hex-${kind}`, ["==", ["get", "id"], mini ? -1 : (cellId ?? -1)]);
+    this.map.setFilter(`mini-${kind}`, ["==", ["get", "id"], mini ? (cellId ?? -1) : -1]);
   }
 
   /** Animates the outline of the hexagons that grew in the current pass while the map is on screen. */
@@ -472,8 +519,10 @@ export class RadarMap {
       if (now - last > 50 && this.map.getLayer("hex-new")) {
         last = now;
         const s = (Math.sin(now / 260) + 1) / 2;
-        this.map.setPaintProperty("hex-new", "line-width", 1.5 + s * 4);
-        this.map.setPaintProperty("hex-new", "line-opacity", 0.35 + s * 0.65);
+        for (const id of ["hex-new", "mini-new"]) {
+          this.map.setPaintProperty(id, "line-width", 1.5 + s * 4);
+          this.map.setPaintProperty(id, "line-opacity", 0.35 + s * 0.65);
+        }
       }
       this.pulseRaf = requestAnimationFrame(tick);
     };

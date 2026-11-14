@@ -50,7 +50,7 @@ speckle_window 5 (100 m); baseline_dates 3; min_baseline_db −4.0 dB (dry Chaco
 
 ## Results (this data release)
 - 23 clearing polygons, 565.9 ha in total, polygons from 5.1 to 88.6 ha. Detection dates range from February to September 2026 (most in March–April and in July).
-- All the clearing (565.9 ha) falls in a single hexagon, the one that holds the whole study area; the exact polygon outlines show where it is inside.
+- All the clearing (565.9 ha) falls in a single hexagon, the one that holds the whole study area; when zoomed in, the map splits it into mini hexagons of 2 km radius (about 1,040 ha each; 19 of them contain clearing, the busiest about 80 ha), and the exact polygon outlines show where each clearing is.
 
 ## Validation (headline numbers, data contract v2)
 - Optical alert = VEG-DIST-STATUS 6 or 8 (confirmed ≥ 50 % vegetation loss), first-disturbance date between the first radar date and the last radar date + 24 days, inside the forest mask, patches ≥ 5 ha. 518 ha of optical alerts in forest in the area.

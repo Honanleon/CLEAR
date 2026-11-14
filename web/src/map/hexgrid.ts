@@ -46,6 +46,12 @@ const SQRT3 = Math.sqrt(3);
 /** Hexagon radius used across the site: 40.8 km ≈ 432,500 ha (≈ 4,300 km²) per hexagon, big enough to see from the whole-country view. */
 export const HEX_RADIUS_M = 40800;
 
+/** Mini hexagons drawn inside the big ones when zoomed in: 2 km ≈ 1,040 ha, over the study area only. */
+export const MINI_HEX_RADIUS_M = 2000;
+
+/** Map zoom from which the mini hexagons replace the big ones (cross-fade ±0.4 around it). */
+export const MINI_ZOOM = 9;
+
 /**
  * @param country optional outer ring (lon, lat) of the country: hexagons whose centre falls inside it
  * are added around the study area, with no data, so the grid covers the whole map.

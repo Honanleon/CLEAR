@@ -127,7 +127,7 @@
     "coach": "👆 Tap a colored hexagon to see what happened there",
     "help": "How do I read the map?",
     "more": "More options",
-    "hex_size": "Each hexagon covers about {ha} ha.",
+    "hex_size": "Each big hexagon covers about {ha} ha. Zoom in and it splits into small hexagons of about {mini} ha.",
     "hex_nodata": "Outside the dashed box, empty hexagons have no radar data yet: that does not mean there is no clearing."
   },
   "zone": {
