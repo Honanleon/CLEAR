@@ -20,6 +20,9 @@ Status: `used` = already in the code or the app; `planned` = listed in the plan,
 | Harmonized Landsat Sentinel-2 (HLS) | NASA / USGS / ESA (Sentinel-2: partner data) | satellite | True-color context and visual checks | TODO: add HLS L30/S30 DOIs | planned |
 | MapBiomas Paraguay, Collection 2 | MapBiomas | modeled | 2023 forest mask | https://paraguay.mapbiomas.org/ | planned |
 | NASA POWER, daily `PRECTOTCORR` | NASA LaRC | modeled | Rain bars in the time-series chart | https://power.larc.nasa.gov/docs/services/api/temporal/daily/ | planned |
+| Esri World Imagery (basemap tiles) | Esri, Maxar, Earthstar Geographics, GIS User Community | satellite | High-resolution satellite photo under the web map (default view). Optional: the map works without it | https://www.arcgis.com/home/item.html?id=10df2279f9684e4a9f6a7f08febac2a9 · attribution shown on the map | used |
+| OpenFreeMap vector tiles (OpenMapTiles schema) | OpenFreeMap; data © OpenStreetMap contributors (ODbL) | measured | Place names (country, department, city, town; no villages), main roads and borders over the satellite photo | https://openfreemap.org · https://www.openstreetmap.org/copyright | used |
+| OpenStreetMap Nominatim (one-off lookup) | OpenStreetMap contributors (ODbL) | measured | Coordinates of 4 reference towns (Mariscal Estigarribia, Filadelfia, Loma Plata, Neuland) in `web/src/map/places.json`, used to say "x km north of …" | https://nominatim.openstreetmap.org · looked up 2026-11-14 | used |
 | Sentinel-1 GRD (C-band, optional) | ESA / Copernicus | satellite | Frequency comparison | TODO | planned (optional) |
 | ESA WorldCover 2021 v200 (10 m) | ESA | satellite | Interim forest mask for detection (`pipeline/fetch/worldcover.py`) and the Paraguay-wide zone screening | Zanaga et al. (2022), doi:10.5281/zenodo.7254221; CC-BY 4.0 | used (screening) |
 | Natural Earth admin-0 / admin-1 boundaries (1:10m) | Natural Earth | modeled | Paraguay and department outlines for the zone screening | https://www.naturalearthdata.com/ (public domain) | used (screening) |
@@ -50,9 +53,11 @@ All licenses must be compatible with Apache-2.0. Re-check them with `pip-license
 | requests | Apache-2.0 | NASA POWER API | planned |
 | pytest | MIT | Tests | used |
 | ruff | MIT | Lint and format | used |
-| Vite | MIT | Web build | planned |
-| TypeScript | Apache-2.0 | Web language | planned |
-| MapLibre GL JS | BSD-3-Clause | Interactive map | planned |
+| Vite 8.3.5 | MIT | Web build and dev server | used |
+| TypeScript 7.0.2 | Apache-2.0 | Web language (strict) | used |
+| MapLibre GL JS 6.16.0 | BSD-3-Clause | Interactive map, image sources, before/after maps | used |
+| @fontsource-variable/space-grotesk 5.3.0 (Space Grotesk) | OFL-1.1 | Self-hosted UI typeface | used |
+| @fontsource-variable/jetbrains-mono 5.3.0 (JetBrains Mono) | OFL-1.1 | Self-hosted monospace typeface | used |
 
 ## Methods and tutorials
 

@@ -29,3 +29,6 @@ web/dist/
 .DS_Store
 .vscode/
 .idea/
+
+# Synthetic dev data (regenerate with: cd web && npm run fixtures)
+web/fixtures/
