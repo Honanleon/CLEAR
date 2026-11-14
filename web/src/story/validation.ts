@@ -116,15 +116,13 @@ export function initValidation(ds: Dataset | null): void {
   function render() {
     const v = ds?.index.validation;
     const pending = !v || (v.agreement_pct === null && v.coverage_pct === null);
-    // schema v2: spatial (any-date) headline numbers plus the ±24-day ones and the radar lead
+    // schema v2: spatial (any-date) headline numbers plus the ±24-day ones. median_lead_days is not shown:
+    // the team found the "radar sees it earlier" reading does not hold (CLAUDE.md §9, 14/11).
     const v2 = v?.agreement_pct_24d !== undefined;
     gauges!.innerHTML = pending
       ? `<div class="pending"><b>${t("trust.pending")}</b><p>${t("trust.pending_desc")}</p></div>`
       : ring(v.agreement_pct, t("trust.agreement"), t(v2 ? "trust.agreement_desc_any" : "trust.agreement_desc"), "gauge-a") +
         ring(v.coverage_pct, t("trust.coverage"), t(v2 ? "trust.coverage_desc_any" : "trust.coverage_desc"), "gauge-b") +
-        (v2 && v.median_lead_days != null
-          ? `<p class="gauge-lead"><b>${fmt.num(Math.abs(v.median_lead_days))}</b> <span>${t(v.median_lead_days >= 0 ? "trust.lead" : "trust.lag")}</span></p>`
-          : "") +
         (v2 && v.agreement_pct_24d != null && v.coverage_pct_24d != null
           ? `<p class="gauge-ref">${t("trust.window24", { a: fmt.num(v.agreement_pct_24d, 1), c: fmt.num(v.coverage_pct_24d, 1) })}</p>`
           : "") +

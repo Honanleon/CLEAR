@@ -43,21 +43,21 @@ CLEAR (Chaco L-band Early Alerts from Radar) is a team project for the NASA Spac
 8. Validation against OPERA DIST-ALERT (see below).
 9. RGB composite per date: R = HH (dB), G = HV (dB), B = HH/HV (dB), one fixed stretch (2nd–98th percentiles pooled over all dates) so the animation does not flicker; 1200 x 800 px, about 50 m. Forest looks yellow-green (high HV); cleared pasture looks blue-violet (low HV, high HH/HV); fresh clearing with windrows can look pink.
 - Chart series (grid_500m.json): each date averaged in linear γ⁰ onto a 125 x 89 grid of about 500 m cells, stored in dB. These cell values are NOT normalized per date (the detection uses normalized HV per pixel), so they can differ from the detection numbers.
-- Map hexagons: the web app covers all of Paraguay with 94 pointy-top hexagons of 40.8 km radius (about 432,500 ha or 4,300 km² each). Only the 7 hexagons that overlap the study area have radar data, edge ones included so no clearing is lost; the rest of the country has no data yet (that is not the same as no clearing). Each clearing polygon is sampled on a point grid and its area is shared among the hexagons it covers, so hexagon totals add up exactly to the polygon totals. Hexagons summarize; they do not add detections.
+- Map hexagons: the web app covers all of Paraguay with 97 pointy-top hexagons of 40.8 km radius (about 432,500 ha or 4,300 km² each). Only the 7 hexagons that overlap the study area have radar data, edge ones included so no clearing is lost; the rest of the country has no data yet (that is not the same as no clearing). Each clearing polygon is sampled on a point grid and its area is shared among the hexagons it covers, so hexagon totals add up exactly to the polygon totals. Hexagons summarize; they do not add detections.
 
 ## Parameters (final)
 speckle_window 5 (100 m); baseline_dates 3; min_baseline_db −4.0 dB (dry Chaco forest starts near −3 dB, old pasture near −4.6 dB); threshold_db −3.0 dB (chosen once with the validation numbers; the ASF NISAR Cookbook example uses −2 dB); persistence 2 of 3 dates; min_area_ha 5 (matches the optical comparison filter); normalization: per-date forest median.
 
 ## Results (this data release)
 - 23 clearing polygons, 565.9 ha in total, polygons from 5.1 to 88.6 ha. Detection dates range from February to September 2026 (most in March–April and in July).
-- All the clearing (565.9 ha) falls in a single hexagon, the one that holds the whole study area; when zoomed in, the map splits it into mini hexagons of 2 km radius (about 1,040 ha each; 19 of them contain clearing, the busiest about 80 ha), and the exact polygon outlines show where each clearing is.
+- All the clearing (596.2 ha) falls in a single hexagon, the one that holds the whole study area; when zoomed in, the map splits it into mini hexagons of 2 km radius (about 1,040 ha each; 21 of them contain clearing, the busiest about 190 ha); the pipeline publishes clearing only as 1 km hexagons, never exact shapes.
 
 ## Validation (headline numbers, data contract v2)
 - Optical alert = VEG-DIST-STATUS 6 or 8 (confirmed ≥ 50 % vegetation loss), first-disturbance date between the first radar date and the last radar date + 24 days, inside the forest mask, patches ≥ 5 ha. 518 ha of optical alerts in forest in the area.
 - Agreement = % of the radar polygon area that has an optical alert. Coverage = % of the optical-alert area that the radar polygons cover.
 - Spatial (any date in the period), the headline: agreement 28.3 %, coverage 30.9 %.
 - Within ±24 days of the radar date (the window first planned): agreement 9.5 %, coverage 10.4 %.
-- Median lead: the radar detects the change a median of 36 days BEFORE the optical alert (lag = radar date − optical date, median over overlapping pixels = −36 days). That is why the ±24-day window counts many correct early detections as misses.
+- Radar lead: NOT a claim we make. An earlier estimate said the radar saw the change a median of 36 days before the optical alert, but a check with HLS images showed those events were management of pastures already open (team correction, 14 Nov). Never say the radar sees clearing earlier than optical satellites.
 - 7 of 23 polygons are "confirmed" (dist_confirmed true: ≥ 20 % of the polygon has an optical alert).
 - Honesty note: the team chose the spatial metric as headline after seeing the results (team decision, 2026-11-14) and keeps publishing the ±24-day numbers next to it.
 - Threshold tuning (done once): −2.0 dB gave 81 polygons, 1,908 ha, agreement 8.8 % / 1.5 % (spatial / ±24 d), coverage 32.3 % / 5.6 %, median lag −108 days: mostly noise. −3.0 dB (chosen) gave 23 polygons, 566 ha, agreement 28.3 % / 9.5 %, coverage 30.9 % / 10.4 %, median lag −36 days.

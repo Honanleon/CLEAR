@@ -101,7 +101,7 @@
     "view": "Ver el mapa como",
     "view_satellite": "Foto satelital",
     "view_radar": "Radar NISAR",
-    "layer_polygons": "Contorno exacto de cada desmonte",
+    "layer_polygons": "Detalle en hexágonos de 1 km",
     "opacity": "Transparencia del radar",
     "legend_polys": "Hectáreas desmontadas en cada hexágono",
     "tap_hint": "Tocá un hexágono de color para ver qué pasó ahí",
@@ -252,9 +252,7 @@
     "disclaimer": "Son resultados estimados por radar, no verificados en el terreno.",
     "agreement_desc_any": "del área que marcamos también tiene una alerta óptica en algún momento del período",
     "coverage_desc_any": "del área con alertas ópticas en bosque (≥ 5 ha) también la detecta el radar",
-    "lead": "días antes que los satélites ópticos: es lo que el radar se adelanta, en la mediana",
-    "lag": "días después que los satélites ópticos, en la mediana",
-    "window24": "Si además exigimos que las fechas coincidan (±24 días): acuerdo {a} %, cobertura {c} %. Es bajo porque el radar suele ver el desmonte antes."
+    "window24": "Si además exigimos que las fechas coincidan (±24 días): acuerdo {a} %, cobertura {c} %."
   },
   "next": {
     "kicker": "Qué sigue",
@@ -273,7 +271,7 @@
       "Casi todos los datos son provisionales y el último está validado: ajustamos cada fecha para poder compararlas.",
       "Solo miramos lo que era bosque según un mapa de 2021 (ESA WorldCover) y que el radar también veía como bosque al principio.",
       "La lluvia y las quemas mueven la señal: por eso pedimos dos de tres pasadas seguidas.",
-      "Los hexágonos resumen los desmontes: el contorno exacto está en «Más opciones».",
+      "Los hexágonos resumen los desmontes: el detalle en hexágonos de 1 km está en «Más opciones».",
       "No decimos nada sobre si un desmonte es legal: eso exige catastro y permisos que no usamos."
     ],
     "steps_title": "Siguientes pasos",
