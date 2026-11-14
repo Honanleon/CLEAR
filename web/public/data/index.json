@@ -1,13 +1,13 @@
 {
   "schema_version": 2,
-  "generated_at": "2026-11-14T12:28:27-03:00",
+  "generated_at": "2026-11-14T20:29:10-03:00",
   "aoi": {
-    "id": "chaco-central-norte",
+    "id": "boqueron-norte",
     "bbox": [
-      -60.78,
-      -21.73,
-      -60.18,
-      -21.33
+      -61.6,
+      -20.9,
+      -61.0,
+      -20.5
     ]
   },
   "nisar": {
@@ -202,37 +202,39 @@
   ],
   "image_coordinates": [
     [
-      -60.78,
-      -21.33
+      -61.6,
+      -20.5
     ],
     [
-      -60.18,
-      -21.33
+      -61.0,
+      -20.5
     ],
     [
-      -60.18,
-      -21.73
+      -61.0,
+      -20.9
     ],
     [
-      -60.78,
-      -21.73
+      -61.6,
+      -20.9
     ]
   ],
   "detection": {
     "threshold_db": -3.0,
     "persistence": 2,
     "min_area_ha": 5,
-    "n_polygons": 23,
-    "area_ha_total": 565.9
+    "n_polygons": 31,
+    "area_ha_total": 596.4,
+    "n_hexes": 49,
+    "hex_width_m": 1000
   },
   "validation": {
-    "agreement_pct": 28.3,
-    "coverage_pct": 30.9,
-    "agreement_pct_24d": 9.5,
-    "coverage_pct_24d": 10.4,
-    "median_lead_days": 36,
-    "polygons_confirmed": 7,
-    "polygons_total": 23,
+    "agreement_pct": 7.4,
+    "coverage_pct": 23.9,
+    "agreement_pct_24d": 1.9,
+    "coverage_pct_24d": 6.2,
+    "median_lead_days": -43,
+    "polygons_confirmed": 3,
+    "polygons_total": 31,
     "reference": "OPERA DIST-ALERT-HLS V1"
   },
   "provenance": [

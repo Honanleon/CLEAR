@@ -59,6 +59,14 @@ NISAR L2 GCOV, frequency A (20 MHz, ~20 m), HH and HV, γ⁰ linear with radiome
 
 **Time series for the chart (`grid_500m.json`).** Each crop is averaged (linear γ⁰) onto a 125 × 89 cell EPSG:4326 grid over the AOI (about 500 m cells) and stored as dB × 10 per date, for HH and HV. Implementation: `resample_to_grid` in `pipeline/export/rgb_png.py`, `build_grid` in `pipeline/export/to_json.py`.
 
+## Results for `boqueron-norte` (2026-11-14)
+
+- **Detection** (26 dates, 2025-11-21 → 2026-10-23; −3 dB, 2 of 3 dates, forest-like on all baseline dates at −2 dB, ≥ 5 ha): **31 clearings, 596 ha**, mostly dated March–May 2026, published as **49 hexagons** of 1 km. Sanity checks passed (largest forest-median jump 1.42 dB; at most 0.10 % of the forest flagged on one date).
+- **Against OPERA DIST-ALERT:** agreement 7.4 % (±24 days: 1.9 %), coverage 23.9 % (±24 days: 6.2 %); 3 of 31 clearings confirmed. DIST-ALERT reports only 185 ha of confirmed loss in forest in this box.
+- **Visual review with HLS true colour** (Sentinel-2, 2025-11-19 vs 2026-11-04), done by the team, one panel per clearing: in about **25 of 31** clearings, continuous forest in November 2025 has become **new paddock blocks** by November 2026. About 5 are at the edge of existing paddocks and may be management. This review is our own interpretation of optical images, not field data.
+- **Reading:** the low agreement with DIST-ALERT comes mostly from the optical alert product missing new clearings that are visible in the HLS images; the radar found them. The detector is conservative: many new paddocks in the HLS images are larger than the radar polygon, so 596 ha is a lower bound.
+- The radar-earlier question remains open here: the median lag on the few overlapping pixels is +43 days (radar *later*), from only 3 confirmed clearings.
+
 ## Default parameters
 
 | Parameter | Value | Origin |
