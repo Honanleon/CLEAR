@@ -14,8 +14,8 @@ Status: `used` = already in the code or the app; `planned` = listed in the plan,
 
 | Source | Provider | Type | How we use it | Citation / link | Status |
 |---|---|---|---|---|---|
-| NISAR L2 GCOV, PROVISIONAL V1 (`NISAR_L2_GCOV_PROVISIONAL_V1`, CRID P05023) | NASA/JPL, ASF DAAC | satellite | HH and HV backscatter, track 161 ascending, frame 167, Jun–Oct 2026 | https://www.earthdata.nasa.gov/data/catalog/asf-nisar-l2-gcov-provisional-v1-1 | planned |
-| NISAR L2 GCOV V1 (`NISAR_L2_GCOV_V1`, VALIDATED, CRID P05036) | NASA/JPL, ASF DAAC | satellite | Same as above, for 2026-10-23 | TODO: add collection citation | planned |
+| NISAR L2 GCOV, PROVISIONAL V1 (`NISAR_L2_GCOV_PROVISIONAL_V1`, CRID P05023) | NASA/JPL, ASF DAAC | satellite | HH and HV backscatter, track 161 ascending, frame 167, Jun–Oct 2026 | https://www.earthdata.nasa.gov/data/catalog/asf-nisar-l2-gcov-provisional-v1-1 | used |
+| NISAR L2 GCOV V1 (`NISAR_L2_GCOV_V1`, VALIDATED, CRID P05036) | NASA/JPL, ASF DAAC | satellite | Same as above, for 2026-10-23 | TODO: add collection citation | used |
 | OPERA DIST-ALERT-HLS V1 (`OPERA_L3_DIST-ALERT-HLS_V1`) | NASA JPL / LP DAAC | satellite | Validation: optical vegetation-loss alerts | DOI 10.5067/SNWG/OPERA_L3_DIST-ALERT-HLS_V1.001 | planned |
 | Harmonized Landsat Sentinel-2 (HLS) | NASA / USGS / ESA (Sentinel-2: partner data) | satellite | True-color context and visual checks | TODO: add HLS L30/S30 DOIs | planned |
 | MapBiomas Paraguay, Collection 2 | MapBiomas | modeled | 2023 forest mask | https://paraguay.mapbiomas.org/ | planned |
@@ -31,18 +31,18 @@ All licenses must be compatible with Apache-2.0. Re-check them with `pip-license
 |---|---|---|---|
 | asf_search | BSD-3-Clause | Search NISAR products at ASF | used |
 | earthaccess | MIT | Earthdata login and search (OPERA, HLS) | planned |
-| fsspec | BSD-3-Clause | Partial HTTPS reads of HDF5 files | planned |
-| aiohttp | Apache-2.0 | HTTP backend for fsspec | planned |
-| h5py | BSD-3-Clause | Read HDF5 (GCOV) | planned |
+| fsspec | BSD-3-Clause | Partial HTTPS reads of HDF5 files | used |
+| aiohttp | Apache-2.0 | HTTP backend for fsspec | used |
+| h5py | BSD-3-Clause | Read HDF5 (GCOV) | used |
 | h5netcdf | BSD-3-Clause | xarray HDF5 engine | planned |
 | xarray | Apache-2.0 | Labeled arrays | planned |
 | rioxarray | TODO: verify | Raster I/O and reprojection with xarray | planned |
-| rasterio | BSD-3-Clause | GeoTIFF I/O and reprojection | planned |
-| numpy | BSD-3-Clause | Numerics | planned |
+| rasterio | BSD-3-Clause | GeoTIFF I/O and reprojection | used |
+| numpy | BSD-3-Clause | Numerics | used |
 | scipy | BSD-3-Clause | Speckle filter, connected components | planned |
 | shapely | BSD-3-Clause | Geometry | planned |
 | geopandas | BSD-3-Clause | Polygons and GeoJSON export | planned |
-| pyproj | MIT | Coordinate transforms | planned |
+| pyproj | MIT | Coordinate transforms | used |
 | Pillow | MIT-CMU | PNG export | planned |
 | PyYAML | MIT | Config file | used |
 | requests | Apache-2.0 | NASA POWER API | planned |

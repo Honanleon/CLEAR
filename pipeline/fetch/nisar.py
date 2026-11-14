@@ -1,20 +1,26 @@
 # Parts of this file were generated with AI assistance (Claude Code). See docs/AI_USAGE.md
-"""Search NISAR L2 GCOV products at ASF and pick one product per date.
+"""Search NISAR L2 GCOV products at ASF, pick one product per date and crop the AOI.
 
-The pure functions (name parsing, de-duplication, date checks) do not touch the
-network and are covered by tests. `search_scenes` is the only network call.
+The pure functions (name parsing, de-duplication, date checks, AOI window, cleaning)
+do not touch the network and are covered by tests. `search_scenes` and `read_crop`
+are the only network calls. `read_crop` reads only the AOI window of each ~1.9 GB
+HDF5 file over HTTPS; it never downloads the whole file.
 """
 
 from __future__ import annotations
 
 import json
 import logging
+import os
 import re
-from collections.abc import Iterable, Mapping
+from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import asdict, dataclass
 from datetime import date, datetime
 from pathlib import Path
 from typing import Any
+
+import numpy as np
+from affine import Affine
 
 log = logging.getLogger(__name__)
 
@@ -190,3 +196,139 @@ def write_manifest(scenes: Iterable[Scene], path: Path) -> None:
 
 def read_manifest(path: Path) -> list[Scene]:
     return [Scene(**s) for s in json.loads(path.read_text())]
+
+
+# --- AOI crop ---------------------------------------------------------------
+
+GRID_PATH = "/science/LSAR/GCOV/grids/{frequency}"
+
+
+@dataclass(frozen=True)
+class Window:
+    """Half-open row/column window into the product grid."""
+
+    row0: int
+    row1: int
+    col0: int
+    col1: int
+
+    @property
+    def shape(self) -> tuple[int, int]:
+        return self.row1 - self.row0, self.col1 - self.col0
+
+
+@dataclass(frozen=True)
+class Crop:
+    bands: dict[str, np.ndarray]  # polarization term (e.g. "HVHV") -> gamma0, linear
+    transform: Affine  # pixel-corner transform of the window
+    epsg: int
+    window: Window
+
+
+def load_token(env_file: Path = Path(".env")) -> str:
+    """Earthdata token from $EARTHDATA_TOKEN or from the .env file. Never logged."""
+    token = os.environ.get("EARTHDATA_TOKEN", "").strip()
+    if not token and env_file.exists():
+        for line in env_file.read_text().splitlines():
+            if line.startswith("EARTHDATA_TOKEN="):
+                token = line.split("=", 1)[1].strip().strip("\"'")
+    if not token:
+        raise RuntimeError("EARTHDATA_TOKEN is not set (put it in .env at the repository root)")
+    return token
+
+
+def bbox_to_projected(bbox: Sequence[float], epsg: int) -> tuple[float, float, float, float]:
+    """Lon/lat bbox -> (xmin, ymin, xmax, ymax) envelope in `epsg`, with densified edges."""
+    from pyproj import Transformer
+
+    t = Transformer.from_crs(4326, epsg, always_xy=True)
+    xmin, ymin, xmax, ymax = t.transform_bounds(*bbox, densify_pts=21)
+    return float(xmin), float(ymin), float(xmax), float(ymax)
+
+
+def aoi_window(x: np.ndarray, y: np.ndarray, bounds: Sequence[float]) -> Window:
+    """Window of the pixels whose centers fall inside `bounds` (projected units).
+
+    `x` (ascending) and `y` (descending) are the pixel-center coordinates of the grid.
+    """
+    xmin, ymin, xmax, ymax = bounds
+    cols = np.flatnonzero((x >= xmin) & (x <= xmax))
+    rows = np.flatnonzero((y >= ymin) & (y <= ymax))
+    if cols.size == 0 or rows.size == 0:
+        raise ValueError("the AOI does not overlap the product grid")
+    if xmin < x.min() or xmax > x.max() or ymin < y.min() or ymax > y.max():
+        log.warning("the AOI is only partly inside the product grid")
+    return Window(int(rows[0]), int(rows[-1]) + 1, int(cols[0]), int(cols[-1]) + 1)
+
+
+def window_transform(x: np.ndarray, y: np.ndarray, w: Window) -> Affine:
+    """Affine transform (pixel corners) of window `w` from pixel-center coordinates."""
+    dx = float(x[1] - x[0])
+    dy = float(y[1] - y[0])  # negative: north-up grid
+    return Affine(dx, 0.0, float(x[w.col0]) - dx / 2, 0.0, dy, float(y[w.row0]) - dy / 2)
+
+
+def clean_gamma0(a: np.ndarray) -> np.ndarray:
+    """float32 copy with 0, negative and non-finite values set to NaN."""
+    out = np.asarray(a, dtype=np.float32).copy()
+    out[~np.isfinite(out) | (out <= 0)] = np.nan
+    return out
+
+
+def read_crop(url: str, token: str, bbox: Sequence[float], frequency: str, polarizations: Sequence[str]) -> Crop:
+    """Read only the AOI window of each polarization from a remote GCOV file."""
+    import fsspec
+    import h5py
+
+    fs = fsspec.filesystem("https", client_kwargs={"headers": {"Authorization": f"Bearer {token}"}})
+    with fs.open(url, "rb", block_size=2**21, cache_type="blockcache") as f, h5py.File(f, "r") as h:
+        g = h[GRID_PATH.format(frequency=frequency)]
+        epsg = int(g["projection"][()])
+        x = g["xCoordinates"][:]
+        y = g["yCoordinates"][:]
+        w = aoi_window(x, y, bbox_to_projected(bbox, epsg))
+        bands = {p: clean_gamma0(g[p][w.row0 : w.row1, w.col0 : w.col1]) for p in polarizations}
+        transform = window_transform(x, y, w)
+    return Crop(bands=bands, transform=transform, epsg=epsg, window=w)
+
+
+def crop_path(interim: Path, aoi_id: str, day: str) -> Path:
+    return interim / aoi_id / f"nisar_{day}.tif"
+
+
+def write_crop(path: Path, crop: Crop, scene: Scene) -> None:
+    """Write a multi-band GeoTIFF (gamma0 linear, NaN nodata). Atomic: tmp file, then rename."""
+    import rasterio
+
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = path.with_suffix(".tmp.tif")
+    names = list(crop.bands)
+    rows, cols = crop.window.shape
+    profile = {
+        "driver": "GTiff",
+        "width": cols,
+        "height": rows,
+        "count": len(names),
+        "dtype": "float32",
+        "crs": f"EPSG:{crop.epsg}",
+        "transform": crop.transform,
+        "nodata": float("nan"),
+        "compress": "deflate",
+        "predictor": 3,
+        "tiled": True,
+        "blockxsize": 512,
+        "blockysize": 512,
+    }
+    with rasterio.open(tmp, "w", **profile) as dst:
+        for i, name in enumerate(names, start=1):
+            dst.write(crop.bands[name], i)
+            dst.set_band_description(i, name)
+        dst.update_tags(
+            date=scene.date,
+            granule_id=scene.granule_id,
+            crid=scene.crid,
+            maturity=scene.maturity,
+            units="gamma0, linear",
+            source="NISAR L2 GCOV (NASA/JPL, ASF DAAC)",
+        )
+    tmp.replace(path)

@@ -25,7 +25,7 @@ NISAR L2 GCOV, frequency A (20 MHz, ~20 m), HH and HV, γ⁰ linear with radiome
 
 ## Processing steps
 
-1. **Subset.** Read only the AOI window of HH and HV from each HDF5 file over HTTPS, using `xCoordinates` / `yCoordinates` in the file's projection. Pixels equal to 0 or NaN are set to NaN.
+1. **Subset.** Read only the AOI window of `HHHH` and `HVHV` (frequency A) from each HDF5 file over HTTPS, without downloading the ~1.9 GB file. The AOI bbox is projected to the product grid (EPSG:32720, UTM 20S, 20 m) with densified edges, and the window keeps the pixels whose centers fall inside it (`xCoordinates` / `yCoordinates` are pixel centers). For `chaco-central-norte` the window is 2262 × 3137 pixels and the read takes about 1 minute (~75 MB) per date. Values that are 0, negative or not finite are set to NaN. Each crop is saved as a GeoTIFF (γ⁰ linear, bands `HHHH`, `HVHV`) in `data/interim/<aoi>/nisar_<date>.tif`, with the granule id, CRID and maturity as tags. Implementation: `pipeline/fetch/nisar.py` (`read_crop`).
 2. **Speckle.** 5 × 5 pixel (100 m) moving mean, computed on linear γ⁰.
 3. **dB.** `10·log10(γ⁰)`.
 4. **Forest mask.** MapBiomas Paraguay Collection 2, forest classes in 2023.
