@@ -18,13 +18,13 @@ Loaded on startup.
 {
   "schema_version": 1,
   "generated_at": "2026-11-14T18:00:00-03:00",
-  "aoi": { "id": "chaco-central-norte", "bbox": [-61.0, -21.95, -60.4, -21.55] },
+  "aoi": { "id": "chaco-central-norte", "bbox": [-60.78, -21.73, -60.18, -21.33] },
   "nisar": { "track": 161, "direction": "ASCENDING", "frame": 167, "mode": "20+5 DHDH" },
   "scenes": [
     { "date": "2026-06-01", "id": "NISAR_L2_PR_GCOV_021_...", "maturity": "PROVISIONAL", "crid": "P05023",
       "rgb": "rgb/2026-06-01.webp" }
   ],
-  "image_coordinates": [[-61.0, -21.55], [-60.4, -21.55], [-60.4, -21.95], [-61.0, -21.95]],
+  "image_coordinates": [[-60.78, -21.33], [-60.18, -21.33], [-60.18, -21.73], [-60.78, -21.73]],
   "detection": { "threshold_db": -3.0, "persistence": 2, "min_area_ha": 5, "n_polygons": 0, "area_ha_total": 0 },
   "validation": { "agreement_pct": null, "coverage_pct": null, "reference": "OPERA DIST-ALERT-HLS V1" },
   "provenance": [
@@ -43,7 +43,7 @@ A `FeatureCollection` of polygons. Properties per feature:
 | Property | Type | Meaning |
 |---|---|---|
 | `id` | string | Stable id |
-| `first_date` | string (ISO) | First date of the detection (±12 days) |
+| `first_date` | string (ISO) | Detection date of the polygon: median of its pixels' first-detection dates (±12 days) |
 | `area_ha` | number | Area in hectares |
 | `mean_drop_db` | number | Mean ΔHV in dB (negative) |
 | `dist_confirmed` | `true` / `false` / `null` | Overlaps an OPERA DIST-ALERT alert; `null` = not checked |
@@ -56,7 +56,7 @@ Time series shown when the user taps the map. Lazy-loaded on the first tap.
 ```json
 {
   "dates": ["2026-06-01", "..."],
-  "origin": [-61.0, -21.55],
+  "origin": [-60.78, -21.33],
   "cell_deg": [0.0048, -0.0045],
   "nx": 125,
   "ny": 89,

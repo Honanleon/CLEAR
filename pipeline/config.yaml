@@ -8,7 +8,10 @@ aoi: chaco-central-norte # active AOI for this run
 aois:
   # [lon_min, lat_min, lon_max, lat_max], EPSG:4326
   chaco-central-norte:
-    bbox: [-61.0, -21.95, -60.4, -21.55] # Chapter 1; fits inside track 161 / frame 167 (checked in ASF Vertex, 2026-11-14)
+    # Chapter 1. Moved on 2026-11-14 from [-61.0, -21.95, -60.4, -21.55], where OPERA DIST-ALERT (22 ha) and NISAR (~86 ha)
+    # saw almost no clearing in Jun-Oct 2026. This box had 319 ha of confirmed >=50% DIST-ALERT loss and lies inside
+    # track 161 / frame 167 (checked against the product footprint). Chosen over boxes further north (PNCAT risk).
+    bbox: [-60.78, -21.73, -60.18, -21.33]
   neembucu:
     bbox: [-57.9, -27.3, -57.3, -26.6] # Chapter 2; orbit not verified yet
   mbaracayu:
@@ -22,7 +25,7 @@ nisar:
   relative_orbit: 161
   flight_direction: ASCENDING
   frame: 167
-  start: "2026-06-01"
+  start: "2025-11-01" # extended on 2026-11-14 from 2026-06-01: clearing in C happened before June, so the baseline must start earlier
   end: "2026-10-31"
   # GCOV grid to read: frequency A = 20 MHz, ~20 m pixels
   frequency: frequencyA
@@ -31,8 +34,23 @@ nisar:
   crid_maturity:
     P05023: PROVISIONAL # NISAR_L2_GCOV_PROVISIONAL_V1
     P05036: VALIDATED # NISAR_L2_GCOV_V1
-  # Dates we expect after de-duplication (ASF Vertex, 2026-11-14). Used only to warn.
+  # Dates we expect after de-duplication (ASF Vertex and asf_search, 2026-11-14). Used only to warn.
   expected_dates:
+    - "2025-11-21"
+    - "2025-12-03"
+    - "2025-12-15"
+    - "2025-12-27"
+    - "2026-01-08"
+    - "2026-01-20"
+    - "2026-02-01"
+    - "2026-02-13"
+    - "2026-02-25"
+    - "2026-03-09"
+    - "2026-03-21"
+    - "2026-04-02"
+    - "2026-04-26" # 2026-04-14 missing in the archive
+    - "2026-05-08"
+    - "2026-05-20"
     - "2026-06-01"
     - "2026-06-13"
     - "2026-06-25"
@@ -59,8 +77,18 @@ export:
 
 detection:
   speckle_window: 5 # 5 x 5 pixels = 100 m at 20 m
-  baseline_dates: 3 # Jun 1, Jun 13, Jun 25
+  baseline_dates: 3 # Nov 21, Dec 3, Dec 15 (2025)
+  min_baseline_db: -4.0 # pixel must look like forest to the radar at baseline (normalized HV).
+                        # -3 (forest p10) dropped half of the Chaco clearings, whose dry forest starts near -3 dB;
+                        # old pastures sit near -4.6 dB, so -4 still excludes them (2026-11-14).
   threshold_db: -3.0 # starting point; the ASF NISAR Cookbook example uses -2 dB
-  persistence: 2 # consecutive dates below threshold; avoids one-date drops (rain, noise)
+  persistence: 2 # dates below threshold needed within the window; avoids one-date drops (rain, noise)
+  persistence_window: 3 # 2 of 3: tolerates one wet date that bounces bare soil back (e.g. 2026-04-26)
   min_area_ha: 5 # matches the DIST-ALERT comparison filter
   normalize: forest_median # per-date median HV of forest pixels in the AOI
+
+validation:
+  reference_statuses: [6, 8] # DIST-ALERT confirmed >=50% vegetation loss (ongoing, finished)
+  tol_days: 24 # CLAUDE.md: same window +-24 days
+  min_alert_area_ha: 5 # optical patches smaller than this are ignored for coverage
+  polygon_confirmed_frac: 0.2 # dist_confirmed = true if >= 20% of the polygon has an optical alert

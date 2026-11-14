@@ -6,7 +6,7 @@ Leé este archivo entero antes de tocar código. Es la fuente de verdad del proy
 - **Evento:** NASA Space Apps Challenge 2026. Nuestro evento local **empezó el viernes 13 nov 2026**. El envío cierra el **domingo 15 nov a las 23:59, hora de Asunción (UTC-3)**; confirmarlo con el líder local (Local Lead).
 - **Desafío:** "Dancing with the SARs": app interactiva que usa datos de radar de **NISAR** para seguir y visualizar un tipo de cambio en la superficie terrestre.
 - **Producto:** **CLEAR — Chaco L-band Early Alerts from Radar.** En español: *alertas de desmonte en el Chaco con radar de banda L*.
-  - Muestra **dónde y cuándo se desmonta el monte chaqueño**, con una imagen NISAR cada 12 días entre junio y octubre de 2026.
+  - Muestra **dónde y cuándo se desmonta el monte chaqueño**, con una imagen NISAR cada 12 días entre noviembre de 2025 y octubre de 2026 (26 fechas).
   - La señal es la **caída sostenida del canal HV**: al talar el bosque se pierde la dispersión de volumen de las copas.
   - Se presenta como un **recorrido guiado (story map)** con un mapa interactivo en el centro.
 - **Público:** jueces de Space Apps, docentes, periodistas, técnicos ambientales y público general. Muchos lo van a ver en el celular.
@@ -125,7 +125,7 @@ npm run check        # typecheck + chequeo de claves i18n + build + tamaño del 
 | Hueco del instrumento | sin datos entre 2026-07-27 y 2026-08-10 |
 | Datasets HDF5 | `/science/LSAR/GCOV/grids/frequencyA/HHHH`, `.../HVHV`, `.../xCoordinates`, `.../yCoordinates`, `.../projection` (código EPSG) |
 
-**Fechas disponibles (track 161, frame 167):**
+**Fechas disponibles (track 161, frame 167).** Además de la tabla, hay 15 fechas anteriores, todas PROVISIONAL (CRID P05023, DHDH): 2025-11-21, 12-03, 12-15, 12-27, 2026-01-08, 01-20, 02-01, 02-13, 02-25, 03-09, 03-21, 04-02, 04-26 (falta 04-14), 05-08 y 05-20. Se agregaron el 14/11 porque en la AOI el desmonte ocurrió antes de junio: con la serie desde junio, la línea de base ya veía el monte caído.
 | Fecha | Ciclo | Colección | Nota |
 |---|---|---|---|
 | 2026-06-01 | 021 | PROVISIONAL | |
@@ -158,11 +158,11 @@ El 04/11 solo existe el frame 166. Nombre de ejemplo: `NISAR_L2_PR_GCOV_032_161_
 ### 8.2 Áreas de interés (lon_min, lat_min, lon_max, lat_max; EPSG:4326)
 | AOI | bbox | Uso |
 |---|---|---|
-| `chaco-central-norte` | `[-61.0, -21.95, -60.4, -21.55]` | Capítulo 1. Entra entera en el frame 167 (~60 × 45 km) |
+| `chaco-central-norte` | `[-60.78, -21.73, -60.18, -21.33]` | Capítulo 1. Entra entera en el frame 167 (~60 × 45 km). Movida el 14/11 (ver abajo) |
 | `neembucu` | `[-57.9, -27.3, -57.3, -26.6]` | Capítulo 2. Hay 6 productos GCOV entre el 1 y el 27/07 y 6 entre el 10 y el 31/08; la órbita no está verificada: buscarla |
 | `mbaracayu` | `[-55.7, -24.3, -55.2, -23.9]` | Capítulo 3. 60 productos entre jun y nov; órbita sin elegir |
 
-Antes de fijar `chaco-central-norte`, mirar OPERA DIST-ALERT en esa zona. Si los desmontes de jun–oct quedan más al sur, pasar al frame 166 de la misma órbita (tiene menos fechas) y avisar.
+**Revisado el 14/11 con OPERA DIST-ALERT y NISAR.** El bbox original `[-61.0, -21.95, -60.4, -21.55]` casi no tuvo desmonte en jun–oct (22 ha en DIST-ALERT, ~86 ha en NISAR). La actividad estaba al norte y al este, dentro del mismo frame 167, así que no hizo falta pasar al frame 166. Se eligió la caja actual (unas 320 ha de pérdida confirmada ≥ 50 % en DIST-ALERT) y no las de más al norte, por cercanía al PNCAT. En el sur de Boquerón (frame 166) hubo más desmonte, pero en jun–jul, antes de la línea de base del radar: no se puede detectar.
 
 ### 8.3 Datos complementarios
 | Fuente | Acceso | Uso | Tipo |
@@ -180,13 +180,14 @@ Antes de fijar `chaco-central-norte`, mirar OPERA DIST-ALERT en esa zona. Si los
 1. **Recortar** HH y HV de cada fecha sobre la AOI (§8.1).
 2. **Pasar a dB:** `10·log10(γ⁰)`.
 3. **Bajar el moteado:** promedio en ventana de 5 × 5 píxeles (100 m), en lineal, antes del dB.
-4. **Máscara:** analizar solo lo que es bosque en MapBiomas 2023.
+4. **Máscara:** analizar solo lo que es bosque en MapBiomas 2023. *Provisorio (14/11): ESA WorldCover 2021 (tree cover), porque MapBiomas no tiene descarga directa simple; `pipeline/fetch/worldcover.py` es el único punto a cambiar.* Como esa máscara es de 2021, además el píxel tiene que verse como bosque para el radar en la línea de base (HV normalizado ≥ `min_baseline_db`).
 5. **Normalizar:** restar por fecha la mediana de HV de todos los píxeles de bosque de la AOI. Corrige la lluvia y la diferencia PROVISIONAL/VALIDATED, porque en 5 meses casi todo el bosque no cambia. Opcional: un bloque de bosque estable dentro del frame, fuera de la AOI y del PNCAT.
 6. **Detectar:**
-   - línea de base = mediana de las 3 primeras fechas;
-   - desmonte cuando ΔHV ≤ `threshold_db` en `persistence` fechas seguidas;
+   - línea de base = mediana de las 3 primeras fechas (nov–dic 2025);
+   - solo píxeles que en la línea de base parecen bosque (HV normalizado ≥ `min_baseline_db`, −3 dB);
+   - desmonte cuando ΔHV ≤ `threshold_db` en esa fecha y en `persistence` de 3 fechas (2 de 3, tolera una fecha húmeda);
    - fecha de detección = la primera de esas fechas.
-7. **Polígonos:** unir píxeles vecinos y descartar los menores a `min_area_ha`. Propiedades: fecha, área (ha) y caída media (dB).
+7. **Polígonos:** unir píxeles vecinos (sin separar por fecha) y descartar los menores a `min_area_ha`. Propiedades: fecha (mediana de los píxeles), área (ha) y caída media (dB).
 8. **Validar contra DIST-ALERT** en la misma ventana de fechas (±24 días). Dos números:
    - **acuerdo** = % del área de nuestros polígonos con alerta óptica;
    - **cobertura** = % del área de alertas ópticas (en bosque, ≥ 5 ha) que detectamos.
@@ -221,11 +222,11 @@ No cambiarlo sin acordar; si cambia, subir `schema_version`. Coordenadas en EPSG
 `web/public/data/index.json`
 ```json
 { "schema_version": 1, "generated_at": "2026-11-14T18:00:00-03:00",
-  "aoi": { "id": "chaco-central-norte", "bbox": [-61.0, -21.95, -60.4, -21.55] },
+  "aoi": { "id": "chaco-central-norte", "bbox": [-60.78, -21.73, -60.18, -21.33] },
   "nisar": { "track": 161, "direction": "ASCENDING", "frame": 167, "mode": "20+5 DHDH" },
   "scenes": [ { "date": "2026-06-01", "id": "NISAR_L2_PR_GCOV_021_...", "maturity": "PROVISIONAL", "crid": "P05023",
                 "rgb": "rgb/2026-06-01.webp" } ],
-  "image_coordinates": [[-61.0, -21.55], [-60.4, -21.55], [-60.4, -21.95], [-61.0, -21.95]],
+  "image_coordinates": [[-60.78, -21.33], [-60.18, -21.33], [-60.18, -21.73], [-60.78, -21.73]],
   "detection": { "threshold_db": -3.0, "persistence": 2, "min_area_ha": 5, "n_polygons": 0, "area_ha_total": 0 },
   "validation": { "agreement_pct": null, "coverage_pct": null, "reference": "OPERA DIST-ALERT-HLS V1" },
   "provenance": [ { "layer": "rgb", "type": "satellite", "source": "NISAR L2 GCOV (NASA/JPL, ASF DAAC)" } ] }
@@ -234,7 +235,7 @@ No cambiarlo sin acordar; si cambia, subir `schema_version`. Coordenadas en EPSG
 
 `web/public/data/grid_500m.json`: series para el gráfico al tocar el mapa (se carga al primer clic).
 ```json
-{ "dates": ["2026-06-01", "..."], "origin": [-61.0, -21.55], "cell_deg": [0.0048, -0.0045], "nx": 125, "ny": 89,
+{ "dates": ["2026-06-01", "..."], "origin": [-60.78, -21.33], "cell_deg": [0.0048, -0.0045], "nx": 125, "ny": 89,
   "hv_db_x10": [[-118, -120, null, "..."]], "hh_db_x10": [["..."]] }
 ```
 Una fila por fecha, alineada con `dates`; las celdas van en orden fila por fila; los valores son enteros dB×10 o `null`.
