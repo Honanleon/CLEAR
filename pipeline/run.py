@@ -282,7 +282,9 @@ def stage_validate(cfg: dict[str, Any]) -> bool:
             f["properties"]["dist_confirmed"] = c
         to_json.write_json(fc, poly_path, compact=True)
         log.info("dist_confirmed: %d of %d polygons", sum(conf), len(conf))
-        res["polygons_confirmed"] = f"{sum(conf)} of {len(conf)}"
+        res["polygons_confirmed"] = int(sum(conf))
+    res["polygons_total"] = len(feats)
+    res.setdefault("polygons_confirmed", 0)
     to_json.write_json(
         {
             **res,

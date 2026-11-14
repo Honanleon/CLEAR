@@ -50,6 +50,8 @@ NISAR L2 GCOV, frequency A (20 MHz, ~20 m), HH and HV, γ⁰ linear with radiome
    - each is reported **spatially** (any date in the period) and **within ±24 days** of the radar date, as first planned;
    - **lag** = radar date − optical date, median over the overlapping pixels (negative = radar earlier).
 
+   **Headline numbers (team decision, 2026-11-14, after seeing the results):** the spatial agreement and coverage, together with the median lead and the count of confirmed polygons. The ±24-day window was the plan, but the results showed that the radar detects the felling before the optical alert (median 36 days), so that window counts correct early detections as misses. We say openly that the metric was chosen after looking at the data, and we keep publishing the ±24-day numbers next to it (`index.json` → `validation`).
+
    `dist_confirmed` is true when ≥ 20 % of a polygon has an optical alert. The threshold is tuned **once** with these numbers (see the tuning log). Implementation: `pipeline/fetch/dist_alert.py`, `pipeline/validate/dist_compare.py`.
 9. **RGB per date.** The speckle-filtered linear γ⁰ is averaged onto a north-up EPSG:4326 grid that matches the AOI bbox exactly (0.0005°, about 50 m; 1200 × 800 px), so the image corners are the bbox corners. Then R = HH (dB), G = HV (dB), B = HH/HV (dB, i.e. HH − HV). One stretch is used for every date: the 2nd–98th percentiles of each channel over all dates pooled, saved in `data/interim/<aoi>/rgb_stretch.json`. Forest looks yellow-green (high HV); cleared pasture looks blue-violet (low HV, high HH/HV). Implementation: `pipeline/export/rgb_png.py`, `pipeline/process/calibrate.py`.
 

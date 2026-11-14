@@ -1,6 +1,6 @@
 {
-  "schema_version": 1,
-  "generated_at": "2026-11-14T12:20:56-03:00",
+  "schema_version": 2,
+  "generated_at": "2026-11-14T12:28:27-03:00",
   "aoi": {
     "id": "chaco-central-norte",
     "bbox": [
@@ -226,8 +226,13 @@
     "area_ha_total": 565.9
   },
   "validation": {
-    "agreement_pct": 9.5,
-    "coverage_pct": 10.4,
+    "agreement_pct": 28.3,
+    "coverage_pct": 30.9,
+    "agreement_pct_24d": 9.5,
+    "coverage_pct_24d": 10.4,
+    "median_lead_days": 36,
+    "polygons_confirmed": 7,
+    "polygons_total": 23,
     "reference": "OPERA DIST-ALERT-HLS V1"
   },
   "provenance": [

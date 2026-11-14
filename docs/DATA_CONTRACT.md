@@ -2,7 +2,7 @@
 
 # Data contract: pipeline → web
 
-**Current `schema_version`: 1.** The pipeline writes these files to `web/public/data/` and the web app reads them. Do not change this contract without agreeing with the team. If it changes, bump `schema_version` and update this file in the same commit.
+**Current `schema_version`: 2.** The pipeline writes these files to `web/public/data/` and the web app reads them. Do not change this contract without agreeing with the team. If it changes, bump `schema_version` and update this file in the same commit.
 
 General rules:
 - Coordinates are EPSG:4326 (lon, lat).
@@ -16,7 +16,7 @@ Loaded on startup.
 
 ```json
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "generated_at": "2026-11-14T18:00:00-03:00",
   "aoi": { "id": "chaco-central-norte", "bbox": [-60.78, -21.73, -60.18, -21.33] },
   "nisar": { "track": 161, "direction": "ASCENDING", "frame": 167, "mode": "20+5 DHDH" },
@@ -26,7 +26,8 @@ Loaded on startup.
   ],
   "image_coordinates": [[-60.78, -21.33], [-60.18, -21.33], [-60.18, -21.73], [-60.78, -21.73]],
   "detection": { "threshold_db": -3.0, "persistence": 2, "min_area_ha": 5, "n_polygons": 0, "area_ha_total": 0 },
-  "validation": { "agreement_pct": null, "coverage_pct": null, "reference": "OPERA DIST-ALERT-HLS V1" },
+  "validation": { "agreement_pct": 28.3, "coverage_pct": 30.9, "agreement_pct_24d": 9.5, "coverage_pct_24d": 10.4,
+                  "median_lead_days": 36, "polygons_confirmed": 7, "polygons_total": 23, "reference": "OPERA DIST-ALERT-HLS V1" },
   "provenance": [
     { "layer": "rgb", "type": "satellite", "source": "NISAR L2 GCOV (NASA/JPL, ASF DAAC)" }
   ]
@@ -35,6 +36,16 @@ Loaded on startup.
 
 - `image_coordinates`: corners in MapLibre order (top-left, top-right, bottom-right, bottom-left).
 - `scenes[].rgb`: path relative to `web/public/data/`.
+- `validation` (any value can be `null` before validation runs):
+  - `agreement_pct`: % of the radar polygon area that has an OPERA DIST-ALERT alert, at any date in the period (**headline number**);
+  - `coverage_pct`: % of the optical-alert area (forest, ≥ 5 ha) that the radar polygons cover, at any date;
+  - `agreement_pct_24d`, `coverage_pct_24d`: the same, but the dates must be within ±24 days (the method first planned);
+  - `median_lead_days`: how many days the radar detects the change **before** the optical alert (median; negative would mean later);
+  - `polygons_confirmed` of `polygons_total`: polygons with `dist_confirmed: true`, for the sentence "in X of N cases it matches optical alerts".
+
+## Changes
+
+- **v2 (2026-11-14):** `agreement_pct` and `coverage_pct` are now spatial (any date) instead of ±24 days; added `agreement_pct_24d`, `coverage_pct_24d`, `median_lead_days`, `polygons_confirmed`, `polygons_total`. Backward compatible: no field was removed or renamed. Reason in `docs/METHODS.md` (validation).
 
 ## `polygons.geojson`
 
