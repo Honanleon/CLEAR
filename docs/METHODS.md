@@ -41,14 +41,16 @@ NISAR L2 GCOV, frequency A (20 MHz, ~20 m), HH and HV, γ⁰ linear with radiome
 6. **Detection.**
    - baseline = median of the first 3 dates (2025-11-21, 12-03, 12-15);
    - only pixels that look like forest at baseline (see step 4);
-   - a pixel is flagged when ΔHV ≤ `threshold_db` for `persistence` consecutive dates;
-   - the detection date is the first of those dates.
-7. **Polygons.** Connected flagged pixels are grouped and polygons smaller than `min_area_ha` are dropped. Properties: first date, area (ha) and mean drop (dB).
-8. **Validation** against OPERA DIST-ALERT-HLS V1, ±24 days:
+   - a pixel is flagged at date i when ΔHV ≤ `threshold_db` at date i and at `persistence` (2) of the dates i, i+1, i+2 (`persistence_window` = 3). The first version required 2 *consecutive* dates; on 2026-04-26 (a wet date, forest median +1.9 dB) bare soil bounced back and broke the run, so one bounce is now tolerated;
+   - the detection date is date i. Implementation: `pipeline/process/detect.py`.
+7. **Polygons.** All neighbouring (8-connected) flagged pixels are joined, whatever their date, and polygons smaller than `min_area_ha` are dropped. The first version split pixels by date, which cut one clearing into pieces below 5 ha (neighbouring pixels get different dates from radar noise and because felling lasts weeks). Properties: `first_date` = median detection date of the polygon's pixels, area (ha), mean drop at detection (dB). Geometry simplified by 10 m and written in EPSG:4326. Implementation: `pipeline/process/polygons.py`.
+8. **Validation** against OPERA DIST-ALERT-HLS V1 (latest product, 2026-11-04; tiles T20KQA and T20KQB), read at 30 m onto the 20 m crop grid. Optical alert = `VEG-DIST-STATUS` 6 or 8 (confirmed ≥ 50 % vegetation loss), first-disturbance date between the first radar date and the last radar date + 24 days, inside the forest mask, patches ≥ 5 ha. Only the published polygons count on the radar side.
    - **agreement** = % of our polygon area that has an optical alert;
-   - **coverage** = % of optical-alert area (forest, ≥ 5 ha) that we detect.
+   - **coverage** = % of optical-alert area that our polygons cover;
+   - each is reported **spatially** (any date in the period) and **within ±24 days** of the radar date, as first planned;
+   - **lag** = radar date − optical date, median over the overlapping pixels (negative = radar earlier).
 
-   The threshold is tuned **once** using these two numbers, and the tuning is recorded below.
+   `dist_confirmed` is true when ≥ 20 % of a polygon has an optical alert. The threshold is tuned **once** with these numbers (see the tuning log). Implementation: `pipeline/fetch/dist_alert.py`, `pipeline/validate/dist_compare.py`.
 9. **RGB per date.** The speckle-filtered linear γ⁰ is averaged onto a north-up EPSG:4326 grid that matches the AOI bbox exactly (0.0005°, about 50 m; 1200 × 800 px), so the image corners are the bbox corners. Then R = HH (dB), G = HV (dB), B = HH/HV (dB, i.e. HH − HV). One stretch is used for every date: the 2nd–98th percentiles of each channel over all dates pooled, saved in `data/interim/<aoi>/rgb_stretch.json`. Forest looks yellow-green (high HV); cleared pasture looks blue-violet (low HV, high HH/HV). Implementation: `pipeline/export/rgb_png.py`, `pipeline/process/calibrate.py`.
 
 **Time series for the chart (`grid_500m.json`).** Each crop is averaged (linear γ⁰) onto a 125 × 89 cell EPSG:4326 grid over the AOI (about 500 m cells) and stored as dB × 10 per date, for HH and HV. Implementation: `resample_to_grid` in `pipeline/export/rgb_png.py`, `build_grid` in `pipeline/export/to_json.py`.
@@ -58,9 +60,10 @@ NISAR L2 GCOV, frequency A (20 MHz, ~20 m), HH and HV, γ⁰ linear with radiome
 | Parameter | Value | Origin |
 |---|---|---|
 | `speckle_window` | 5 | 100 m at 20 m pixels |
-| `baseline_dates` | 3 | Jun 1, Jun 13, Jun 25 |
-| `threshold_db` | -3.0 | Starting point; the ASF Cookbook example uses -2 dB |
-| `persistence` | 2 | Avoids one-date drops (rain, noise) |
+| `baseline_dates` | 3 | 2025-11-21, 12-03, 12-15 |
+| `min_baseline_db` | -4.0 | Forest-like at baseline; dry Chaco forest starts near −3 dB, old pasture near −4.6 dB |
+| `threshold_db` | -3.0 | Chosen once (tuning log); the ASF Cookbook example uses −2 dB |
+| `persistence` / `persistence_window` | 2 of 3 | Avoids one-date drops (rain, noise) and tolerates one wet-date bounce |
 | `min_area_ha` | 5 | Matches the DIST-ALERT comparison filter |
 | `normalize` | `forest_median` | Step 5 |
 
@@ -72,7 +75,19 @@ NISAR L2 GCOV, frequency A (20 MHz, ~20 m), HH and HV, γ⁰ linear with radiome
 
 ## Threshold tuning log
 
-TODO: record the run, the two validation numbers and the final threshold.
+Run on 2026-11-14, AOI `chaco-central-norte`, 26 dates (2025-11-21 → 2026-10-23), `min_baseline_db` −4, persistence 2 of 3, `min_area_ha` 5. Reference: OPERA DIST-ALERT (518 ha of optical alerts in forest).
+
+| `threshold_db` | Polygons | Area | Agreement (spatial / ±24 d) | Coverage (spatial / ±24 d) | Median lag |
+|---|---|---|---|---|---|
+| −2.0 (ASF example) | 81 | 1,908 ha | 8.8 % / 1.5 % | 32.3 % / 5.6 % | −108 days |
+| **−3.0 (chosen)** | **23** | **566 ha** | **28.3 % / 9.5 %** | **30.9 % / 10.4 %** | **−36 days** |
+
+−2 dB adds mostly noise: coverage barely improves while agreement drops to a third. The ±24-day numbers are low because the radar sees the felling earlier than the optical alert (median 36 days), so a correct early detection counts as a disagreement in that window.
+
+Earlier attempts (same day), kept for the record:
+- 11 dates from 2026-06-01, no baseline condition: 57 polygons, 1,456 ha, only 2 % agreement. They were old pasture (still "tree cover" in WorldCover 2021) burned or ploughed in winter → baseline condition added.
+- Same with the baseline condition at −3 dB: 0 polygons. The clearings had been felled before June → series extended to November 2025.
+- 26 dates, baseline −3 dB, 2 consecutive dates, polygons split by date: 6 polygons, 84 ha → `min_baseline_db` −4, 2 of 3, polygons joined across dates (this table).
 
 ## Limitations and next steps
 

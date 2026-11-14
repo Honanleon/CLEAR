@@ -43,7 +43,7 @@ A `FeatureCollection` of polygons. Properties per feature:
 | Property | Type | Meaning |
 |---|---|---|
 | `id` | string | Stable id |
-| `first_date` | string (ISO) | First date of the detection (±12 days) |
+| `first_date` | string (ISO) | Detection date of the polygon: median of its pixels' first-detection dates (±12 days) |
 | `area_ha` | number | Area in hectares |
 | `mean_drop_db` | number | Mean ΔHV in dB (negative) |
 | `dist_confirmed` | `true` / `false` / `null` | Overlaps an OPERA DIST-ALERT alert; `null` = not checked |

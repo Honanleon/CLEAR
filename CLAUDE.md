@@ -185,9 +185,9 @@ El 04/11 solo existe el frame 166. Nombre de ejemplo: `NISAR_L2_PR_GCOV_032_161_
 6. **Detectar:**
    - línea de base = mediana de las 3 primeras fechas (nov–dic 2025);
    - solo píxeles que en la línea de base parecen bosque (HV normalizado ≥ `min_baseline_db`, −3 dB);
-   - desmonte cuando ΔHV ≤ `threshold_db` en `persistence` fechas seguidas;
+   - desmonte cuando ΔHV ≤ `threshold_db` en esa fecha y en `persistence` de 3 fechas (2 de 3, tolera una fecha húmeda);
    - fecha de detección = la primera de esas fechas.
-7. **Polígonos:** unir píxeles vecinos y descartar los menores a `min_area_ha`. Propiedades: fecha, área (ha) y caída media (dB).
+7. **Polígonos:** unir píxeles vecinos (sin separar por fecha) y descartar los menores a `min_area_ha`. Propiedades: fecha (mediana de los píxeles), área (ha) y caída media (dB).
 8. **Validar contra DIST-ALERT** en la misma ventana de fechas (±24 días). Dos números:
    - **acuerdo** = % del área de nuestros polígonos con alerta óptica;
    - **cobertura** = % del área de alertas ópticas (en bosque, ≥ 5 ha) que detectamos.
