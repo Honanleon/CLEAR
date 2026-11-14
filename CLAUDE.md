@@ -184,7 +184,7 @@ El 04/11 solo existe el frame 166. Nombre de ejemplo: `NISAR_L2_PR_GCOV_032_161_
 5. **Normalizar:** restar por fecha la mediana de HV de todos los píxeles de bosque de la AOI. Corrige la lluvia y la diferencia PROVISIONAL/VALIDATED, porque en 5 meses casi todo el bosque no cambia. Opcional: un bloque de bosque estable dentro del frame, fuera de la AOI y del PNCAT.
 6. **Detectar:**
    - línea de base = mediana de las 3 primeras fechas (nov–dic 2025);
-   - solo píxeles que en la línea de base parecen bosque (HV normalizado ≥ `min_baseline_db`, −3 dB);
+   - solo píxeles que parecen bosque en **todas** las fechas de la línea de base (HV normalizado ≥ `min_baseline_db`, −2 dB). Más laxo dejaba pasar potreros con rebrote, cultivos y pivotes (verificado con HLS el 14/11);
    - desmonte cuando ΔHV ≤ `threshold_db` en esa fecha y en `persistence` de 3 fechas (2 de 3, tolera una fecha húmeda);
    - fecha de detección = la primera de esas fechas.
 7. **Polígonos:** unir píxeles vecinos (sin separar por fecha) y descartar los menores a `min_area_ha`. Propiedades: fecha (mediana de los píxeles), área (ha) y caída media (dB).
@@ -193,6 +193,8 @@ El 04/11 solo existe el frame 166. Nombre de ejemplo: `NISAR_L2_PR_GCOV_032_161_
    - **cobertura** = % del área de alertas ópticas (en bosque, ≥ 5 ha) que detectamos.
 
    Ajustar el umbral **una sola vez** con esos números y documentarlo.
+
+   **Cambio del 14/11 (decisión del equipo):** los números principales son **espaciales** (cualquier fecha del período), no ±24 días. Los números de ±24 días se siguen calculando y publicando (`agreement_pct_24d`, `coverage_pct_24d`). **Corrección del mismo día:** se había dicho que el radar ve el volteo 36 días antes que el óptico; **no se sostiene**: el chequeo con imágenes HLS mostró que esos eventos eran manejo de potreros ya abiertos. No usar esa afirmación. Contrato: `schema_version` 2.
 9. **RGB por fecha:** R = HH, G = HV, B = HH/HV. Estirar con percentiles fijos para **todas** las fechas (si no, la animación parpadea).
 10. **Exportar** según el contrato (§10).
 
@@ -221,17 +223,18 @@ No cambiarlo sin acordar; si cambia, subir `schema_version`. Coordenadas en EPSG
 
 `web/public/data/index.json`
 ```json
-{ "schema_version": 1, "generated_at": "2026-11-14T18:00:00-03:00",
+{ "schema_version": 2, "generated_at": "2026-11-14T18:00:00-03:00",
   "aoi": { "id": "chaco-central-norte", "bbox": [-60.78, -21.73, -60.18, -21.33] },
   "nisar": { "track": 161, "direction": "ASCENDING", "frame": 167, "mode": "20+5 DHDH" },
   "scenes": [ { "date": "2026-06-01", "id": "NISAR_L2_PR_GCOV_021_...", "maturity": "PROVISIONAL", "crid": "P05023",
                 "rgb": "rgb/2026-06-01.webp" } ],
   "image_coordinates": [[-60.78, -21.33], [-60.18, -21.33], [-60.18, -21.73], [-60.78, -21.73]],
   "detection": { "threshold_db": -3.0, "persistence": 2, "min_area_ha": 5, "n_polygons": 0, "area_ha_total": 0 },
-  "validation": { "agreement_pct": null, "coverage_pct": null, "reference": "OPERA DIST-ALERT-HLS V1" },
+  "validation": { "agreement_pct": 28.3, "coverage_pct": 30.9, "agreement_pct_24d": 9.5, "coverage_pct_24d": 10.4,
+                  "median_lead_days": 36, "polygons_confirmed": 7, "polygons_total": 23, "reference": "OPERA DIST-ALERT-HLS V1" },
   "provenance": [ { "layer": "rgb", "type": "satellite", "source": "NISAR L2 GCOV (NASA/JPL, ASF DAAC)" } ] }
 ```
-`web/public/data/polygons.geojson`: `FeatureCollection`. Propiedades por feature: `id`, `first_date` (ISO), `area_ha`, `mean_drop_db`, `dist_confirmed` (true, false o null) y `status: "estimado"`.
+`web/public/data/polygons.geojson`: `FeatureCollection` de **hexágonos agregados** (1 km de ancho, `export.hex_width_m`), no de las formas exactas del desmonte, que quedan solo en `data/interim/` (decisión del equipo del 14/11: anonimato de propietarios y protección de grupos en aislamiento). Propiedades por feature: `id`, `first_date` (ISO), `area_ha`, `mean_drop_db`, `dist_confirmed` (true, false o null) y `status: "estimado"`.
 
 `web/public/data/grid_500m.json`: series para el gráfico al tocar el mapa (se carga al primer clic).
 ```json

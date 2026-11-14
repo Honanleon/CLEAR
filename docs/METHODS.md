@@ -17,15 +17,17 @@ Other drivers we expect to see, to be discussed in the app:
 
 ## Study area
 
-`chaco-central-norte`, bbox `[-60.78, -21.73, -60.18, -21.33]` (EPSG:4326), north-east of Mariscal Estigarribia, Boquerón, Paraguay (about 60 × 45 km). It lies fully inside NISAR track 161, ascending, frame 167 (checked against the product footprint), which has 11 dates from 2026-06-01 to 2026-10-23.
+**`boqueron-norte`**, bbox `[-61.6, -20.9, -61.0, -20.5]` (EPSG:4326), district of Mariscal Estigarribia, Boquerón, Paraguay (about 60 × 45 km). It lies fully inside NISAR track 161, ascending, frame 167 (26 dates).
 
-How it was chosen (2026-11-14):
-- The first box, `[-61.0, -21.95, -60.4, -21.55]`, showed almost no clearing in Jun–Oct 2026: 22 ha of confirmed ≥ 50 % vegetation loss in OPERA DIST-ALERT (latest product, 2026-11-04) and about 86 ha of sustained HV drop ≤ −3 dB in our NISAR crops.
-- Sliding a box of the same size over the 4 DIST-ALERT tiles around it, the activity was to the north and east, inside the same frame. The chosen box had about 320 ha of confirmed ≥ 50 % loss, about 80 % of it after the radar baseline (late June).
-- Boxes further north had more loss (~500 ha) but were rejected: they are closer to the PNCAT (Ayoreo Totobiegosode territory), whose exact boundary we could not verify. The study area must stay clear of it.
-- A Paraguay-wide scan (DIST-ALERT masked with ESA WorldCover 2021 tree cover, ~210 m) found more forest loss in southern Boquerón (frame 166), but it happened in June–July, before the radar baseline, so the method cannot detect it.
+**Ethics.** The study area must stay clear of the Ayoreo Totobiegosode territory (PNCAT), where groups live in voluntary isolation under IACHR precautionary measures. The PNCAT is located in the district of Puerto Casado (formerly La Victoria), department of Alto Paraguay (Resolución N.º 1/2001, Dirección General de Bienes Culturales, then Ministerio de Educación y Culto). Using the official district boundaries (DGEEC 2012, via geoBoundaries), the study area is 139 km from that district and lies in a single district (Mariscal Estigarribia). Isolated Ayoreo groups also move outside the PNCAT, across the northern Chaco, so the app publishes **aggregated hexagons, never exact clearing shapes**, and no indigenous layer is used or shown.
 
-These DIST-ALERT figures are coarse screening numbers, not validation results.
+**How it was chosen (2026-11-14).** Three boxes were tried; the history matters because each step corrected the previous one:
+
+1. `[-61.0, -21.95, -60.4, -21.55]` (first plan): almost no clearing in OPERA DIST-ALERT (22 ha) or NISAR.
+2. `chaco-central-norte`, `[-60.78, -21.73, -60.18, -21.33]`: chosen because DIST-ALERT showed ~320 ha of vegetation loss. Our first detections there (23 polygons, 566 ha) looked like clearing in the radar, but a **colour check with HLS (Sentinel-2) images from 2025-11-19 and 2026-11-04** showed that ~18 of 23 were inside paddocks that already existed in November 2025 (regrowth removal, ploughing or burning), 2 were seasonal wetlands, and about 1 was standing forest that was cleared. The DIST-ALERT alerts there were the same kind of event. With a stricter forest condition (step 6) the box has ~19 ha of clearing.
+3. `boqueron-norte`: found with the **radar itself**. NISAR frequency B (80 m, ~25 MB per date for the whole frame) was read for the whole of frame 167 (3 dates in Nov–Dec 2025, 3 in Sep–Oct 2026) to map forest that became open. In the centre-south of the frame the flagged changes were centre pivots and existing paddocks; in the north, new paddock blocks opened in forest are visible. This box had about 950 ha (coarse estimate) and is the northern candidate farthest from the PNCAT district.
+
+The DIST-ALERT and frequency-B figures are coarse screening numbers, not validation results.
 
 ## Data
 
@@ -36,11 +38,11 @@ NISAR L2 GCOV, frequency A (20 MHz, ~20 m), HH and HV, γ⁰ linear with radiome
 1. **Subset.** Read only the AOI window of `HHHH` and `HVHV` (frequency A) from each HDF5 file over HTTPS, without downloading the ~1.9 GB file. The AOI bbox is projected to the product grid (EPSG:32720, UTM 20S, 20 m) with densified edges, and the window keeps the pixels whose centers fall inside it (`xCoordinates` / `yCoordinates` are pixel centers). For `chaco-central-norte` the window is 2262 × 3137 pixels and the read takes about 1 minute (~75 MB) per date. Values that are 0, negative or not finite are set to NaN. Each crop is saved as a GeoTIFF (γ⁰ linear, bands `HHHH`, `HVHV`) in `data/interim/<aoi>/nisar_<date>.tif`, with the granule id, CRID and maturity as tags. Implementation: `pipeline/fetch/nisar.py` (`read_crop`).
 2. **Speckle.** 5 × 5 pixel (100 m) moving mean, computed on linear γ⁰.
 3. **dB.** `10·log10(γ⁰)`.
-4. **Forest mask.** Planned: MapBiomas Paraguay Collection 2, forest in 2023. **Interim:** ESA WorldCover 2021 v200 tree cover (class 10), averaged onto the 20 m crop grid and kept where the tree fraction is ≥ 0.5 (`pipeline/fetch/worldcover.py`). Because this mask is from 2021, a second condition uses the radar itself: at baseline the pixel's normalized HV must be ≥ `min_baseline_db` (−3 dB; the forest 10th percentile was −3.3 dB). Without it, the first run flagged 57 polygons (1,456 ha) that were already pasture at baseline (median −4.5 dB) and lost further HV when burned or ploughed; only 2 % of their area matched DIST-ALERT.
+4. **Forest mask.** Planned: MapBiomas Paraguay Collection 2, forest in 2023. **Interim:** ESA WorldCover 2021 v200 tree cover (class 10), averaged onto the 20 m crop grid and kept where the tree fraction is ≥ 0.5 (`pipeline/fetch/worldcover.py`). Because this mask is from 2021, a second condition uses the radar itself: the pixel's normalized HV must be ≥ `min_baseline_db` (−2 dB) on **every** baseline date. Earlier versions used the baseline median with −3 and then −4 dB; the HLS colour check showed that this let through paddocks with regrowth, crops at peak biomass and centre pivots. Without it, the first run flagged 57 polygons (1,456 ha) that were already pasture at baseline (median −4.5 dB) and lost further HV when burned or ploughed; only 2 % of their area matched DIST-ALERT.
 5. **Normalization.** For each date, subtract the median HV of all forest pixels in the AOI. This removes most of the effect of rain and of the PROVISIONAL → VALIDATED change, because almost all forest stays unchanged over five months.
 6. **Detection.**
    - baseline = median of the first 3 dates (2025-11-21, 12-03, 12-15);
-   - only pixels that look like forest at baseline (see step 4);
+   - only pixels that look like forest on every baseline date (see step 4);
    - a pixel is flagged at date i when ΔHV ≤ `threshold_db` at date i and at `persistence` (2) of the dates i, i+1, i+2 (`persistence_window` = 3). The first version required 2 *consecutive* dates; on 2026-04-26 (a wet date, forest median +1.9 dB) bare soil bounced back and broke the run, so one bounce is now tolerated;
    - the detection date is date i. Implementation: `pipeline/process/detect.py`.
 7. **Polygons.** All neighbouring (8-connected) flagged pixels are joined, whatever their date, and polygons smaller than `min_area_ha` are dropped. The first version split pixels by date, which cut one clearing into pieces below 5 ha (neighbouring pixels get different dates from radar noise and because felling lasts weeks). Properties: `first_date` = median detection date of the polygon's pixels, area (ha), mean drop at detection (dB). Geometry simplified by 10 m and written in EPSG:4326. Implementation: `pipeline/process/polygons.py`.
@@ -50,10 +52,20 @@ NISAR L2 GCOV, frequency A (20 MHz, ~20 m), HH and HV, γ⁰ linear with radiome
    - each is reported **spatially** (any date in the period) and **within ±24 days** of the radar date, as first planned;
    - **lag** = radar date − optical date, median over the overlapping pixels (negative = radar earlier).
 
+   **Headline numbers (team decision, 2026-11-14):** the spatial agreement and coverage (any date in the period), plus the count of confirmed clearings; the ±24-day numbers are published next to them. An earlier version of this text claimed that the radar sees clearing a median of 36 days before the optical alert. **That claim is withdrawn:** the colour check showed that the events behind it were management of existing paddocks, not felling of standing forest. Whether the radar sees felling earlier than optical products is still an open question for the new study area.
+
    `dist_confirmed` is true when ≥ 20 % of a polygon has an optical alert. The threshold is tuned **once** with these numbers (see the tuning log). Implementation: `pipeline/fetch/dist_alert.py`, `pipeline/validate/dist_compare.py`.
 9. **RGB per date.** The speckle-filtered linear γ⁰ is averaged onto a north-up EPSG:4326 grid that matches the AOI bbox exactly (0.0005°, about 50 m; 1200 × 800 px), so the image corners are the bbox corners. Then R = HH (dB), G = HV (dB), B = HH/HV (dB, i.e. HH − HV). One stretch is used for every date: the 2nd–98th percentiles of each channel over all dates pooled, saved in `data/interim/<aoi>/rgb_stretch.json`. Forest looks yellow-green (high HV); cleared pasture looks blue-violet (low HV, high HH/HV). Implementation: `pipeline/export/rgb_png.py`, `pipeline/process/calibrate.py`.
 
 **Time series for the chart (`grid_500m.json`).** Each crop is averaged (linear γ⁰) onto a 125 × 89 cell EPSG:4326 grid over the AOI (about 500 m cells) and stored as dB × 10 per date, for HH and HV. Implementation: `resample_to_grid` in `pipeline/export/rgb_png.py`, `build_grid` in `pipeline/export/to_json.py`.
+
+## Results for `boqueron-norte` (2026-11-14)
+
+- **Detection** (26 dates, 2025-11-21 → 2026-10-23; −3 dB, 2 of 3 dates, forest-like on all baseline dates at −2 dB, ≥ 5 ha): **31 clearings, 596 ha**, mostly dated March–May 2026, published as **49 hexagons** of 1 km. Sanity checks passed (largest forest-median jump 1.42 dB; at most 0.10 % of the forest flagged on one date).
+- **Against OPERA DIST-ALERT:** agreement 7.4 % (±24 days: 1.9 %), coverage 23.9 % (±24 days: 6.2 %); 3 of 31 clearings confirmed. DIST-ALERT reports only 185 ha of confirmed loss in forest in this box.
+- **Visual review with HLS true colour** (Sentinel-2, 2025-11-19 vs 2026-11-04), done by the team, one panel per clearing: in about **25 of 31** clearings, continuous forest in November 2025 has become **new paddock blocks** by November 2026. About 5 are at the edge of existing paddocks and may be management. This review is our own interpretation of optical images, not field data.
+- **Reading:** the low agreement with DIST-ALERT comes mostly from the optical alert product missing new clearings that are visible in the HLS images; the radar found them. The detector is conservative: many new paddocks in the HLS images are larger than the radar polygon, so 596 ha is a lower bound.
+- The radar-earlier question remains open here: the median lag on the few overlapping pixels is +43 days (radar *later*), from only 3 confirmed clearings.
 
 ## Default parameters
 
@@ -94,7 +106,7 @@ Run on 2026-11-14, AOI `chaco-central-norte`, 26 dates (2025-11-21 → 2026-10-2
 | −2.0 (ASF example) | 81 | 1,908 ha | 8.8 % / 1.5 % | 32.3 % / 5.6 % | −108 days |
 | **−3.0 (chosen)** | **23** | **566 ha** | **28.3 % / 9.5 %** | **30.9 % / 10.4 %** | **−36 days** |
 
-−2 dB adds mostly noise: coverage barely improves while agreement drops to a third. The ±24-day numbers are low because the radar sees the felling earlier than the optical alert (median 36 days), so a correct early detection counts as a disagreement in that window.
+−2 dB adds mostly noise: coverage barely improves while agreement drops to a third. *This tuning was done in `chaco-central-norte` with the looser forest condition; the HLS check later showed that most of these polygons were paddock management, so the numbers in this table are kept only as a record. The radar-lead interpretation written here at first is withdrawn (see step 8).*
 
 Earlier attempts (same day), kept for the record:
 - 11 dates from 2026-06-01, no baseline condition: 57 polygons, 1,456 ha, only 2 % agreement. They were old pasture (still "tree cover" in WorldCover 2021) burned or ploughed in winter → baseline condition added.
