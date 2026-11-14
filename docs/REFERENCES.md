@@ -39,11 +39,11 @@ All licenses must be compatible with Apache-2.0. Re-check them with `pip-license
 | rioxarray | TODO: verify | Raster I/O and reprojection with xarray | planned |
 | rasterio | BSD-3-Clause | GeoTIFF I/O and reprojection | used |
 | numpy | BSD-3-Clause | Numerics | used |
-| scipy | BSD-3-Clause | Speckle filter, connected components | planned |
+| scipy | BSD-3-Clause | Speckle filter, connected components | used |
 | shapely | BSD-3-Clause | Geometry | planned |
 | geopandas | BSD-3-Clause | Polygons and GeoJSON export | planned |
 | pyproj | MIT | Coordinate transforms | used |
-| Pillow | MIT-CMU | PNG export | planned |
+| Pillow | MIT-CMU | PNG export | used |
 | PyYAML | MIT | Config file | used |
 | requests | Apache-2.0 | NASA POWER API | planned |
 | pytest | MIT | Tests | used |

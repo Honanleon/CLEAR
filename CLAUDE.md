@@ -61,7 +61,7 @@ Cada feature tiene que poder ubicarse en uno de estos puntos. Si no encaja, preg
 [pipeline/ Python, en laptops o Colab]  →  web/public/data/*  →  [web/ Vite build]  →  dist/  →  SSH (tar)  →  hosting compartido (HTTPS)
 ```
 - **No hay backend.** En el servidor no corre Python, Node ni base de datos. No agregues código de servidor.
-- Todo lo pesado se **precalcula** en `pipeline/` y se exporta como PNG, GeoJSON y JSON: descarga NISAR, recorte, dB, detección y validación.
+- Todo lo pesado se **precalcula** en `pipeline/` y se exporta como WebP, GeoJSON y JSON: descarga NISAR, recorte, dB, detección y validación.
 - El navegador solo dibuja: mapa, deslizador, línea de tiempo, gráficos y textos.
 - **La demo nunca depende de una llamada en vivo.** Todo lo que se muestra está en `web/public/data/`.
 - Hosting: cPanel compartido, sin `rsync`. Producción en `https://clear.rohayhu.org`, staging en `https://staging.rohayhu.org` (los dos con SSL de Let's Encrypt). `.htaccess` para compresión gzip, caché y tipos MIME. Espejo de respaldo en GitHub Pages.
@@ -215,7 +215,7 @@ detection:
 **Fuera de alcance este fin de semana:** interferometría (GUNW, coherencia), descomposición polarimétrica y aprendizaje automático. Van como "siguientes pasos".
 
 ## 10. Contrato de datos pipeline → web
-No cambiarlo sin acordar; si cambia, subir `schema_version`. Coordenadas en EPSG:4326. Los PNG se reproyectan a EPSG:4326 antes de exportarse, para alinearlos como `image` source en MapLibre.
+No cambiarlo sin acordar; si cambia, subir `schema_version`. Coordenadas en EPSG:4326. Las imágenes RGB son **WebP** (calidad 80, ~250 KB cada una; se cambió de PNG el 14/11 porque pesaban 2,1 MB) y se reproyectan a EPSG:4326 antes de exportarse, para alinearlas como `image` source en MapLibre.
 
 `web/public/data/index.json`
 ```json
@@ -223,7 +223,7 @@ No cambiarlo sin acordar; si cambia, subir `schema_version`. Coordenadas en EPSG
   "aoi": { "id": "chaco-central-norte", "bbox": [-61.0, -21.95, -60.4, -21.55] },
   "nisar": { "track": 161, "direction": "ASCENDING", "frame": 167, "mode": "20+5 DHDH" },
   "scenes": [ { "date": "2026-06-01", "id": "NISAR_L2_PR_GCOV_021_...", "maturity": "PROVISIONAL", "crid": "P05023",
-                "rgb": "rgb/2026-06-01.png" } ],
+                "rgb": "rgb/2026-06-01.webp" } ],
   "image_coordinates": [[-61.0, -21.55], [-60.4, -21.55], [-60.4, -21.95], [-61.0, -21.95]],
   "detection": { "threshold_db": -3.0, "persistence": 2, "min_area_ha": 5, "n_polygons": 0, "area_ha_total": 0 },
   "validation": { "agreement_pct": null, "coverage_pct": null, "reference": "OPERA DIST-ALERT-HLS V1" },
@@ -257,7 +257,7 @@ Una fila por fecha, alineada con `dates`; las celdas van en orden fila por fila;
 - **Requisitos:**
   - bundle de menos de 500 KB gzip (sin contar datos ni tiles);
   - funciona en celular de 360 px de ancho;
-  - `grid_500m.json` y los PNG se cargan cuando hacen falta (lazy);
+  - `grid_500m.json` y las imágenes RGB se cargan cuando hacen falta (lazy);
   - sin textos escritos directamente en el código: todo va en `i18n/es.json` y `i18n/en.json`;
   - cada capa muestra fuente y madurez.
 
