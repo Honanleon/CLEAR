@@ -10,6 +10,7 @@ const MIME: Record<string, string> = {
   ".json": "application/json",
   ".geojson": "application/geo+json",
   ".png": "image/png",
+  ".webp": "image/webp",
 };
 
 // Dev server only: serves the synthetic data in web/fixtures/ under /fixtures/.

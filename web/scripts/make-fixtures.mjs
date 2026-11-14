@@ -6,6 +6,9 @@
 // the validation numbers are invented. The dev server serves these files under /fixtures/
 // and the app shows a "synthetic data" banner while it uses them. They never enter the build.
 //
+// The contract asks for WebP RGB images (pipeline output). These fixtures stay PNG because Node has
+// no built-in WebP encoder; the web app reads each scene path from index.json, so both work.
+//
 // Usage: node scripts/make-fixtures.mjs
 
 import { mkdirSync, writeFileSync } from "node:fs";
