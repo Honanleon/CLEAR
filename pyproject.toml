@@ -1,0 +1,12 @@
+# Parts of this file were generated with AI assistance (Claude Code). See docs/AI_USAGE.md
+# Tool settings only; dependencies are in pipeline/requirements.txt.
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP"]
+
+[tool.pytest.ini_options]
+testpaths = ["pipeline/tests"]

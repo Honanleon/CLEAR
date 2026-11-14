@@ -1,0 +1,59 @@
+# Parts of this file were generated with AI assistance (Claude Code). See docs/AI_USAGE.md
+#
+# CLEAR pipeline configuration. Every parameter says where its value comes from.
+# Paths are relative to the repository root (run the pipeline from there).
+
+aoi: chaco-central-norte # active AOI for this run
+
+aois:
+  # [lon_min, lat_min, lon_max, lat_max], EPSG:4326
+  chaco-central-norte:
+    bbox: [-61.0, -21.95, -60.4, -21.55] # Chapter 1; fits inside track 161 / frame 167 (checked in ASF Vertex, 2026-11-14)
+  neembucu:
+    bbox: [-57.9, -27.3, -57.3, -26.6] # Chapter 2; orbit not verified yet
+  mbaracayu:
+    bbox: [-55.7, -24.3, -55.2, -23.9] # Chapter 3; orbit not chosen yet
+
+nisar:
+  # Search parameters (asf_search); values checked in ASF Vertex on 2026-11-14
+  dataset: NISAR
+  processing_level: GCOV
+  production_configuration: PR
+  relative_orbit: 161
+  flight_direction: ASCENDING
+  frame: 167
+  start: "2026-06-01"
+  end: "2026-10-31"
+  # GCOV grid to read: frequency A = 20 MHz, ~20 m pixels
+  frequency: frequencyA
+  polarizations: [HHHH, HVHV]
+  # Composite Release ID -> product maturity (collection names in CLAUDE.md §8.1)
+  crid_maturity:
+    P05023: PROVISIONAL # NISAR_L2_GCOV_PROVISIONAL_V1
+    P05036: VALIDATED # NISAR_L2_GCOV_V1
+  # Dates we expect after de-duplication (ASF Vertex, 2026-11-14). Used only to warn.
+  expected_dates:
+    - "2026-06-01"
+    - "2026-06-13"
+    - "2026-06-25"
+    - "2026-07-07"
+    - "2026-07-19"
+    - "2026-08-24"
+    - "2026-09-05"
+    - "2026-09-17"
+    - "2026-09-29"
+    - "2026-10-11"
+    - "2026-10-23"
+
+paths:
+  raw: data/raw # never committed
+  interim: data/interim # crops and the scene manifest; not committed
+  web_data: web/public/data # pipeline outputs read by the web app
+
+detection:
+  speckle_window: 5 # 5 x 5 pixels = 100 m at 20 m
+  baseline_dates: 3 # Jun 1, Jun 13, Jun 25
+  threshold_db: -3.0 # starting point; the ASF NISAR Cookbook example uses -2 dB
+  persistence: 2 # consecutive dates below threshold; avoids one-date drops (rain, noise)
+  min_area_ha: 5 # matches the DIST-ALERT comparison filter
+  normalize: forest_median # per-date median HV of forest pixels in the AOI

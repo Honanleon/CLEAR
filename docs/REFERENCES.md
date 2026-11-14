@@ -29,7 +29,7 @@ All licenses must be compatible with Apache-2.0. Re-check them with `pip-license
 
 | Library | License | Use | Status |
 |---|---|---|---|
-| asf_search | BSD-3-Clause | Search NISAR products at ASF | planned |
+| asf_search | BSD-3-Clause | Search NISAR products at ASF | used |
 | earthaccess | MIT | Earthdata login and search (OPERA, HLS) | planned |
 | fsspec | BSD-3-Clause | Partial HTTPS reads of HDF5 files | planned |
 | aiohttp | Apache-2.0 | HTTP backend for fsspec | planned |
@@ -44,10 +44,10 @@ All licenses must be compatible with Apache-2.0. Re-check them with `pip-license
 | geopandas | BSD-3-Clause | Polygons and GeoJSON export | planned |
 | pyproj | MIT | Coordinate transforms | planned |
 | Pillow | MIT-CMU | PNG export | planned |
-| PyYAML | MIT | Config file | planned |
+| PyYAML | MIT | Config file | used |
 | requests | Apache-2.0 | NASA POWER API | planned |
-| pytest | MIT | Tests | planned |
-| ruff | MIT | Lint and format | planned |
+| pytest | MIT | Tests | used |
+| ruff | MIT | Lint and format | used |
 | Vite | MIT | Web build | planned |
 | TypeScript | Apache-2.0 | Web language | planned |
 | MapLibre GL JS | BSD-3-Clause | Interactive map | planned |
