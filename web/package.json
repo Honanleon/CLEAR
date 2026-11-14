@@ -9,7 +9,8 @@
     "build": "vite build",
     "preview": "vite preview",
     "fixtures": "node scripts/make-fixtures.mjs",
-    "check": "tsc --noEmit && node scripts/check-i18n.mjs && vite build && node scripts/check-size.mjs"
+    "check": "tsc --noEmit && node scripts/check-i18n.mjs && vite build && node scripts/check-size.mjs",
+    "build:lab": "vite build --mode lab --outDir dist-lab --emptyOutDir && node scripts/lab-package.mjs dist-lab"
   },
   "dependencies": {
     "@fontsource-variable/jetbrains-mono": "5.3.0",

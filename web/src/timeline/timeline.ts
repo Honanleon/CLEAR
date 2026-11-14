@@ -4,9 +4,9 @@
 // shows), a bar per tick with the hectares first detected in that pass, and the running totals.
 
 import { INSTRUMENT_GAP, type Scene } from "../data";
-import { fmt, onLang, t } from "../i18n";
+import { fmt, locale, onLang, t } from "../i18n";
 
-const STEP_MS = 1600;
+const STEP_MS = 1100;
 
 export interface TimelineOptions {
   scenes: Scene[];
@@ -45,6 +45,33 @@ export class Timeline {
     return ((day(iso) - d0) / (d1 - d0)) * 100;
   }
 
+  /** One label per month, placed on the 1st of the month (year added on the first label and in January). */
+  private months(): string {
+    const s = this.opts.scenes;
+    if (!s.length) return "";
+    const fmtM = new Intl.DateTimeFormat(locale(), { month: "short", timeZone: "UTC" });
+    const fmtMY = new Intl.DateTimeFormat(locale(), { month: "short", year: "numeric", timeZone: "UTC" });
+    const out: string[] = [];
+    let [y, m] = (s[0]?.date ?? "").split("-").map(Number) as [number, number];
+    const end = s[s.length - 1]?.date ?? "";
+    for (let k = 0; k < 40; k++) {
+      const iso = `${y}-${String(m).padStart(2, "0")}-01`;
+      if (iso > end) break;
+      const left = this.pos(iso);
+      if (left >= 0 && left <= 100) {
+        const d = new Date(`${iso}T00:00:00Z`);
+        const label = out.length === 0 || m === 1 ? fmtMY.format(d) : fmtM.format(d);
+        out.push(`<span class="tl-month${k % 3 === 0 ? " tl-month-q" : ""}" style="left:${left}%">${label}</span>`);
+      }
+      m++;
+      if (m > 12) {
+        m = 1;
+        y++;
+      }
+    }
+    return out.join("");
+  }
+
   private render() {
     const { scenes, newArea } = this.opts;
     const maxArea = Math.max(1, ...newArea);
@@ -70,9 +97,10 @@ export class Timeline {
         <div class="tl-track" role="group">
           <div class="tl-rail"><i class="tl-fill"></i></div>
           ${showGap ? `<div class="tl-gap" style="left:${gapL}%;width:${gapR - gapL}%"><span></span></div>` : ""}
+          ${this.months()}
           ${scenes
             .map(
-              (s, k) => `<button type="button" class="tl-tick" data-i="${k}" style="left:${this.pos(s.date)}%">
+              (s, k) => `<button type="button" class="tl-tick${k === 0 || s.date.slice(0, 7) !== scenes[k - 1]?.date.slice(0, 7) ? " is-month" : ""}" data-i="${k}" style="left:${this.pos(s.date)}%">
                 <i class="tl-bar" style="height:${((newArea[k] ?? 0) / maxArea) * 100}%"></i>
                 <span class="tl-dot"></span>
                 <span class="tl-label">${fmt.date(s.date)}</span>
@@ -191,12 +219,8 @@ export class Timeline {
     const tick = () => {
       if (!this.playing) return;
       if (this.i >= this.opts.scenes.length - 1) {
-        // hold on the last pass, then loop
-        this.timer = window.setTimeout(() => {
-          if (!this.playing) return;
-          this.set(0);
-          this.timer = window.setTimeout(tick, STEP_MS);
-        }, STEP_MS * 2);
+        // stop on the last pass: the final picture stays on screen
+        this.pause();
         return;
       }
       this.set(this.i + 1);

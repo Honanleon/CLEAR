@@ -13,6 +13,9 @@ import { initHero } from "./story/hero";
 import { initRadar } from "./story/radar";
 import { initValidation } from "./story/validation";
 
+// TEST build only (vite --mode lab): test styles and controls, loaded before the page is drawn.
+if (import.meta.env.MODE === "lab") await import("./lab/boot");
+
 function initChrome() {
   const toggle = document.getElementById("lang-toggle");
   toggle?.addEventListener("click", () => setLang(lang() === "es" ? "en" : "es"));

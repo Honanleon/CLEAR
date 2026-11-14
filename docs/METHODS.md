@@ -79,6 +79,18 @@ NISAR L2 GCOV, frequency A (20 MHz, ~20 m), HH and HV, γ⁰ linear with radiome
 | `min_area_ha` | 5 | Matches the DIST-ALERT comparison filter |
 | `normalize` | `forest_median` | Step 5 |
 
+## Web visualization: hexagon aggregation
+
+Done in the browser (`web/src/map/hexgrid.ts`), so the data contract does not change.
+
+- All of Paraguay is tiled with pointy-top hexagons of 40.8 km radius (≈ 432,500 ha or 4,300 km² each; 94 hexagons whose centre falls inside the Natural Earth 1:50m outline of Paraguay), in a local equirectangular projection centred on the AOI. Within the AOI the distortion is < 0.5 %; at the far south of the country (27.5° S) the cells are about 5 % wider east–west in true distance, which only matters for the empty grid.
+- Only the 7 hexagons that overlap the AOI have radar data. At this size one hexagon holds the whole study area, so all the clearing of this data release (565.9 ha) falls in a single hexagon; the exact polygon outlines remain available to see where it is. Every one of them takes part in the aggregation, so clearing near the edge is never dropped. The rest of the grid has **no data**: it is shaded and the legend and panel say so, so it never reads as "no clearing".
+- The size was raised from 1 km (≈ 260 ha) to 1.5, 2, 3, 6, 8, 24 and then 40.8 km so the clearing pattern reads at the scale of the whole country; totals do not change.
+- Each polygon in `polygons.geojson` is sampled on a regular grid (step = √area / 10, between 15 and 100 m). Every sample is assigned to its hexagon, and the polygon's `area_ha` is shared out in proportion to the samples, so hexagon totals add up exactly to the polygon totals (checked: 565.9 ha in both).
+- Each share is dated with the polygon's `first_date`. The map colours a hexagon by the hectares cleared inside it up to the selected date (scale 1 · 10 · 25 · 50 · 100+ ha); hexagons that grew in the selected pass pulse.
+- The hexagon panel shows hectares and % of the hexagon, first detection date, how many of its clearings overlap an OPERA DIST-ALERT alert, and the hectares detected at each pass. The exact polygon outlines stay available as an option.
+- Hexagons make small clearings visible at the scale of the whole study area; they summarize, they do not add detections.
+
 ## Sanity checks
 
 - The forest HV median changes by more than 2 dB between two dates → check the product version, calibration or rain before going on.

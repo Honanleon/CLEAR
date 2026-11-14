@@ -27,13 +27,13 @@ function countUp(root: HTMLElement) {
     const target = Number(b.dataset.target);
     if (!b.dataset.target || Number.isNaN(target)) return;
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      b.textContent = fmt.num(target);
+      b.textContent = fmt.num(target, Number.isInteger(target) ? 0 : 1);
       return;
     }
     const t0 = performance.now();
     const step = (now: number) => {
       const f = Math.min(1, Math.max(0, (now - t0) / 1400));
-      b.textContent = fmt.num(target * (1 - (1 - f) ** 3));
+      b.textContent = fmt.num(target * (1 - (1 - f) ** 3), Number.isInteger(target) ? 0 : 1);
       if (f < 1) requestAnimationFrame(step);
     };
     requestAnimationFrame(step);
@@ -116,10 +116,18 @@ export function initValidation(ds: Dataset | null): void {
   function render() {
     const v = ds?.index.validation;
     const pending = !v || (v.agreement_pct === null && v.coverage_pct === null);
+    // schema v2: spatial (any-date) headline numbers plus the ±24-day ones and the radar lead
+    const v2 = v?.agreement_pct_24d !== undefined;
     gauges!.innerHTML = pending
       ? `<div class="pending"><b>${t("trust.pending")}</b><p>${t("trust.pending_desc")}</p></div>`
-      : ring(v.agreement_pct, t("trust.agreement"), t("trust.agreement_desc"), "gauge-a") +
-        ring(v.coverage_pct, t("trust.coverage"), t("trust.coverage_desc"), "gauge-b") +
+      : ring(v.agreement_pct, t("trust.agreement"), t(v2 ? "trust.agreement_desc_any" : "trust.agreement_desc"), "gauge-a") +
+        ring(v.coverage_pct, t("trust.coverage"), t(v2 ? "trust.coverage_desc_any" : "trust.coverage_desc"), "gauge-b") +
+        (v2 && v.median_lead_days != null
+          ? `<p class="gauge-lead"><b>${fmt.num(Math.abs(v.median_lead_days))}</b> <span>${t(v.median_lead_days >= 0 ? "trust.lead" : "trust.lag")}</span></p>`
+          : "") +
+        (v2 && v.agreement_pct_24d != null && v.coverage_pct_24d != null
+          ? `<p class="gauge-ref">${t("trust.window24", { a: fmt.num(v.agreement_pct_24d, 1), c: fmt.num(v.coverage_pct_24d, 1) })}</p>`
+          : "") +
         `<p class="gauge-ref">${t("trust.reference", { ref: v.reference })}${ds?.provenance("validation") ? ` · ${ds.provenance("validation")!.source}` : ""}</p>`;
     gauges!.classList.remove("is-in");
     if (counted) {
@@ -130,7 +138,9 @@ export function initValidation(ds: Dataset | null): void {
 
     const checked = fc?.features.filter((f) => f.properties.dist_confirmed !== null) ?? [];
     const x = checked.filter((f) => f.properties.dist_confirmed === true).length;
-    sentence!.textContent = checked.length ? t("trust.cases_sentence", { x: fmt.num(x), n: fmt.num(checked.length) }) : "";
+    const nx = v?.polygons_confirmed ?? x;
+    const nn = v?.polygons_total ?? checked.length;
+    sentence!.textContent = nn ? t("trust.cases_sentence", { x: fmt.num(nx), n: fmt.num(nn) }) : "";
     renderCases();
   }
 

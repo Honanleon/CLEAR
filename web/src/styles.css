@@ -2793,3 +2793,186 @@ button {
     padding: 7px 11px;
   }
 }
+
+/* ------------------------------------------------------------------ v3: hexagons, friendlier panel */
+.panel-note {
+  margin: 6px 0 0;
+  font-size: 12.5px;
+  color: var(--dim);
+}
+.hex-legend .ramp {
+  height: 12px;
+}
+.btn-link {
+  background: none;
+  border: 0;
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  margin-top: 6px;
+  padding: 6px;
+  font-size: 14px;
+}
+.more {
+  margin-top: 10px;
+  border-top: 1px solid var(--line);
+  padding-top: 10px;
+}
+.more summary,
+.zone-signal summary {
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--muted);
+  list-style: none;
+}
+.more summary::before,
+.zone-signal summary::before {
+  content: "+ ";
+  font-family: var(--mono);
+  color: var(--accent);
+}
+.more[open] summary::before,
+.zone-signal[open] summary::before {
+  content: "− ";
+}
+.more .switch {
+  margin-top: 12px;
+}
+.hex-tip {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 5;
+  pointer-events: none;
+  padding: 6px 10px;
+  border-radius: 10px;
+  background: rgba(14, 18, 25, 0.95);
+  border: 1px solid var(--line-2);
+  font-size: 13.5px;
+  font-weight: 600;
+  white-space: nowrap;
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.8);
+}
+.fact-hot .fact-value {
+  color: #ff6d8f;
+}
+.zone-signal {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+.zone-signal[open] .zone-help {
+  margin-top: 8px;
+}
+.bars {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin-top: 8px;
+}
+.bars .bar {
+  fill: rgba(255, 255, 255, 0.22);
+}
+.bars .bar.is-past {
+  fill: #ff6b3d;
+}
+.bars-axis {
+  stroke: rgba(255, 255, 255, 0.18);
+}
+.bars-dot {
+  fill: rgba(255, 255, 255, 0.25);
+}
+.bars-tick,
+.bars-val {
+  font-family: var(--mono);
+  font-size: 10px;
+  fill: var(--dim);
+}
+.bars-val {
+  fill: var(--text);
+}
+.map-toast {
+  font-size: 15px;
+  font-weight: 600;
+}
+.guide-ramp-unit {
+  margin: 6px 0 0 !important;
+  font-size: 13px !important;
+}
+/* 26 dates: only the first pass of each month gets a label */
+.tl-label {
+  display: none;
+}
+.tl-tick.is-month .tl-label,
+.tl-tick.is-current .tl-label {
+  display: block;
+}
+.tl-tick.is-current ~ .tl-tick.is-month .tl-label {
+  opacity: 0.9;
+}
+.tl-tick {
+  width: 22px;
+  margin-left: -11px;
+}
+.tl-bar {
+  width: 5px;
+  margin-left: -2.5px;
+}
+@media (max-width: 900px) {
+  .tl-tick.is-month .tl-label {
+    display: none;
+  }
+  .tl-tick.is-current .tl-label {
+    display: block;
+  }
+}
+.tl-tick .tl-label,
+.tl-tick.is-month .tl-label,
+.tl-tick.is-current .tl-label {
+  display: none;
+}
+.tl-month {
+  position: absolute;
+  top: 48px;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  color: var(--dim);
+  white-space: nowrap;
+  padding-left: 4px;
+  border-left: 1px solid rgba(255, 255, 255, 0.18);
+  line-height: 1.1;
+  pointer-events: none;
+}
+@media (max-width: 900px) {
+  .tl-month {
+    display: none;
+  }
+  .tl-month.tl-month-q {
+    display: block;
+  }
+}
+.tl-gap span {
+  bottom: auto;
+  top: -12px;
+}
+.gauge-lead {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  margin: 4px 0 0;
+  padding: 18px 22px;
+  border-radius: var(--radius);
+  border: 1px solid var(--line);
+  background: var(--bg-3);
+}
+.gauge-lead b {
+  font-size: clamp(36px, 5vw, 56px);
+  line-height: 1;
+  color: var(--hh);
+  font-variant-numeric: tabular-nums;
+}
+.gauge-lead span {
+  color: #d5dbe3;
+  font-size: 16px;
+}
