@@ -14,7 +14,7 @@ Status: `used` = already in the code or the app; `planned` = listed in the plan,
 
 | Source | Provider | Type | How we use it | Citation / link | Status |
 |---|---|---|---|---|---|
-| NISAR L2 GCOV, PROVISIONAL V1 (`NISAR_L2_GCOV_PROVISIONAL_V1`, CRID P05023) | NASA/JPL, ASF DAAC | satellite | HH and HV backscatter, track 161 ascending, frame 167, Jun–Oct 2026 | https://www.earthdata.nasa.gov/data/catalog/asf-nisar-l2-gcov-provisional-v1-1 | used |
+| NISAR L2 GCOV, PROVISIONAL V1 (`NISAR_L2_GCOV_PROVISIONAL_V1`, CRID P05023) | NASA/JPL, ASF DAAC | satellite | HH and HV backscatter, track 161 ascending, frame 167, Nov 2025 – Oct 2026 | https://www.earthdata.nasa.gov/data/catalog/asf-nisar-l2-gcov-provisional-v1-1 | used |
 | NISAR L2 GCOV V1 (`NISAR_L2_GCOV_V1`, VALIDATED, CRID P05036) | NASA/JPL, ASF DAAC | satellite | Same as above, for 2026-10-23 | TODO: add collection citation | used |
 | OPERA DIST-ALERT-HLS V1 (`OPERA_L3_DIST-ALERT-HLS_V1`) | NASA JPL / LP DAAC | satellite | Validation: optical vegetation-loss alerts; also used to choose the study area | DOI 10.5067/SNWG/OPERA_L3_DIST-ALERT-HLS_V1.001 | used |
 | Harmonized Landsat Sentinel-2 (HLS) | NASA / USGS / ESA (Sentinel-2: partner data) | satellite | True-color context and visual checks | TODO: add HLS L30/S30 DOIs | planned |

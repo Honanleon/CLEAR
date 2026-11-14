@@ -105,5 +105,5 @@ Earlier attempts (same day), kept for the record:
 
 - Change in cover is not proof of illegality; we have no cadastre or permits.
 - PROVISIONAL products may change in calibration.
-- Five months of data; seasonal effects are only partly covered.
+- About 11 months of data (one wet and one dry season, a single year); wet dates such as 2026-04-26 still add noise, and year-to-year variation is not covered.
 - Out of scope this weekend: interferometry (GUNW, coherence), polarimetric decomposition, machine learning.
