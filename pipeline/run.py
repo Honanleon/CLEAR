@@ -10,11 +10,14 @@ import argparse
 import logging
 import sys
 import time
+from dataclasses import asdict
 from pathlib import Path
 from typing import Any
 
+import numpy as np
 import yaml
 
+from pipeline.export import rgb_png, to_json
 from pipeline.fetch import nisar
 
 log = logging.getLogger("pipeline")
@@ -83,6 +86,62 @@ def stage_fetch(cfg: dict[str, Any], only_dates: list[str] | None = None) -> boo
     return not failed
 
 
+def stage_export(cfg: dict[str, Any]) -> bool:
+    """RGB PNG per date (one shared stretch) and index.json for the web app."""
+    aoi_id = cfg["aoi"]
+    bbox = cfg["aois"][aoi_id]["bbox"]
+    interim = Path(cfg["paths"]["interim"])
+    web_data = Path(cfg["paths"]["web_data"])
+    exp = cfg["export"]
+    scenes = nisar.read_manifest(interim / "nisar_scenes.json")
+
+    channels: dict[str, dict[str, Any]] = {}
+    for s in scenes:
+        tif = nisar.crop_path(interim, aoi_id, s.date)
+        if not tif.exists():
+            log.warning("%s: no crop yet, skipping (run --stage fetch)", s.date)
+            continue
+        lin = rgb_png.load_resampled(tif, bbox, exp["rgb_res_deg"], cfg["detection"]["speckle_window"])
+        channels[s.date] = rgb_png.channels_db(lin["HHHH"], lin["HVHV"])
+    if not channels:
+        log.error("no crops to export")
+        return False
+
+    pooled = {c: np.concatenate([ch[c].ravel() for ch in channels.values()]) for c in rgb_png.CHANNELS}
+    stretch = rgb_png.fit_stretch(pooled, *exp["rgb_percentiles"])
+    rgb_png.save_stretch(stretch, interim / aoi_id / "rgb_stretch.json")
+    log.info("RGB stretch (dB) over %d dates: %s", len(channels), stretch)
+
+    exported = []
+    for s in scenes:
+        if s.date not in channels:
+            continue
+        rel = f"rgb/{s.date}.webp"
+        rgb_png.write_webp(rgb_png.to_rgba(channels[s.date], stretch), web_data / rel, exp["rgb_webp_quality"])
+        log.info("%s: wrote %s (%.0f KB)", s.date, web_data / rel, (web_data / rel).stat().st_size / 1e3)
+        exported.append({**asdict(s), "rgb": rel})
+
+    # Time series for the chart (grid_500m.json); speckle filter not needed at 500 m
+    dates, hv, hh = [], [], []
+    for s in scenes:
+        if s.date not in channels:
+            continue
+        g = rgb_png.resample_to_grid(
+            nisar.crop_path(interim, aoi_id, s.date), bbox, exp["grid_nx"], exp["grid_ny"], speckle_window=1
+        )
+        dates.append(s.date)
+        hv.append(g["HVHV"])
+        hh.append(g["HHHH"])
+    grid_path = web_data / "grid_500m.json"
+    to_json.write_json(to_json.build_grid(bbox, dates, hv, hh), grid_path, compact=True)
+    log.info("wrote %s (%d dates, %.0f KB)", grid_path, len(dates), grid_path.stat().st_size / 1e3)
+
+    index = to_json.build_index(aoi_id, bbox, cfg["nisar"], exported, cfg["detection"])
+    to_json.write_json(index, web_data / "index.json")
+    log.info("wrote %s (%d scenes)", web_data / "index.json", len(exported))
+    return True
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--config", type=Path, default=Path("pipeline/config.yaml"))
@@ -103,6 +162,9 @@ def main(argv: list[str] | None = None) -> int:
     for stage in stages:
         if stage == "fetch":
             if not stage_fetch(cfg, args.dates):
+                return 1
+        elif stage == "export":
+            if not stage_export(cfg):
                 return 1
         else:
             log.error("stage %r is not implemented yet", stage)

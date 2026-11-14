@@ -7,7 +7,7 @@
 General rules:
 - Coordinates are EPSG:4326 (lon, lat).
 - Dates are ISO `YYYY-MM-DD`.
-- PNGs are reprojected to EPSG:4326 before export so they align as a MapLibre `image` source.
+- RGB images are WebP (lossy, quality 80, ~250 KB each), reprojected to EPSG:4326 before export so they align as a MapLibre `image` source. Changed from PNG on 2026-11-14 (PNG was 2.1 MB per date), before any consumer used v1, so `schema_version` stays 1.
 - Every layer shown has a provenance entry: `type` (`satellite`, `modeled` or `measured`), `source` and, for NISAR, maturity (`PROVISIONAL` or `VALIDATED`).
 
 ## `index.json`
@@ -22,7 +22,7 @@ Loaded on startup.
   "nisar": { "track": 161, "direction": "ASCENDING", "frame": 167, "mode": "20+5 DHDH" },
   "scenes": [
     { "date": "2026-06-01", "id": "NISAR_L2_PR_GCOV_021_...", "maturity": "PROVISIONAL", "crid": "P05023",
-      "rgb": "rgb/2026-06-01.png" }
+      "rgb": "rgb/2026-06-01.webp" }
   ],
   "image_coordinates": [[-61.0, -21.55], [-60.4, -21.55], [-60.4, -21.95], [-61.0, -21.95]],
   "detection": { "threshold_db": -3.0, "persistence": 2, "min_area_ha": 5, "n_polygons": 0, "area_ha_total": 0 },
@@ -67,7 +67,9 @@ Time series shown when the user taps the map. Lazy-loaded on the first tap.
 
 - One row per date, aligned with `dates`.
 - Each row holds `nx × ny` cells in row-major order, starting at `origin` (top-left corner).
-- Values are integers in dB × 10, or `null`.
+- Values are integers in dB × 10, or `null`. Each cell is the mean of linear γ⁰ inside it, converted to dB (no normalization).
+- `cell_deg` is exact: bbox width / `nx` and −(bbox height) / `ny`. For `chaco-central-norte` it is `[0.0048, -0.0044944]` (the example above rounds it).
+- The file is minified; about 1 MB raw and ~250 KB gzip for 11 dates.
 - Cell of a point: `col = floor((lon - origin[0]) / cell_deg[0])`, `row = floor((lat - origin[1]) / cell_deg[1])`, index `row * nx + col`.
 
 ## `rain.json`

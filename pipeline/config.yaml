@@ -50,6 +50,13 @@ paths:
   interim: data/interim # crops and the scene manifest; not committed
   web_data: web/public/data # pipeline outputs read by the web app
 
+export:
+  rgb_res_deg: 0.0005 # ~50 m; 1200 x 800 px for chaco-central-norte. 20 m would be too heavy for phones
+  rgb_webp_quality: 80 # ~250 KB per date vs 2.1 MB as PNG (team decision, 2026-11-14)
+  rgb_percentiles: [2, 98] # stretch limits per channel, pooled over all dates (one stretch for the whole time-lapse)
+  grid_nx: 125 # grid_500m.json: 0.6 deg / 125 = 0.0048 deg, about 500 m
+  grid_ny: 89 # 0.4 deg / 89 = 0.0045 deg, about 500 m
+
 detection:
   speckle_window: 5 # 5 x 5 pixels = 100 m at 20 m
   baseline_dates: 3 # Jun 1, Jun 13, Jun 25
