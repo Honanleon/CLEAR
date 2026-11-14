@@ -260,7 +260,7 @@ Una fila por fecha, alineada con `dates`; las celdas van en orden fila por fila;
      - **línea de tiempo con play** en pasos de 12 días;
      - polígonos coloreados por fecha de detección;
      - al tocar: gráfico de HH y HV en el tiempo + barras de lluvia + si hubo alerta óptica.
-  4. **¿Le creemos al radar?:** los dos números de validación y 3 casos lado a lado (radar vs. HLS).
+  4. **¿Le creemos al radar?:** los números de validación y la revisión visual con HLS como texto ("en ~25 de 31 desmontes la imagen óptica muestra potreros nuevos"). **Decisión del equipo (14/11): no se publican recortes de casos (radar vs. HLS)**, porque muestran potreros puntuales en alta resolución y contradicen el anonimato de los hexágonos. Los paneles de revisión quedan fuera del repo.
   5. **Agua bajo el monte** (capítulo 2, si llega).
   6. **Qué sigue:** usos futuros de NISAR, límites del método y créditos.
 - **Requisitos:**
