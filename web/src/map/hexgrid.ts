@@ -1,7 +1,7 @@
 // Parts of this file were generated with AI assistance (Claude Code). See docs/AI_USAGE.md
 //
 // Hexagon aggregation of the clearing polygons, computed in the browser (no change to the data
-// contract). Paraguay is tiled with pointy-top hexagons (default radius 8 km ≈ 16,600 ha); only the
+// contract). Paraguay is tiled with pointy-top hexagons (default radius 24 km ≈ 149,600 ha); only the
 // hexagons that overlap the study area carry radar data, the rest of the country is an empty grid.
 // Each polygon is sampled on a regular point grid; every sample is assigned to the hexagon that
 // contains it and the polygon's area_ha is shared out in proportion. Result: hectares cleared per
@@ -43,8 +43,8 @@ type GeoJSON = { type: "FeatureCollection"; features: unknown[] };
 
 const SQRT3 = Math.sqrt(3);
 
-/** Hexagon radius used across the site: 8 km ≈ 16,600 ha (≈ 166 km²) per hexagon, big enough to see from the whole-country view. */
-export const HEX_RADIUS_M = 8000;
+/** Hexagon radius used across the site: 24 km ≈ 149,600 ha (≈ 1,500 km²) per hexagon, big enough to see from the whole-country view. */
+export const HEX_RADIUS_M = 24000;
 
 /**
  * @param country optional outer ring (lon, lat) of the country: hexagons whose centre falls inside it
