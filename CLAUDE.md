@@ -184,7 +184,7 @@ El 04/11 solo existe el frame 166. Nombre de ejemplo: `NISAR_L2_PR_GCOV_032_161_
 5. **Normalizar:** restar por fecha la mediana de HV de todos los píxeles de bosque de la AOI. Corrige la lluvia y la diferencia PROVISIONAL/VALIDATED, porque en 5 meses casi todo el bosque no cambia. Opcional: un bloque de bosque estable dentro del frame, fuera de la AOI y del PNCAT.
 6. **Detectar:**
    - línea de base = mediana de las 3 primeras fechas (nov–dic 2025);
-   - solo píxeles que en la línea de base parecen bosque (HV normalizado ≥ `min_baseline_db`, −3 dB);
+   - solo píxeles que parecen bosque en **todas** las fechas de la línea de base (HV normalizado ≥ `min_baseline_db`, −2 dB). Más laxo dejaba pasar potreros con rebrote, cultivos y pivotes (verificado con HLS el 14/11);
    - desmonte cuando ΔHV ≤ `threshold_db` en esa fecha y en `persistence` de 3 fechas (2 de 3, tolera una fecha húmeda);
    - fecha de detección = la primera de esas fechas.
 7. **Polígonos:** unir píxeles vecinos (sin separar por fecha) y descartar los menores a `min_area_ha`. Propiedades: fecha (mediana de los píxeles), área (ha) y caída media (dB).
@@ -194,7 +194,7 @@ El 04/11 solo existe el frame 166. Nombre de ejemplo: `NISAR_L2_PR_GCOV_032_161_
 
    Ajustar el umbral **una sola vez** con esos números y documentarlo.
 
-   **Cambio del 14/11 (decisión del equipo):** los números principales son **espaciales** (cualquier fecha del período), no ±24 días. El radar ve el volteo del monte antes que la alerta óptica (mediana: 36 días), así que la ventana de ±24 días contaba como error justo lo que el radar hace mejor. Los números de ±24 días se siguen calculando y publicando (`agreement_pct_24d`, `coverage_pct_24d`) junto con el adelanto (`median_lead_days`). Contrato: `schema_version` 2.
+   **Cambio del 14/11 (decisión del equipo):** los números principales son **espaciales** (cualquier fecha del período), no ±24 días. Los números de ±24 días se siguen calculando y publicando (`agreement_pct_24d`, `coverage_pct_24d`). **Corrección del mismo día:** se había dicho que el radar ve el volteo 36 días antes que el óptico; **no se sostiene**: el chequeo con imágenes HLS mostró que esos eventos eran manejo de potreros ya abiertos. No usar esa afirmación. Contrato: `schema_version` 2.
 9. **RGB por fecha:** R = HH, G = HV, B = HH/HV. Estirar con percentiles fijos para **todas** las fechas (si no, la animación parpadea).
 10. **Exportar** según el contrato (§10).
 
@@ -234,7 +234,7 @@ No cambiarlo sin acordar; si cambia, subir `schema_version`. Coordenadas en EPSG
                   "median_lead_days": 36, "polygons_confirmed": 7, "polygons_total": 23, "reference": "OPERA DIST-ALERT-HLS V1" },
   "provenance": [ { "layer": "rgb", "type": "satellite", "source": "NISAR L2 GCOV (NASA/JPL, ASF DAAC)" } ] }
 ```
-`web/public/data/polygons.geojson`: `FeatureCollection`. Propiedades por feature: `id`, `first_date` (ISO), `area_ha`, `mean_drop_db`, `dist_confirmed` (true, false o null) y `status: "estimado"`.
+`web/public/data/polygons.geojson`: `FeatureCollection` de **hexágonos agregados** (1 km de ancho, `export.hex_width_m`), no de las formas exactas del desmonte, que quedan solo en `data/interim/` (decisión del equipo del 14/11: anonimato de propietarios y protección de grupos en aislamiento). Propiedades por feature: `id`, `first_date` (ISO), `area_ha`, `mean_drop_db`, `dist_confirmed` (true, false o null) y `status: "estimado"`.
 
 `web/public/data/grid_500m.json`: series para el gráfico al tocar el mapa (se carga al primer clic).
 ```json

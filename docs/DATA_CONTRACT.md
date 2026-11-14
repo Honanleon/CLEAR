@@ -45,19 +45,19 @@ Loaded on startup.
 
 ## Changes
 
-- **v2 (2026-11-14):** `agreement_pct` and `coverage_pct` are now spatial (any date) instead of ±24 days; added `agreement_pct_24d`, `coverage_pct_24d`, `median_lead_days`, `polygons_confirmed`, `polygons_total`. Backward compatible: no field was removed or renamed. Reason in `docs/METHODS.md` (validation).
+- **v2 (2026-11-14):** `polygons.geojson` holds aggregated hexagons (same properties, new meaning above); `detection` adds `n_hexes` and `hex_width_m`. Also: `agreement_pct` and `coverage_pct` are now spatial (any date) instead of ±24 days; added `agreement_pct_24d`, `coverage_pct_24d`, `median_lead_days`, `polygons_confirmed`, `polygons_total`. Backward compatible: no field was removed or renamed. Reason in `docs/METHODS.md` (validation).
 
 ## `polygons.geojson`
 
-A `FeatureCollection` of polygons. Properties per feature:
+A `FeatureCollection` of **hexagons** (pointy-top, `hex_width_m` wide, 1000 m by default), aggregating the detected clearing. Exact clearing shapes are never published; they stay in `data/interim/`. `index.json` → `detection.n_hexes` and `detection.hex_width_m` describe the grid. Properties per feature:
 
 | Property | Type | Meaning |
 |---|---|---|
 | `id` | string | Stable id |
-| `first_date` | string (ISO) | Detection date of the polygon: median of its pixels' first-detection dates (±12 days) |
-| `area_ha` | number | Area in hectares |
-| `mean_drop_db` | number | Mean ΔHV in dB (negative) |
-| `dist_confirmed` | `true` / `false` / `null` | Overlaps an OPERA DIST-ALERT alert; `null` = not checked |
+| `first_date` | string (ISO) | Median first-detection date of the cleared pixels in the hexagon (±12 days) |
+| `area_ha` | number | Cleared area inside the hexagon, in hectares (not the hexagon's area) |
+| `mean_drop_db` | number | Mean ΔHV at detection of the cleared pixels, in dB (negative) |
+| `dist_confirmed` | `true` / `false` / `null` | ≥ 20 % of the cleared pixels have an OPERA DIST-ALERT alert; `null` = not checked |
 | `status` | `"estimado"` | Always "estimated"; the UI translates it |
 
 ## `grid_500m.json`

@@ -73,6 +73,8 @@ def build_index(
             "min_area_ha": detection_cfg["min_area_ha"],
             "n_polygons": summary["n_polygons"] if summary else 0,
             "area_ha_total": summary["area_ha_total"] if summary else 0,
+            "n_hexes": (summary or {}).get("n_hexes", 0),
+            "hex_width_m": (summary or {}).get("hex_width_m"),
         },
         "validation": validation_block((summary or {}).get("validation")),
         "provenance": [{"layer": "rgb", "type": "satellite", "source": NISAR_SOURCE}]

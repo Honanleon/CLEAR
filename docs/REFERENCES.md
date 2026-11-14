@@ -26,6 +26,9 @@ Status: `used` = already in the code or the app; `planned` = listed in the plan,
 | Sentinel-1 GRD (C-band, optional) | ESA / Copernicus | satellite | Frequency comparison | TODO | planned (optional) |
 | ESA WorldCover 2021 v200 (10 m) | ESA | satellite | Interim forest mask for detection (`pipeline/fetch/worldcover.py`) and the Paraguay-wide zone screening | Zanaga et al. (2022), doi:10.5281/zenodo.7254221; CC-BY 4.0 | used (screening) |
 | Natural Earth admin-0 / admin-1 boundaries (1:10m) | Natural Earth | modeled | Paraguay and department outlines for the zone screening | https://www.naturalearthdata.com/ (public domain) | used (screening) |
+| Paraguay district boundaries (ADM2, DGEEC 2012) via geoBoundaries | geoBoundaries / DGEEC | modeled | Distance from the study area to the district where the PNCAT is located (ethics check, not shown) | Runfola et al. (2020), geoBoundaries, PLoS ONE 15(4): e0231866; CC-BY 4.0 | used (check) |
+| Resolución N.º 1/2001, Dirección General de Bienes Culturales (Ministerio de Educación y Culto) | Government of Paraguay | — | Legal declaration and administrative location of the PNCAT (district of Puerto Casado, Alto Paraguay), used only to keep the study area away | — | used (ethics) |
+| HLS v2.0 Sentinel-2 (HLSS30), 2025-11-19 and 2026-11-04 | NASA / USGS / ESA | satellite | Colour check of radar detections | doi:10.5067/HLS/HLSS30.002 | used (check) |
 | Landsat animation of the Chaco, 1985–2025 (SVS 15026) | NASA Goddard Space Flight Center Scientific Visualization Studio | satellite | Story cover and demo video | https://svs.gsfc.nasa.gov/15026 | planned |
 
 ## Software libraries
