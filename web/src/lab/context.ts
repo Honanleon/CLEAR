@@ -131,7 +131,7 @@ function buildStudyContextSync(ds: Dataset, fc: PolygonCollection, hex: HexGrid,
         cleared_ha: r1(c.cumHa[scenes.length - 1]),
         first_date: scenes[c.firstT ?? 0]?.date,
       })),
-    hexagons_total: hex.cells.length,
+    hexagons_total: hex.shownCount,
     hexagon_area_ha: Math.round(hex.cells[0]?.areaHa ?? 0),
     rainfall: rainSummary(ds, rain) ?? "no rainfall data",
   };
