@@ -1,7 +1,7 @@
 // Parts of this file were generated with AI assistance (Claude Code). See docs/AI_USAGE.md
 //
 // Hexagon aggregation of the clearing polygons, computed in the browser (no change to the data
-// contract). The study area is tiled with pointy-top hexagons (default radius 2 km ≈ 1,040 ha).
+// contract). The study area is tiled with pointy-top hexagons (default radius 3 km ≈ 2,340 ha).
 // Each polygon is sampled on a regular point grid; every sample is assigned to the hexagon that
 // contains it and the polygon's area_ha is shared out in proportion. Result: hectares cleared per
 // hexagon and per scene date, so the map can colour the cells by "hectares cleared up to date t".
@@ -41,8 +41,8 @@ type GeoJSON = { type: "FeatureCollection"; features: unknown[] };
 
 const SQRT3 = Math.sqrt(3);
 
-/** Hexagon radius used across the site: 2 km ≈ 1,040 ha per hexagon, big enough to read the clearing pattern at a glance. */
-export const HEX_RADIUS_M = 2000;
+/** Hexagon radius used across the site: 3 km ≈ 2,340 ha per hexagon, big enough to read the clearing pattern at a glance. */
+export const HEX_RADIUS_M = 3000;
 
 export function buildHexGrid(aoi: BBox, polygons: PolygonCollection, nScenes: number, radiusM = HEX_RADIUS_M): HexGrid {
   const R = radiusM;
