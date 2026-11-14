@@ -1,7 +1,7 @@
 # CLEAR
 **Chaco L-band Early Alerts from Radar.** NASA Space Apps Challenge 2026, challenge "Dancing with the SARs".
 
-CLEAR is an interactive story map that shows where and when forest is being cleared in Paraguay's central Chaco, using NISAR L-band radar images taken every 12 days between June and October 2026. The signal is a sustained drop in the HV channel: when the forest is cut, the volume scattering from the canopy is lost.
+CLEAR is an interactive story map that shows where and when forest is being cleared in Paraguay's Chaco (northern Boquerón), using NISAR L-band radar images taken every 12 days between November 2025 and October 2026. The signal is a sustained drop in the HV channel: when the forest is cut, the volume scattering from the canopy is lost.
 
 Results are **radar-estimated land-cover change, dated ±12 days**. They do not say anything about the legality of any clearing.
 

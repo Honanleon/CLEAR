@@ -39,7 +39,7 @@ NISAR L2 GCOV, frequency A (20 MHz, ~20 m), HH and HV, γ⁰ linear with radiome
 2. **Speckle.** 5 × 5 pixel (100 m) moving mean, computed on linear γ⁰.
 3. **dB.** `10·log10(γ⁰)`.
 4. **Forest mask.** Planned: MapBiomas Paraguay Collection 2, forest in 2023. **Interim:** ESA WorldCover 2021 v200 tree cover (class 10), averaged onto the 20 m crop grid and kept where the tree fraction is ≥ 0.5 (`pipeline/fetch/worldcover.py`). Because this mask is from 2021, a second condition uses the radar itself: the pixel's normalized HV must be ≥ `min_baseline_db` (−2 dB) on **every** baseline date. Earlier versions used the baseline median with −3 and then −4 dB; the HLS colour check showed that this let through paddocks with regrowth, crops at peak biomass and centre pivots. Without it, the first run flagged 57 polygons (1,456 ha) that were already pasture at baseline (median −4.5 dB) and lost further HV when burned or ploughed; only 2 % of their area matched DIST-ALERT.
-5. **Normalization.** For each date, subtract the median HV of all forest pixels in the AOI. This removes most of the effect of rain and of the PROVISIONAL → VALIDATED change, because almost all forest stays unchanged over five months.
+5. **Normalization.** For each date, subtract the median HV of all forest pixels in the AOI. This removes most of the effect of rain and of the PROVISIONAL → VALIDATED change, because almost all forest in the AOI stays unchanged over the series (about 11 months).
 6. **Detection.**
    - baseline = median of the first 3 dates (2025-11-21, 12-03, 12-15);
    - only pixels that look like forest on every baseline date (see step 4);
@@ -117,5 +117,5 @@ Earlier attempts (same day), kept for the record:
 
 - Change in cover is not proof of illegality; we have no cadastre or permits.
 - PROVISIONAL products may change in calibration.
-- Five months of data; seasonal effects are only partly covered.
+- About 11 months of data (one wet and one dry season, a single year); wet dates such as 2026-04-26 still add noise, and year-to-year variation is not covered.
 - Out of scope this weekend: interferometry (GUNW, coherence), polarimetric decomposition, machine learning.

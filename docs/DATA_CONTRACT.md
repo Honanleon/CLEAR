@@ -80,7 +80,7 @@ Time series shown when the user taps the map. Lazy-loaded on the first tap.
 - Each row holds `nx × ny` cells in row-major order, starting at `origin` (top-left corner).
 - Values are integers in dB × 10, or `null`. Each cell is the mean of linear γ⁰ inside it, converted to dB (no normalization).
 - `cell_deg` is exact: bbox width / `nx` and −(bbox height) / `ny`. For `chaco-central-norte` it is `[0.0048, -0.0044944]` (the example above rounds it).
-- The file is minified; about 1 MB raw and ~250 KB gzip for 11 dates.
+- The file is minified; about 2.7 MB raw and ~530 KB gzip for 26 dates.
 - Cell of a point: `col = floor((lon - origin[0]) / cell_deg[0])`, `row = floor((lat - origin[1]) / cell_deg[1])`, index `row * nx + col`.
 
 ## `rain.json`
