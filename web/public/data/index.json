@@ -1,0 +1,250 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-11-14T12:20:56-03:00",
+  "aoi": {
+    "id": "chaco-central-norte",
+    "bbox": [
+      -60.78,
+      -21.73,
+      -60.18,
+      -21.33
+    ]
+  },
+  "nisar": {
+    "track": 161,
+    "direction": "ASCENDING",
+    "frame": 167,
+    "mode": "20+5 DHDH"
+  },
+  "scenes": [
+    {
+      "date": "2025-11-21",
+      "id": "NISAR_L2_PR_GCOV_005_161_A_167_2005_DHDH_A_20251121T095757_20251121T095836_P05023_N_F_J_001",
+      "maturity": "PROVISIONAL",
+      "crid": "P05023",
+      "rgb": "rgb/2025-11-21.webp"
+    },
+    {
+      "date": "2025-12-03",
+      "id": "NISAR_L2_PR_GCOV_006_161_A_167_2005_DHDH_A_20251203T095758_20251203T095834_P05023_N_F_J_001",
+      "maturity": "PROVISIONAL",
+      "crid": "P05023",
+      "rgb": "rgb/2025-12-03.webp"
+    },
+    {
+      "date": "2025-12-15",
+      "id": "NISAR_L2_PR_GCOV_007_161_A_167_2005_DHDH_A_20251215T095759_20251215T095835_P05023_N_F_J_001",
+      "maturity": "PROVISIONAL",
+      "crid": "P05023",
+      "rgb": "rgb/2025-12-15.webp"
+    },
+    {
+      "date": "2025-12-27",
+      "id": "NISAR_L2_PR_GCOV_008_161_A_167_2005_DHDH_A_20251227T095759_20251227T095835_P05023_N_F_J_001",
+      "maturity": "PROVISIONAL",
+      "crid": "P05023",
+      "rgb": "rgb/2025-12-27.webp"
+    },
+    {
+      "date": "2026-01-08",
+      "id": "NISAR_L2_PR_GCOV_009_161_A_167_2005_DHDH_A_20260108T095800_20260108T095836_P05023_N_F_J_001",
+      "maturity": "PROVISIONAL",
+      "crid": "P05023",
+      "rgb": "rgb/2026-01-08.webp"
+    },
+    {
+      "date": "2026-01-20",
+      "id": "NISAR_L2_PR_GCOV_010_161_A_167_2005_DHDH_A_20260120T095800_20260120T095837_P05023_N_F_J_001",
+      "maturity": "PROVISIONAL",
+      "crid": "P05023",
+      "rgb": "rgb/2026-01-20.webp"
+    },
+    {
+      "date": "2026-02-01",
+      "id": "NISAR_L2_PR_GCOV_011_161_A_167_2005_DHDH_A_20260201T095801_20260201T095837_P05023_N_F_J_001",
+      "maturity": "PROVISIONAL",
+      "crid": "P05023",
+      "rgb": "rgb/2026-02-01.webp"
+    },
+    {
+      "date": "2026-02-13",
+      "id": "NISAR_L2_PR_GCOV_012_161_A_167_2005_DHDH_A_20260213T095801_20260213T095838_P05023_N_F_J_001",
+      "maturity": "PROVISIONAL",
+      "crid": "P05023",
+      "rgb": "rgb/2026-02-13.webp"
+    },
+    {
+      "date": "2026-02-25",
+      "id": "NISAR_L2_PR_GCOV_013_161_A_167_2005_DHDH_A_20260225T095802_20260225T095838_P05023_N_F_J_001",
+      "maturity": "PROVISIONAL",
+      "crid": "P05023",
+      "rgb": "rgb/2026-02-25.webp"
+    },
+    {
+      "date": "2026-03-09",
+      "id": "NISAR_L2_PR_GCOV_014_161_A_167_2005_DHDH_A_20260309T095802_20260309T095838_P05023_N_F_J_001",
+      "maturity": "PROVISIONAL",
+      "crid": "P05023",
+      "rgb": "rgb/2026-03-09.webp"
+    },
+    {
+      "date": "2026-03-21",
+      "id": "NISAR_L2_PR_GCOV_015_161_A_167_2005_DHDH_A_20260321T095802_20260321T095839_P05023_N_F_J_001",
+      "maturity": "PROVISIONAL",
+      "crid": "P05023",
+      "rgb": "rgb/2026-03-21.webp"
+    },
+    {
+      "date": "2026-04-02",
+      "id": "NISAR_L2_PR_GCOV_016_161_A_167_2005_DHDH_A_20260402T095802_20260402T095839_P05023_N_F_J_001",
+      "maturity": "PROVISIONAL",
+      "crid": "P05023",
+      "rgb": "rgb/2026-04-02.webp"
+    },
+    {
+      "date": "2026-04-26",
+      "id": "NISAR_L2_PR_GCOV_018_161_A_167_2005_DHDH_A_20260426T095802_20260426T095838_P05023_N_F_J_001",
+      "maturity": "PROVISIONAL",
+      "crid": "P05023",
+      "rgb": "rgb/2026-04-26.webp"
+    },
+    {
+      "date": "2026-05-08",
+      "id": "NISAR_L2_PR_GCOV_019_161_A_167_2005_DHDH_A_20260508T095801_20260508T095838_P05023_N_F_J_001",
+      "maturity": "PROVISIONAL",
+      "crid": "P05023",
+      "rgb": "rgb/2026-05-08.webp"
+    },
+    {
+      "date": "2026-05-20",
+      "id": "NISAR_L2_PR_GCOV_020_161_A_167_2005_DHDH_A_20260520T095801_20260520T095837_P05023_N_F_J_001",
+      "maturity": "PROVISIONAL",
+      "crid": "P05023",
+      "rgb": "rgb/2026-05-20.webp"
+    },
+    {
+      "date": "2026-06-01",
+      "id": "NISAR_L2_PR_GCOV_021_161_A_167_2005_DHDH_A_20260601T095800_20260601T095836_P05023_N_F_J_001",
+      "maturity": "PROVISIONAL",
+      "crid": "P05023",
+      "rgb": "rgb/2026-06-01.webp"
+    },
+    {
+      "date": "2026-06-13",
+      "id": "NISAR_L2_PR_GCOV_022_161_A_167_2005_DHDH_A_20260613T095759_20260613T095836_P05023_N_F_J_001",
+      "maturity": "PROVISIONAL",
+      "crid": "P05023",
+      "rgb": "rgb/2026-06-13.webp"
+    },
+    {
+      "date": "2026-06-25",
+      "id": "NISAR_L2_PR_GCOV_023_161_A_167_2005_DHDH_A_20260625T095758_20260625T095835_P05023_N_F_J_002",
+      "maturity": "PROVISIONAL",
+      "crid": "P05023",
+      "rgb": "rgb/2026-06-25.webp"
+    },
+    {
+      "date": "2026-07-07",
+      "id": "NISAR_L2_PR_GCOV_024_161_A_167_2005_DHDH_A_20260707T095757_20260707T095836_P05023_N_F_J_001",
+      "maturity": "PROVISIONAL",
+      "crid": "P05023",
+      "rgb": "rgb/2026-07-07.webp"
+    },
+    {
+      "date": "2026-07-19",
+      "id": "NISAR_L2_PR_GCOV_025_161_A_167_2005_DHDH_A_20260719T095757_20260719T095836_P05023_N_F_J_001",
+      "maturity": "PROVISIONAL",
+      "crid": "P05023",
+      "rgb": "rgb/2026-07-19.webp"
+    },
+    {
+      "date": "2026-08-24",
+      "id": "NISAR_L2_PR_GCOV_028_161_A_167_2005_DHDH_A_20260824T095756_20260824T095834_P05023_N_F_J_001",
+      "maturity": "PROVISIONAL",
+      "crid": "P05023",
+      "rgb": "rgb/2026-08-24.webp"
+    },
+    {
+      "date": "2026-09-05",
+      "id": "NISAR_L2_PR_GCOV_029_161_A_167_2005_DHDH_A_20260905T095755_20260905T095834_P05023_N_F_J_002",
+      "maturity": "PROVISIONAL",
+      "crid": "P05023",
+      "rgb": "rgb/2026-09-05.webp"
+    },
+    {
+      "date": "2026-09-17",
+      "id": "NISAR_L2_PR_GCOV_030_161_A_167_2005_DHDH_A_20260917T095755_20260917T095834_P05023_N_F_J_001",
+      "maturity": "PROVISIONAL",
+      "crid": "P05023",
+      "rgb": "rgb/2026-09-17.webp"
+    },
+    {
+      "date": "2026-09-29",
+      "id": "NISAR_L2_PR_GCOV_031_161_A_167_2005_DHDH_A_20260929T095756_20260929T095834_P05023_N_F_J_001",
+      "maturity": "PROVISIONAL",
+      "crid": "P05023",
+      "rgb": "rgb/2026-09-29.webp"
+    },
+    {
+      "date": "2026-10-11",
+      "id": "NISAR_L2_PR_GCOV_032_161_A_167_2005_DHDH_A_20261011T095756_20261011T095834_P05023_N_F_J_001",
+      "maturity": "PROVISIONAL",
+      "crid": "P05023",
+      "rgb": "rgb/2026-10-11.webp"
+    },
+    {
+      "date": "2026-10-23",
+      "id": "NISAR_L2_PR_GCOV_033_161_A_167_2005_DHDH_A_20261023T095756_20261023T095832_P05036_N_F_J_001",
+      "maturity": "VALIDATED",
+      "crid": "P05036",
+      "rgb": "rgb/2026-10-23.webp"
+    }
+  ],
+  "image_coordinates": [
+    [
+      -60.78,
+      -21.33
+    ],
+    [
+      -60.18,
+      -21.33
+    ],
+    [
+      -60.18,
+      -21.73
+    ],
+    [
+      -60.78,
+      -21.73
+    ]
+  ],
+  "detection": {
+    "threshold_db": -3.0,
+    "persistence": 2,
+    "min_area_ha": 5,
+    "n_polygons": 23,
+    "area_ha_total": 565.9
+  },
+  "validation": {
+    "agreement_pct": 9.5,
+    "coverage_pct": 10.4,
+    "reference": "OPERA DIST-ALERT-HLS V1"
+  },
+  "provenance": [
+    {
+      "layer": "rgb",
+      "type": "satellite",
+      "source": "NISAR L2 GCOV (NASA/JPL, ASF DAAC)"
+    },
+    {
+      "layer": "polygons",
+      "type": "satellite",
+      "source": "CLEAR change detection on NISAR L2 GCOV (NASA/JPL, ASF DAAC), HV"
+    },
+    {
+      "layer": "forest_mask",
+      "type": "satellite",
+      "source": "ESA WorldCover 2021 v200 (tree cover), CC-BY 4.0"
+    }
+  ]
+}
