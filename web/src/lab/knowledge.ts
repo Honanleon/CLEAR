@@ -43,14 +43,14 @@ CLEAR (Chaco L-band Early Alerts from Radar) is a team project for the NASA Spac
 8. Validation against OPERA DIST-ALERT (see below).
 9. RGB composite per date: R = HH (dB), G = HV (dB), B = HH/HV (dB), one fixed stretch (2nd–98th percentiles pooled over all dates) so the animation does not flicker; 1200 x 800 px, about 50 m. Forest looks yellow-green (high HV); cleared pasture looks blue-violet (low HV, high HH/HV); fresh clearing with windrows can look pink.
 - Chart series (grid_500m.json): each date averaged in linear γ⁰ onto a 125 x 89 grid of about 500 m cells, stored in dB. These cell values are NOT normalized per date (the detection uses normalized HV per pixel), so they can differ from the detection numbers.
-- Map hexagons: the web app divides the study area into 104 pointy-top hexagons of 3 km radius (about 2,340 ha each); edge hexagons that only overlap the area are counted too, so no clearing is lost. Each clearing polygon is sampled on a point grid and its area is shared among the hexagons it covers, so hexagon totals add up exactly to the polygon totals. Hexagons summarize; they do not add detections.
+- Map hexagons: the web app divides the study area into 29 pointy-top hexagons of 6 km radius (about 9,350 ha or 93 km² each, roughly the size of a city); edge hexagons that only overlap the area are counted too, so no clearing is lost. Each clearing polygon is sampled on a point grid and its area is shared among the hexagons it covers, so hexagon totals add up exactly to the polygon totals. Hexagons summarize; they do not add detections.
 
 ## Parameters (final)
 speckle_window 5 (100 m); baseline_dates 3; min_baseline_db −4.0 dB (dry Chaco forest starts near −3 dB, old pasture near −4.6 dB); threshold_db −3.0 dB (chosen once with the validation numbers; the ASF NISAR Cookbook example uses −2 dB); persistence 2 of 3 dates; min_area_ha 5 (matches the optical comparison filter); normalization: per-date forest median.
 
 ## Results (this data release)
 - 23 clearing polygons, 565.9 ha in total, polygons from 5.1 to 88.6 ha. Detection dates range from February to September 2026 (most in March–April and in July).
-- 9 of the 104 map hexagons contain clearing; the busiest hexagon has about 164 ha cleared.
+- 7 of the 29 map hexagons contain clearing; the busiest hexagon has about 250 ha cleared.
 
 ## Validation (headline numbers, data contract v2)
 - Optical alert = VEG-DIST-STATUS 6 or 8 (confirmed ≥ 50 % vegetation loss), first-disturbance date between the first radar date and the last radar date + 24 days, inside the forest mask, patches ≥ 5 ha. 518 ha of optical alerts in forest in the area.
@@ -82,7 +82,7 @@ speckle_window 5 (100 m); baseline_dates 3; min_baseline_db −4.0 dB (dry Chaco
 Interferometric coherence (NISAR GUNW) to date clearings more precisely; polarimetric decomposition to separate trunks, soil and canopy; comparison with Sentinel-1 C-band to show why L-band matters; machine learning trained on optical alerts; MapBiomas 2023 forest mask; alerts every 12 days over the whole Chaco; supply-chain traceability; wetlands and floods (e.g. Ñeembucú, July 2026).
 
 ## Glossary
-γ⁰ (gamma-nought): normalized radar backscatter. dB: decibel, 10·log10 of power. HH / HV: polarization channels. GCOV: NISAR geocoded covariance product. CRID: composite release id of a product version. PROVISIONAL / VALIDATED: product maturity. Speckle: grainy radar noise. Baseline: reference HV before change. ΔHV: change of normalized HV from the baseline. DIST-ALERT: OPERA optical disturbance alerts. HLS: Harmonized Landsat Sentinel-2. WorldCover: ESA global land-cover map. Windrow: row of piled felled trunks. Hexagon: map cell of about 2,340 ha used to summarize clearings.
+γ⁰ (gamma-nought): normalized radar backscatter. dB: decibel, 10·log10 of power. HH / HV: polarization channels. GCOV: NISAR geocoded covariance product. CRID: composite release id of a product version. PROVISIONAL / VALIDATED: product maturity. Speckle: grainy radar noise. Baseline: reference HV before change. ΔHV: change of normalized HV from the baseline. DIST-ALERT: OPERA optical disturbance alerts. HLS: Harmonized Landsat Sentinel-2. WorldCover: ESA global land-cover map. Windrow: row of piled felled trunks. Hexagon: map cell of about 9,350 ha used to summarize clearings.
 
 ## About this test page
 - Background imagery: Sentinel-2 cloudless 2024 (EOX), for context only; it is not used in the detection.
