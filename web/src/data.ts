@@ -1,0 +1,202 @@
+// Parts of this file were generated with AI assistance (Claude Code). See docs/AI_USAGE.md
+//
+// Types and loaders for the pipeline -> web data contract (docs/DATA_CONTRACT.md, schema_version 1).
+// Real data lives in web/public/data/. In `npm run dev` only, if that folder is empty, the app
+// falls back to the synthetic fixtures in web/fixtures/ and flags itself as synthetic.
+
+export type Maturity = "PROVISIONAL" | "VALIDATED";
+export type ProvenanceType = "satellite" | "modeled" | "measured";
+export type LngLat = [number, number];
+export type BBox = [number, number, number, number];
+
+export interface Scene {
+  date: string;
+  id: string;
+  maturity: Maturity;
+  crid: string;
+  rgb: string;
+}
+
+export interface Provenance {
+  layer: string;
+  type: ProvenanceType;
+  source: string;
+}
+
+export interface IndexData {
+  schema_version: number;
+  generated_at: string;
+  aoi: { id: string; bbox: BBox };
+  nisar: { track: number; direction: string; frame: number; mode: string };
+  scenes: Scene[];
+  image_coordinates: [LngLat, LngLat, LngLat, LngLat];
+  detection: { threshold_db: number; persistence: number; min_area_ha: number; n_polygons: number; area_ha_total: number };
+  validation: { agreement_pct: number | null; coverage_pct: number | null; reference: string };
+  provenance: Provenance[];
+}
+
+export interface PolygonProps {
+  id: string;
+  first_date: string;
+  area_ha: number;
+  mean_drop_db: number;
+  dist_confirmed: boolean | null;
+  status: string;
+  /** Added by the web app: index of the scene of first_date. */
+  t?: number;
+}
+
+export type PolygonGeometry =
+  | { type: "Polygon"; coordinates: LngLat[][] }
+  | { type: "MultiPolygon"; coordinates: LngLat[][][] };
+
+export interface PolygonFeature {
+  type: "Feature";
+  id?: string | number;
+  geometry: PolygonGeometry;
+  properties: PolygonProps;
+}
+
+export interface PolygonCollection {
+  type: "FeatureCollection";
+  features: PolygonFeature[];
+}
+
+export interface Grid {
+  dates: string[];
+  origin: LngLat;
+  cell_deg: [number, number];
+  nx: number;
+  ny: number;
+  hv_db_x10: (number | null)[][];
+  hh_db_x10: (number | null)[][];
+}
+
+export interface Rain {
+  dates: string[];
+  mm: number[];
+  source: string;
+  point: LngLat;
+}
+
+export const SUPPORTED_SCHEMA = 1;
+/** Baseline = median of the first N dates (CLAUDE.md §9 step 6, config.yaml detection.baseline_dates). */
+export const BASELINE_DATES = 3;
+/** Instrument gap with no acquisitions (CLAUDE.md §8.1). */
+export const INSTRUMENT_GAP: [string, string] = ["2026-07-27", "2026-08-10"];
+/** Study area, used only when no data has been exported yet. */
+export const DEFAULT_BBOX: BBox = [-61.0, -21.95, -60.4, -21.55];
+
+async function fetchJson<T>(url: string): Promise<T> {
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`${res.status} ${url}`);
+  return (await res.json()) as T;
+}
+
+export class Dataset {
+  private cache = new Map<string, Promise<unknown>>();
+
+  constructor(
+    readonly index: IndexData,
+    readonly base: string,
+    readonly synthetic: boolean,
+  ) {}
+
+  url(path: string): string {
+    return new URL(path, this.base).href;
+  }
+
+  private json<T>(path: string): Promise<T> {
+    let p = this.cache.get(path);
+    if (!p) {
+      p = fetchJson<T>(this.url(path));
+      p.catch(() => this.cache.delete(path));
+      this.cache.set(path, p);
+    }
+    return p as Promise<T>;
+  }
+
+  /** Polygons with `t` (scene index of first_date) added, sorted by date. */
+  async polygons(): Promise<PolygonCollection> {
+    const fc = await this.json<PolygonCollection>("polygons.geojson");
+    const dates = this.index.scenes.map((s) => s.date);
+    fc.features.forEach((f, i) => {
+      f.id = i;
+      let t = dates.indexOf(f.properties.first_date);
+      if (t < 0) t = dates.filter((d) => d <= f.properties.first_date).length - 1;
+      f.properties.t = Math.max(0, t);
+    });
+    return fc;
+  }
+
+  grid(): Promise<Grid> {
+    return this.json<Grid>("grid_500m.json");
+  }
+
+  rain(): Promise<Rain | null> {
+    return this.json<Rain>("rain.json").catch(() => null);
+  }
+
+  provenance(layer: string): Provenance | undefined {
+    return this.index.provenance.find((p) => p.layer === layer);
+  }
+
+  sceneUrl(i: number): string {
+    const scene = this.index.scenes[i];
+    return scene ? this.url(scene.rgb) : "";
+  }
+}
+
+export async function loadDataset(): Promise<Dataset | null> {
+  const candidates: [string, boolean][] = [];
+  const forceFixtures = import.meta.env.DEV && new URLSearchParams(location.search).has("fixtures");
+  if (!forceFixtures) candidates.push([new URL("data/", document.baseURI).href, false]);
+  if (import.meta.env.DEV) candidates.push([new URL("/fixtures/data/", location.origin).href, true]);
+
+  for (const [base, fromFixtures] of candidates) {
+    try {
+      const index = await fetchJson<IndexData>(`${base}index.json`);
+      if (!Array.isArray(index.scenes) || index.scenes.length === 0) continue;
+      if (index.schema_version !== SUPPORTED_SCHEMA) {
+        console.warn(`CLEAR: index.json schema_version ${index.schema_version}, web expects ${SUPPORTED_SCHEMA}`);
+      }
+      // Defensive: also flag fixtures that were copied into public/data by mistake.
+      const synthetic = fromFixtures || index.scenes.some((s) => s.id.includes("SYNTHETIC"));
+      return new Dataset(index, base, synthetic);
+    } catch {
+      /* not there (or the dev server answered with HTML): try the next source */
+    }
+  }
+  return null;
+}
+
+/** Bounding box of a polygon or multipolygon. */
+export function featureBBox(geom: PolygonGeometry): BBox {
+  const rings = geom.type === "Polygon" ? geom.coordinates : geom.coordinates.flat();
+  let [x0, y0, x1, y1] = [Infinity, Infinity, -Infinity, -Infinity];
+  for (const ring of rings) {
+    for (const [x, y] of ring) {
+      if (x < x0) x0 = x;
+      if (y < y0) y0 = y;
+      if (x > x1) x1 = x;
+      if (y > y1) y1 = y;
+    }
+  }
+  return [x0, y0, x1, y1];
+}
+
+export function median(values: number[]): number | null {
+  if (values.length === 0) return null;
+  const s = [...values].sort((a, b) => a - b);
+  const m = Math.floor(s.length / 2);
+  return s.length % 2 ? (s[m] as number) : ((s[m - 1] as number) + (s[m] as number)) / 2;
+}
+
+/** Sequential palette for detection dates (early = pale gold, late = hot magenta). */
+export const DATE_PALETTE = ["#ffe07a", "#ffb03a", "#ff6b3d", "#ff2f6d", "#d63cff"];
+
+export function dateColor(t: number, tMin: number, tMax: number): string {
+  const n = DATE_PALETTE.length - 1;
+  const f = tMax > tMin ? Math.min(1, Math.max(0, (t - tMin) / (tMax - tMin))) : 1;
+  return DATE_PALETTE[Math.round(f * n)] as string;
+}

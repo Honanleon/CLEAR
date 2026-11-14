@@ -101,9 +101,10 @@ pytest pipeline/tests
 
 # Web
 cd web && npm install
-npm run dev          # local
+npm run fixtures     # datos SINTÉTICOS para desarrollo (web/fixtures/, no se commitean)
+npm run dev          # local; si web/public/data/ está vacío usa los sintéticos y lo avisa
 npm run build        # genera web/dist
-npm run check        # typecheck + lint + tamaño del bundle
+npm run check        # typecheck + chequeo de claves i18n + build + tamaño del bundle
 ```
 - **Dependencias del pipeline:** `asf_search`, `earthaccess`, `fsspec`, `aiohttp`, `h5py`, `h5netcdf`, `xarray`, `rioxarray`, `rasterio`, `numpy`, `scipy`, `shapely`, `geopandas`, `pyproj`, `pillow`, `pyyaml`, `requests`, `pytest`, `ruff`.
 - **Secretos:**

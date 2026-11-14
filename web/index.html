@@ -1,0 +1,298 @@
+<!doctype html>
+<!-- Parts of this file were generated with AI assistance (Claude Code). See docs/AI_USAGE.md -->
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>CLEAR</title>
+    <meta name="description" content="" data-i18n-attr="content:meta.description" />
+    <meta name="theme-color" content="#0a0d12" />
+    <meta name="color-scheme" content="dark" />
+    <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
+  </head>
+  <body>
+    <a class="skip" href="#map" data-i18n="nav.skip"></a>
+    <div class="synthetic-banner" id="synthetic-banner" role="status" hidden>
+      <span data-i18n="synthetic.banner"></span>
+    </div>
+
+    <header class="topbar" id="topbar">
+      <a class="brand" href="#top" aria-label="CLEAR">
+        <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true">
+          <circle cx="16" cy="16" r="3" />
+          <path d="M9 9a10 10 0 0 0 0 14M23 9a10 10 0 0 1 0 14M5 5a15.5 15.5 0 0 0 0 22M27 5a15.5 15.5 0 0 1 0 22" />
+        </svg>
+        <span>CLEAR</span>
+      </a>
+      <nav class="nav" aria-label="CLEAR">
+        <a href="#chapter" data-i18n="nav.chapter"></a>
+        <a href="#radar" data-i18n="nav.radar"></a>
+        <a href="#map" data-i18n="nav.map"></a>
+        <a href="#trust" data-i18n="nav.trust"></a>
+        <a href="#next" data-i18n="nav.next"></a>
+      </nav>
+      <button class="lang" id="lang-toggle" type="button" data-i18n="nav.lang_toggle" data-i18n-attr="aria-label:nav.lang_label"></button>
+      <div class="progress" aria-hidden="true"><span id="progress-bar"></span></div>
+    </header>
+
+    <main>
+      <!-- 1. Cover -->
+      <section class="hero" id="top">
+        <div class="hero-stage" aria-hidden="true">
+          <canvas id="hero-canvas"></canvas>
+          <div class="hero-grid"></div>
+        </div>
+        <div class="hero-vignette" aria-hidden="true"></div>
+        <div class="hero-content">
+          <p class="kicker" data-i18n="hero.kicker"></p>
+          <h1 class="hero-title" data-i18n-attr="aria-label:hero.title">
+            <span class="hero-title-word" aria-hidden="true" data-i18n="hero.title"></span>
+          </h1>
+          <p class="hero-expansion" data-i18n="hero.expansion"></p>
+          <p class="hero-phrase" data-i18n="hero.phrase"></p>
+          <div class="hero-actions">
+            <a class="btn btn-primary" href="#map" data-i18n="hero.cta"></a>
+            <a class="btn btn-ghost" href="#radar" data-i18n="hero.more"></a>
+          </div>
+        </div>
+        <div class="hud" aria-hidden="true">
+          <div class="hud-row"><span data-i18n="hero.hud_pass"></span><b id="hud-pass">01/11</b></div>
+          <div class="hud-row"><span data-i18n="hero.hud_date"></span><b id="hud-date">—</b></div>
+          <div class="hud-row"><span data-i18n="hero.hud_signal"></span><b id="hud-signal">—</b></div>
+          <small data-i18n="hero.hud_note"></small>
+        </div>
+        <a class="scroll-cue" href="#chapter"><span data-i18n="hero.scroll"></span><i aria-hidden="true"></i></a>
+      </section>
+
+      <!-- Chapter 1 intro -->
+      <section class="chapter" id="chapter">
+        <div class="wrap">
+          <p class="kicker reveal" data-i18n="chapter.kicker"></p>
+          <h2 class="display reveal" data-i18n="chapter.title"></h2>
+          <p class="lede reveal" data-i18n="chapter.body"></p>
+          <div class="stats">
+            <div class="stat reveal">
+              <b data-i18n="chapter.stat_area_value"></b>
+              <span data-i18n="chapter.stat_area_label"></span>
+            </div>
+            <div class="stat reveal">
+              <b id="stat-scenes">11</b>
+              <span data-i18n="chapter.stat_scenes_label"></span>
+            </div>
+            <div class="stat reveal">
+              <b data-i18n="chapter.stat_revisit_value"></b>
+              <span data-i18n="chapter.stat_revisit_label"></span>
+            </div>
+            <div class="stat reveal">
+              <b data-i18n="chapter.stat_wave_value"></b>
+              <span data-i18n="chapter.stat_wave_label"></span>
+            </div>
+          </div>
+          <p class="note reveal" data-i18n="chapter.why"></p>
+        </div>
+      </section>
+
+      <!-- 2. How radar sees -->
+      <section class="radar" id="radar">
+        <div class="wrap">
+          <p class="kicker reveal" data-i18n="radar.kicker"></p>
+          <h2 class="display reveal" data-i18n="radar.title"></h2>
+          <p class="lede reveal" data-i18n="radar.body"></p>
+
+          <div class="radar-lab reveal" id="radar-lab" data-channel="hv">
+            <div class="radar-figure" id="radar-figure"></div>
+            <div class="radar-panel">
+              <p class="eyebrow" data-i18n="radar.choose"></p>
+              <div class="seg" role="group" id="radar-seg">
+                <button type="button" data-channel="hh" data-i18n="radar.btn_hh"></button>
+                <button type="button" data-channel="hv" data-i18n="radar.btn_hv"></button>
+                <button type="button" data-channel="ratio" data-i18n="radar.btn_ratio"></button>
+              </div>
+              <p class="radar-desc" id="radar-desc"></p>
+              <div class="meters" id="radar-meters"></div>
+              <div class="contrast">
+                <b id="radar-contrast">−7</b>
+                <span><em data-i18n="radar.unit_db"></em> <span data-i18n="radar.contrast"></span></span>
+              </div>
+              <p class="fineprint" data-i18n="radar.illustrative"></p>
+            </div>
+          </div>
+
+          <h3 class="section-sub reveal" data-i18n="radar.drivers_title"></h3>
+          <div class="drivers">
+            <article class="driver reveal">
+              <svg viewBox="0 0 48 48" aria-hidden="true"><path d="M24 6c-7 6-12 11-12 18a12 12 0 0 0 24 0c0-7-5-12-12-18z" /><path d="M24 30v12" /></svg>
+              <h4 data-i18n="radar.driver_volume_title"></h4>
+              <p data-i18n="radar.driver_volume_body"></p>
+            </article>
+            <article class="driver reveal">
+              <svg viewBox="0 0 48 48" aria-hidden="true"><path d="M6 34h36M8 28h32M10 22h28" /><circle cx="12" cy="28" r="2" /><circle cx="30" cy="22" r="2" /><circle cx="22" cy="34" r="2" /></svg>
+              <h4 data-i18n="radar.driver_windrows_title"></h4>
+              <p data-i18n="radar.driver_windrows_body"></p>
+            </article>
+            <article class="driver reveal">
+              <svg viewBox="0 0 48 48" aria-hidden="true"><path d="M24 42c-8 0-13-5-13-12 0-6 4-9 6-14 2 4 4 5 6 5 0-6 2-11 6-15 0 8 10 12 10 24 0 7-6 12-15 12z" /></svg>
+              <h4 data-i18n="radar.driver_fire_title"></h4>
+              <p data-i18n="radar.driver_fire_body"></p>
+            </article>
+            <article class="driver reveal">
+              <svg viewBox="0 0 48 48" aria-hidden="true"><path d="M14 20a10 10 0 0 1 19-4 8 8 0 0 1 1 16H14a6 6 0 0 1 0-12z" /><path d="M16 38l-2 5M24 38l-2 5M32 38l-2 5" /></svg>
+              <h4 data-i18n="radar.driver_moisture_title"></h4>
+              <p data-i18n="radar.driver_moisture_body"></p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <!-- 3. The map -->
+      <section class="map-section" id="map">
+        <div class="wrap map-intro">
+          <p class="kicker reveal" data-i18n="map.kicker"></p>
+          <h2 class="display reveal" data-i18n="map.title"></h2>
+          <p class="lede reveal" data-i18n="map.body"></p>
+          <p class="ethics reveal" data-i18n="map.ethics"></p>
+        </div>
+        <div class="map-shell" id="map-shell">
+          <div class="map-canvas" id="map-a"></div>
+          <div class="map-canvas map-b" id="map-b" hidden></div>
+          <div class="swipe" id="swipe" hidden>
+            <div class="swipe-line"></div>
+            <button class="swipe-knob" id="swipe-knob" type="button" role="slider" aria-valuemin="0" aria-valuemax="100" aria-valuenow="50" data-i18n-attr="aria-label:map.swipe_label">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l-6 6 6 6M15 6l6 6-6 6" /></svg>
+            </button>
+            <span class="swipe-tag swipe-tag-a" id="swipe-tag-a"></span>
+            <span class="swipe-tag swipe-tag-b" id="swipe-tag-b"></span>
+          </div>
+          <div class="map-watermark" id="map-watermark" hidden><span data-i18n="synthetic.watermark"></span></div>
+          <div class="map-status" id="map-status"><span class="spinner" aria-hidden="true"></span><span data-i18n="map.loading"></span></div>
+          <div class="map-ui" id="map-ui" hidden></div>
+        </div>
+        <div class="guide" id="guide">
+          <div class="wrap">
+            <p class="kicker reveal" data-i18n="guide.kicker"></p>
+            <h3 class="guide-title reveal" data-i18n="guide.title"></h3>
+            <div class="guide-stats reveal" id="guide-stats"></div>
+            <div class="guide-grid">
+              <article class="guide-card reveal">
+                <h4 data-i18n="guide.colors_title"></h4>
+                <div class="guide-ramp" id="guide-ramp"></div>
+                <p data-i18n="guide.colors_body"></p>
+              </article>
+              <article class="guide-card reveal">
+                <h4 data-i18n="guide.radar_title"></h4>
+                <div class="chip-row">
+                  <span class="chip chip-r" data-i18n="radar.legend_r"></span>
+                  <span class="chip chip-g" data-i18n="radar.legend_g"></span>
+                  <span class="chip chip-b" data-i18n="radar.legend_b"></span>
+                </div>
+                <ul class="swatches">
+                  <li><i class="sw sw-forest"></i><span data-i18n="radar.legend_forest"></span></li>
+                  <li><i class="sw sw-pasture"></i><span data-i18n="radar.legend_pasture"></span></li>
+                  <li><i class="sw sw-fresh"></i><span data-i18n="radar.legend_fresh"></span></li>
+                </ul>
+                <p data-i18n="guide.radar_body"></p>
+              </article>
+              <article class="guide-card reveal">
+                <h4 data-i18n="guide.chart_title"></h4>
+                <svg class="guide-chart" viewBox="0 0 300 130" aria-hidden="true">
+                  <line class="gc-limit" x1="10" x2="290" y1="72" y2="72" />
+                  <text class="gc-label gc-label-limit" x="288" y="66" text-anchor="end" data-i18n="guide.chart_demo_limit"></text>
+                  <polyline class="gc-line" points="12,34 46,30 80,36 114,32 148,35 168,96 202,100 236,97 270,101 290,99" />
+                  <circle class="gc-dot" cx="168" cy="96" r="5" />
+                  <text class="gc-label" x="14" y="22" data-i18n="guide.chart_demo_forest"></text>
+                  <text class="gc-label gc-label-cut" x="176" y="122" data-i18n="guide.chart_demo_cut"></text>
+                </svg>
+                <p data-i18n="guide.chart_body"></p>
+              </article>
+            </div>
+            <div class="guide-steps reveal">
+              <h4 data-i18n="guide.steps_title"></h4>
+              <ol>
+                <li data-i18n="guide.step1"></li>
+                <li data-i18n="guide.step2"></li>
+                <li data-i18n="guide.step3"></li>
+              </ol>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 4. Can we trust the radar? -->
+      <section class="trust" id="trust">
+        <div class="wrap">
+          <p class="kicker reveal" data-i18n="trust.kicker"></p>
+          <h2 class="display reveal" data-i18n="trust.title"></h2>
+          <p class="lede reveal" data-i18n="trust.body"></p>
+          <div class="gauges reveal" id="gauges"></div>
+          <p class="cases-sentence reveal" id="cases-sentence"></p>
+          <h3 class="section-sub reveal" data-i18n="trust.cases_title"></h3>
+          <div class="cases" id="cases"></div>
+          <p class="fineprint reveal" data-i18n="trust.disclaimer"></p>
+        </div>
+      </section>
+
+      <!-- 6. What's next -->
+      <section class="next" id="next">
+        <div class="wrap">
+          <p class="kicker reveal" data-i18n="next.kicker"></p>
+          <h2 class="display reveal" data-i18n="next.title"></h2>
+          <p class="lede reveal" data-i18n="next.body"></p>
+          <div class="uses">
+            <article class="use reveal">
+              <span class="use-num">12d</span>
+              <h3 data-i18n="next.use_alerts_title"></h3>
+              <p data-i18n="next.use_alerts_body"></p>
+            </article>
+            <article class="use reveal">
+              <span class="use-num">↺</span>
+              <h3 data-i18n="next.use_trace_title"></h3>
+              <p data-i18n="next.use_trace_body"></p>
+            </article>
+            <article class="use reveal">
+              <span class="use-num">≈</span>
+              <h3 data-i18n="next.use_wetlands_title"></h3>
+              <p data-i18n="next.use_wetlands_body"></p>
+            </article>
+          </div>
+          <div class="two-col">
+            <div class="reveal">
+              <h3 class="section-sub" data-i18n="next.limits_title"></h3>
+              <ul class="ticks" data-i18n-list="next.limits"></ul>
+            </div>
+            <div class="reveal">
+              <h3 class="section-sub" data-i18n="next.steps_title"></h3>
+              <ul class="ticks ticks-next" data-i18n-list="next.steps"></ul>
+            </div>
+          </div>
+          <div class="credits reveal">
+            <h3 class="section-sub" data-i18n="next.credits_title"></h3>
+            <ul>
+              <li data-i18n="next.credit_nisar"></li>
+              <li data-i18n="next.credit_opera"></li>
+              <li data-i18n="next.credit_mapbiomas"></li>
+              <li data-i18n="next.credit_power"></li>
+              <li data-i18n="next.credit_basemap"></li>
+              <li data-i18n="next.credit_labels"></li>
+              <li data-i18n="next.credit_software"></li>
+              <li data-i18n="next.credit_ai"></li>
+            </ul>
+            <p class="credit-links">
+              <a href="https://github.com/Honanleon/CLEAR" rel="noopener" data-i18n="next.repo"></a>
+              <a href="https://github.com/Honanleon/CLEAR/blob/main/docs/REFERENCES.md" rel="noopener" data-i18n="next.references"></a>
+            </p>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <div class="wrap footer-row">
+        <p data-i18n="footer.made"></p>
+        <p class="footer-ethics" data-i18n="map.ethics"></p>
+        <a href="#top" data-i18n="footer.top"></a>
+      </div>
+    </footer>
+
+    <script type="module" src="./src/main.ts"></script>
+  </body>
+</html>
