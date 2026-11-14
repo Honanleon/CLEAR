@@ -58,13 +58,14 @@ Cada feature tiene que poder ubicarse en uno de estos puntos. Si no encaja, preg
 
 ## 5. Arquitectura: sitio estático en hosting compartido
 ```
-[pipeline/ Python, en laptops o Colab]  →  web/public/data/*  →  [web/ Vite build]  →  dist/  →  FTP  →  hosting compartido (HTTPS)
+[pipeline/ Python, en laptops o Colab]  →  web/public/data/*  →  [web/ Vite build]  →  dist/  →  SSH (tar)  →  hosting compartido (HTTPS)
 ```
 - **No hay backend.** En el servidor no corre Python, Node ni base de datos. No agregues código de servidor.
 - Todo lo pesado se **precalcula** en `pipeline/` y se exporta como PNG, GeoJSON y JSON: descarga NISAR, recorte, dB, detección y validación.
 - El navegador solo dibuja: mapa, deslizador, línea de tiempo, gráficos y textos.
 - **La demo nunca depende de una llamada en vivo.** Todo lo que se muestra está en `web/public/data/`.
-- Hosting: subdominio con SSL, `.htaccess` para compresión gzip, caché y tipos MIME. Espejo de respaldo en GitHub Pages.
+- Hosting: cPanel compartido, sin `rsync`. Producción en `https://clear.rohayhu.org`, staging en `https://staging.rohayhu.org` (los dos con SSL de Let's Encrypt). `.htaccess` para compresión gzip, caché y tipos MIME. Espejo de respaldo en GitHub Pages.
+- Deploy: `deploy/deploy.sh <build_dir> <docroot>` sube el build por SSH con `tar`, lo deja en `~/releases/` (guarda los últimos 3) y lo copia al docroot sin tocar `.well-known`, `.user.ini` ni `php.ini`. Si `web/` todavía no existe, sube `deploy/placeholder/`.
 
 ## 6. Estructura del repo (convención; crear así)
 ```
@@ -86,7 +87,8 @@ web/
   .htaccess
 docs/
   REFERENCES.md  AI_USAGE.md  DATA_CONTRACT.md  METHODS.md
-.github/workflows/deploy.yml   # FTP: rama staging → staging.<dominio>; tag v* → producción
+deploy/deploy.sh               # subida por SSH (tar), usada por el workflow
+.github/workflows/deploy.yml   # rama staging → staging.rohayhu.org; tag v* → clear.rohayhu.org
 ```
 
 ## 7. Comandos (mantenerlos así; actualizar esta sección si cambian)
@@ -106,7 +108,7 @@ npm run check        # typecheck + lint + tamaño del bundle
 - **Dependencias del pipeline:** `asf_search`, `earthaccess`, `fsspec`, `aiohttp`, `h5py`, `h5netcdf`, `xarray`, `rioxarray`, `rasterio`, `numpy`, `scipy`, `shapely`, `geopandas`, `pyproj`, `pillow`, `pyyaml`, `requests`, `pytest`, `ruff`.
 - **Secretos:**
   - Token de Earthdata Login en `.env` (`EARTHDATA_TOKEN=...`), que está en `.gitignore`.
-  - Credenciales FTP **solo** en GitHub Actions Secrets.
+  - Credenciales de deploy (clave SSH, host, puerto, usuario, known_hosts) **solo** en GitHub Actions Secrets: `DEPLOY_SSH_KEY`, `DEPLOY_KNOWN_HOSTS`, `DEPLOY_HOST`, `DEPLOY_PORT`, `DEPLOY_USER`.
   - El repo es público: nunca commitees credenciales.
 
 ## 8. Datos

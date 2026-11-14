@@ -1,0 +1,65 @@
+# Parts of this file were generated with AI assistance (Claude Code). See docs/AI_USAGE.md
+#
+# Static deploy over SSH (tar stream; the host has no rsync). See deploy/deploy.sh.
+#   push to branch `staging`  -> https://staging.rohayhu.org
+#   push of a tag `v*`        -> https://clear.rohayhu.org (production; frozen after submission)
+#   manual run                -> staging only
+# Secrets: DEPLOY_SSH_KEY, DEPLOY_KNOWN_HOSTS, DEPLOY_HOST, DEPLOY_PORT, DEPLOY_USER
+name: deploy
+
+on:
+  push:
+    branches: [staging]
+    tags: ["v*"]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-${{ startsWith(github.ref, 'refs/tags/v') && 'production' || 'staging' }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      DOCROOT: ${{ startsWith(github.ref, 'refs/tags/v') && 'clear.rohayhu.org' || 'staging.rohayhu.org' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        if: hashFiles('web/package.json') != ''
+        with:
+          node-version: 22
+
+      - name: Build
+        run: |
+          if [ -f web/package.json ]; then
+            cd web && npm ci && npm run build && cd ..
+            echo "SRC=web/dist" >> "$GITHUB_ENV"
+          else
+            echo "web/ not set up yet: deploying the placeholder page"
+            echo "SRC=deploy/placeholder" >> "$GITHUB_ENV"
+          fi
+
+      - name: Configure SSH
+        env:
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_PORT: ${{ secrets.DEPLOY_PORT }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+        run: |
+          install -d -m 700 ~/.ssh
+          printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/deploy_key && chmod 600 ~/.ssh/deploy_key
+          printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          printf 'Host deploy-target\n  HostName %s\n  Port %s\n  User %s\n  IdentityFile ~/.ssh/deploy_key\n  IdentitiesOnly yes\n  BatchMode yes\n  StrictHostKeyChecking yes\n' \
+            "$DEPLOY_HOST" "$DEPLOY_PORT" "$DEPLOY_USER" > ~/.ssh/config
+
+      - name: Deploy
+        run: DEPLOY_SSH_HOST=deploy-target deploy/deploy.sh "$SRC" "$DOCROOT"
+
+      - name: Smoke test
+        run: curl -fsS -o /dev/null -w "HTTP %{http_code}\n" "https://$DOCROOT/"

@@ -68,7 +68,8 @@ All licenses must be compatible with Apache-2.0. Re-check them with `pip-license
 | ASF Vertex (https://search.asf.alaska.edu/) | Manual check of available dates |
 | Claude Code (Anthropic) | AI coding assistant; see `docs/AI_USAGE.md` |
 | GitHub, GitHub Pages | Code hosting and backup mirror |
+| GitHub Actions, OpenSSH, tar | Deploy pipeline (`.github/workflows/deploy.yml`, `deploy/deploy.sh`) |
 
 ## Acknowledgements
 
-- Web hosting: TODO, add the hosting provider's name (acknowledgement only, no advertising).
+- Web hosting: MaxDominios (shared cPanel hosting). Acknowledgement only.
