@@ -48,7 +48,7 @@ export function initGuide(ds: Dataset | null): void {
       head,
       card(fmt.num(total), t("guide.stat_total"), t("guide.fields_total", { n: fmt.num(total / SOCCER_FIELD_HA) }), "gstat-hot"),
       card(fmt.num(feats.length), t("guide.stat_zones")),
-      card(`${fmt.num(hexWith)}/${fmt.num(grid.shownCount)}`, t("guide.stat_largest")),
+      card(`${fmt.num(hexWith)}/${fmt.num(grid.studiedCount)}`, t("guide.stat_largest")),
       card(checked.length ? `${fmt.num(yes)}/${fmt.num(checked.length)}` : t("common.pending"), t("guide.stat_confirmed")),
     );
 

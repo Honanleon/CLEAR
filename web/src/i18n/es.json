@@ -127,13 +127,14 @@
     "coach": "👆 Tocá un hexágono de color para ver qué pasó ahí",
     "help": "¿Cómo leo el mapa?",
     "more": "Más opciones",
-    "hex_size": "Cada hexágono mide unas {ha} ha."
+    "hex_size": "Cada hexágono mide unas {ha} ha.",
+    "hex_nodata": "Fuera del recuadro, los hexágonos vacíos todavía no tienen datos de radar: no quiere decir que no haya desmonte."
   },
   "zone": {
     "title_cleared": "Zona desmontada",
     "title_forest": "Sin desmonte detectado acá",
     "title_outside": "Fuera de la zona de estudio",
-    "outside_body": "Analizamos un área de 60 × 45 km al norte de Mariscal Estigarribia. Tocá dentro del recuadro punteado.",
+    "outside_body": "Este hexágono todavía no tiene datos de radar. Analizamos un área de 60 × 45 km al norte de Mariscal Estigarribia: tocá un hexágono dentro del recuadro punteado.",
     "area": "Superficie",
     "area_value": "{ha} ha",
     "fields": "≈ {n} canchas de fútbol",

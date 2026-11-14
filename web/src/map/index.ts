@@ -13,6 +13,7 @@ import { BASELINE_DATES, type Dataset, HEX_GRADIENT, HEX_STOPS, INSTRUMENT_GAP, 
 import { fmt, lang, onLang, t } from "../i18n";
 import { Timeline } from "../timeline/timeline";
 import { buildHexGrid, HEX_RADIUS_M, type HexCell } from "./hexgrid";
+import paraguay from "./paraguay.json";
 import { PARAGUAY_BBOX, RadarMap } from "./radar-map";
 import { center, nearestTown, SOCCER_FIELD_HA } from "./zone";
 
@@ -61,7 +62,8 @@ export async function initMapSection(ds: Dataset): Promise<void> {
     polygons = { type: "FeatureCollection", features: [] };
   }
   const byId = new Map(polygons.features.map((f) => [f.id as number, f]));
-  const hex = buildHexGrid(aoi, polygons, scenes.length, HEX_RADIUS_M);
+  // hexagons over all of Paraguay; only the ones over the study area have radar data
+  const hex = buildHexGrid(aoi, polygons, scenes.length, HEX_RADIUS_M, paraguay as [number, number][]);
   const newArea = scenes.map(() => 0);
   for (const f of polygons.features) {
     const k = f.properties.t ?? 0;
@@ -204,6 +206,7 @@ export async function initMapSection(ds: Dataset): Promise<void> {
 
     body.append(h("p", "panel-label", t("map.legend_polys")), hexLegend());
     body.append(h("p", "panel-note", t("map.hex_size", { ha: fmt.num(hex.cells[0]?.areaHa ?? 0) })));
+    body.append(h("p", "panel-note", t("map.hex_nodata")));
 
     const zoomedOut = mapA.map.getZoom() < 8.5;
     // the offline test map only has imagery around the study area: no "all of Paraguay" view there

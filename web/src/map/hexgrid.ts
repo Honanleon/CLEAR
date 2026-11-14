@@ -1,7 +1,8 @@
 // Parts of this file were generated with AI assistance (Claude Code). See docs/AI_USAGE.md
 //
 // Hexagon aggregation of the clearing polygons, computed in the browser (no change to the data
-// contract). The study area is tiled with pointy-top hexagons (default radius 6 km ≈ 9,350 ha, about the size of a city).
+// contract). Paraguay is tiled with pointy-top hexagons (default radius 8 km ≈ 16,600 ha); only the
+// hexagons that overlap the study area carry radar data, the rest of the country is an empty grid.
 // Each polygon is sampled on a regular point grid; every sample is assigned to the hexagon that
 // contains it and the polygon's area_ha is shared out in proportion. Result: hectares cleared per
 // hexagon and per scene date, so the map can colour the cells by "hectares cleared up to date t".
@@ -10,8 +11,8 @@ import type { BBox, LngLat as XY, PolygonCollection, PolygonGeometry } from "../
 
 export interface HexCell {
   id: number;
-  /** Centre inside the study area. Edge cells (centre outside, hexagon overlapping it) exist so no clearing is lost; they are drawn only when they hold clearing. */
-  inside: boolean;
+  /** Overlaps the study area, so it has radar data. The other cells only complete the grid over Paraguay: no data, not "no clearing". */
+  studied: boolean;
   center: XY;
   ring: XY[];
   areaHa: number;
@@ -28,12 +29,13 @@ export interface HexGrid {
   cells: HexCell[];
   /** Only the cells with some clearing, with a{t} = cumulative ha at scene t. */
   data: GeoJSON;
-  /** Every cell of the study area (outline grid). */
+  /** Every cell (outline grid); property s = 1 when the cell has radar data. */
   outline: GeoJSON;
   /** Number of cells whose first clearing is at each scene index. */
   newCells: number[];
-  /** Hexagons drawn on the map: centre inside the study area, or holding clearing. */
-  shownCount: number;
+  /** Hexagons that overlap the study area (the ones with radar data). */
+  studiedCount: number;
+  /** The studied hexagon at a point, or null (outside the study area: no data). */
   locate(lon: number, lat: number): HexCell | null;
 }
 
@@ -41,10 +43,14 @@ type GeoJSON = { type: "FeatureCollection"; features: unknown[] };
 
 const SQRT3 = Math.sqrt(3);
 
-/** Hexagon radius used across the site: 6 km ≈ 9,350 ha (≈ 93 km², city-sized) per hexagon, big enough to read the clearing pattern at a glance. */
-export const HEX_RADIUS_M = 6000;
+/** Hexagon radius used across the site: 8 km ≈ 16,600 ha (≈ 166 km²) per hexagon, big enough to see from the whole-country view. */
+export const HEX_RADIUS_M = 8000;
 
-export function buildHexGrid(aoi: BBox, polygons: PolygonCollection, nScenes: number, radiusM = HEX_RADIUS_M): HexGrid {
+/**
+ * @param country optional outer ring (lon, lat) of the country: hexagons whose centre falls inside it
+ * are added around the study area, with no data, so the grid covers the whole map.
+ */
+export function buildHexGrid(aoi: BBox, polygons: PolygonCollection, nScenes: number, radiusM = HEX_RADIUS_M, country?: XY[]): HexGrid {
   const R = radiusM;
   const lon0 = (aoi[0] + aoi[2]) / 2;
   const lat0 = (aoi[1] + aoi[3]) / 2;
@@ -55,21 +61,30 @@ export function buildHexGrid(aoi: BBox, polygons: PolygonCollection, nScenes: nu
 
   const [xmin, ymin] = toXY(aoi[0], aoi[1]);
   const [xmax, ymax] = toXY(aoi[2], aoi[3]);
+  const countryXY = country?.map(([lon, lat]) => toXY(lon, lat));
+  // extent of the loop: the country when given, else the study area
+  let [ex0, ey0, ex1, ey1] = [xmin, ymin, xmax, ymax];
+  for (const [x, y] of countryXY ?? []) {
+    ex0 = Math.min(ex0, x);
+    ey0 = Math.min(ey0, y);
+    ex1 = Math.max(ex1, x);
+    ey1 = Math.max(ey1, y);
+  }
   const center = (q: number, r: number): XY => [R * SQRT3 * (q + r / 2), R * 1.5 * r];
 
   const cells: HexCell[] = [];
   const byKey = new Map<string, HexCell>();
   const areaHa = ((3 * SQRT3) / 2) * R * R * 1e-4;
-  const rMin = Math.floor(ymin / (1.5 * R)) - 1;
-  const rMax = Math.ceil(ymax / (1.5 * R)) + 1;
+  const rMin = Math.floor(ey0 / (1.5 * R)) - 1;
+  const rMax = Math.ceil(ey1 / (1.5 * R)) + 1;
   for (let r = rMin; r <= rMax; r++) {
-    const qMin = Math.floor(xmin / (R * SQRT3) - r / 2) - 1;
-    const qMax = Math.ceil(xmax / (R * SQRT3) - r / 2) + 1;
+    const qMin = Math.floor(ex0 / (R * SQRT3) - r / 2) - 1;
+    const qMax = Math.ceil(ex1 / (R * SQRT3) - r / 2) + 1;
     for (let q = qMin; q <= qMax; q++) {
       const [cx, cy] = center(q, r);
-      // keep every hexagon that overlaps the study area (centre within one radius of it)
-      if (cx < xmin - R || cx > xmax + R || cy < ymin - R || cy > ymax + R) continue;
-      const inside = cx >= xmin && cx <= xmax && cy >= ymin && cy <= ymax;
+      // every hexagon that overlaps the study area (centre within one radius of it) has data
+      const studied = !(cx < xmin - R || cx > xmax + R || cy < ymin - R || cy > ymax + R);
+      if (!studied && !(countryXY && insideRings(cx, cy, [countryXY]))) continue;
       const ring: XY[] = [];
       for (let i = 0; i <= 6; i++) {
         const a = ((60 * (i % 6) - 30) * Math.PI) / 180;
@@ -77,7 +92,7 @@ export function buildHexGrid(aoi: BBox, polygons: PolygonCollection, nScenes: nu
       }
       const cell: HexCell = {
         id: cells.length,
-        inside,
+        studied,
         center: toLL(cx, cy),
         ring,
         areaHa,
@@ -161,21 +176,20 @@ export function buildHexGrid(aoi: BBox, polygons: PolygonCollection, nScenes: nu
     dataFeatures.push({ type: "Feature", id: cell.id, properties: props, geometry: { type: "Polygon", coordinates: [cell.ring] } });
   }
 
-  const shown = cells.filter((c) => c.inside || c.firstT !== null);
   return {
     radiusM: R,
     cells,
-    shownCount: shown.length,
+    studiedCount: cells.filter((c) => c.studied).length,
     data: { type: "FeatureCollection", features: dataFeatures },
     outline: {
       type: "FeatureCollection",
-      features: shown.map((c) => ({ type: "Feature", id: c.id, properties: { id: c.id }, geometry: { type: "Polygon", coordinates: [c.ring] } })),
+      features: cells.map((c) => ({ type: "Feature", id: c.id, properties: { id: c.id, s: c.studied ? 1 : 0 }, geometry: { type: "Polygon", coordinates: [c.ring] } })),
     },
     newCells,
     locate: (lon, lat) => {
-      if (lon < aoi[0] || lon > aoi[2] || lat < aoi[1] || lat > aoi[3]) return null;
       const [x, y] = toXY(lon, lat);
-      return locateXY(x, y);
+      const cell = locateXY(x, y);
+      return cell?.studied ? cell : null;
     },
   };
 }

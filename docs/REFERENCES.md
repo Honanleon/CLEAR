@@ -27,6 +27,7 @@ Status: `used` = already in the code or the app; `planned` = listed in the plan,
 | Sentinel-1 GRD (C-band, optional) | ESA / Copernicus | satellite | Frequency comparison | TODO | planned (optional) |
 | ESA WorldCover 2021 v200 (10 m) | ESA | satellite | Interim forest mask for detection (`pipeline/fetch/worldcover.py`) and the Paraguay-wide zone screening | Zanaga et al. (2022), doi:10.5281/zenodo.7254221; CC-BY 4.0 | used (screening) |
 | Natural Earth admin-0 / admin-1 boundaries (1:10m) | Natural Earth | modeled | Paraguay and department outlines for the zone screening | https://www.naturalearthdata.com/ (public domain) | used (screening) |
+| Natural Earth admin-0 countries (1:50m, v5.1.2) | Natural Earth | modeled | Outline of Paraguay (257 points, `web/src/map/paraguay.json`) to tile the whole country with the web map's hexagon grid | https://www.naturalearthdata.com/ · https://github.com/nvkelso/natural-earth-vector (public domain) | used |
 | Landsat animation of the Chaco, 1985–2025 (SVS 15026) | NASA Goddard Space Flight Center Scientific Visualization Studio | satellite | Story cover and demo video | https://svs.gsfc.nasa.gov/15026 | planned |
 
 ## Software libraries

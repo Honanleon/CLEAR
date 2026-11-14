@@ -127,13 +127,14 @@
     "coach": "👆 Tap a colored hexagon to see what happened there",
     "help": "How do I read the map?",
     "more": "More options",
-    "hex_size": "Each hexagon covers about {ha} ha."
+    "hex_size": "Each hexagon covers about {ha} ha.",
+    "hex_nodata": "Outside the dashed box, empty hexagons have no radar data yet: that does not mean there is no clearing."
   },
   "zone": {
     "title_cleared": "Cleared area",
     "title_forest": "No clearing detected here",
     "title_outside": "Outside the study area",
-    "outside_body": "We analyze a 60 × 45 km area north of Mariscal Estigarribia. Tap inside the dashed box.",
+    "outside_body": "This hexagon has no radar data yet. We analyze a 60 × 45 km area north of Mariscal Estigarribia: tap a hexagon inside the dashed box.",
     "area": "Size",
     "area_value": "{ha} ha",
     "fields": "≈ {n} soccer fields",

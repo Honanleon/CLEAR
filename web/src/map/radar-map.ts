@@ -208,13 +208,24 @@ export class RadarMap {
 
   private addOverlays() {
     const m = this.map;
-    // the study area divided into hexagons
+    // Paraguay divided into hexagons: the ones without radar data are shaded so they never read as "no clearing"
+    const studied = ["==", ["get", "s"], 1];
+    m.addLayer({
+      id: "hex-nodata",
+      type: "fill",
+      source: "hexgrid",
+      filter: ["==", ["get", "s"], 0],
+      paint: { "fill-color": "#0b0f14", "fill-opacity": ["interpolate", ["linear"], ["zoom"], 5, 0.14, 10, 0.22] as never },
+    });
     m.addLayer({
       id: "hex-grid",
       type: "line",
       source: "hexgrid",
-      minzoom: 8,
-      paint: { "line-color": "#ffffff", "line-opacity": ["interpolate", ["linear"], ["zoom"], 8, 0.06, 11, 0.22], "line-width": 0.8 },
+      paint: {
+        "line-color": "#ffffff",
+        "line-opacity": ["interpolate", ["linear"], ["zoom"], 5, ["case", studied, 0.4, 0.16], 11, ["case", studied, 0.3, 0.12]] as never,
+        "line-width": ["interpolate", ["linear"], ["zoom"], 5, 0.5, 10, 1] as never,
+      },
     });
     m.addLayer({
       id: "hex-fill",
