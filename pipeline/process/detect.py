@@ -1,8 +1,8 @@
 # Parts of this file were generated with AI assistance (Claude Code). See docs/AI_USAGE.md
 """Change detection: sustained drop of normalized HV against a baseline.
 
-A pixel is flagged at date i (i >= baseline_dates) when delta <= threshold_db at dates
-i .. i + persistence - 1. Its detection date is i, the first of those dates.
+A pixel is flagged at date i (i >= baseline_dates) when delta <= threshold_db at date i and at
+`persistence` of the dates i .. i + window - 1. Its detection date is i.
 """
 
 from __future__ import annotations
@@ -19,18 +19,23 @@ def baseline(stack: np.ndarray, n: int) -> np.ndarray:
     return np.nanmedian(stack[:n], axis=0).astype(np.float32)
 
 
-def first_detection(delta: np.ndarray, threshold_db: float, persistence: int, start: int) -> np.ndarray:
-    """Index of the first date that starts a run of `persistence` dates with delta <= threshold.
+def first_detection(
+    delta: np.ndarray, threshold_db: float, persistence: int, start: int, window: int | None = None
+) -> np.ndarray:
+    """Index of the first date i >= start where delta[i] <= threshold and at least `persistence`
+    of the dates i .. i + window - 1 are <= threshold (window defaults to `persistence`, i.e. consecutive).
 
+    A window larger than `persistence` tolerates one date that bounces back (e.g. a wet date on bare soil).
     NaN never counts as a drop. Returns NO_DETECTION (-1) where nothing is found.
     """
+    window = window or persistence
     below = np.nan_to_num(delta, nan=np.inf) <= threshold_db
     n = delta.shape[0]
     first = np.full(delta.shape[1:], NO_DETECTION, dtype=np.int16)
-    for i in range(start, n - persistence + 1):
-        run = np.all(below[i : i + persistence], axis=0)
-        new = run & (first == NO_DETECTION)
-        first[new] = i
+    for i in range(start, n):
+        hits = below[i : i + window].sum(axis=0)
+        ok = below[i] & (hits >= persistence) & (first == NO_DETECTION)
+        first[ok] = i
     return first
 
 

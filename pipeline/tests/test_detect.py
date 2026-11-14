@@ -8,7 +8,7 @@ from affine import Affine
 from pipeline.fetch.worldcover import tile_names
 from pipeline.process.detect import NO_DETECTION, baseline, first_detection, sanity_checks
 from pipeline.process.normalize import forest_medians, normalize
-from pipeline.process.polygons import label_by_date, polygons
+from pipeline.process.polygons import label_components, polygons
 
 DATES = [f"2026-{m:02d}-01" for m in range(1, 8)]  # 7 dates
 
@@ -79,13 +79,15 @@ def test_sanity_flags_median_jump_and_mass_detection():
     assert ok.problems == ()
 
 
-def test_label_by_date_splits_touching_blocks_with_different_dates():
-    first = np.full((4, 6), NO_DETECTION, np.int16)
-    first[:, 0:3] = 3
-    first[:, 3:6] = 4
-    labels, date_of = label_by_date(first)
-    assert sorted(date_of) == [3, 4]
-    assert len(np.unique(labels[labels > 0])) == 2
+def test_label_components_merges_touching_dates_and_uses_median():
+    first = np.full((4, 7), NO_DETECTION, np.int16)
+    first[:, 0:3] = 3  # 12 px on date 3
+    first[:, 3:5] = 4  # 8 px on date 4, touching
+    first[0, 6] = 9  # separate pixel
+    labels, date_of = label_components(first)
+    assert len(date_of) == 2
+    assert date_of[labels[0, 0] - 1] == 3  # median of 12 x 3 and 8 x 4
+    assert labels[0, 0] == labels[0, 4] != labels[0, 6]
 
 
 def test_polygons_filter_by_area_and_carry_properties():
@@ -110,3 +112,15 @@ def test_polygons_filter_by_area_and_carry_properties():
     assert feats[0]["geometry"]["type"] == "Polygon"
     lon, lat = feats[0]["geometry"]["coordinates"][0][0]
     assert -62.2 < lon < -61.9 and -21.8 < lat < -21.6  # easting 600 km in UTM 20S: western Chaco
+
+
+def test_two_of_three_tolerates_one_bounce():
+    delta = np.zeros((8, 1, 3), np.float32)
+    delta[[3, 5, 6], 0, 0] = -4  # drop, bounce at 4 (wet date), drop again
+    delta[[3, 6], 0, 1] = -4  # two drops but 3 dates apart: not 2 of 3
+    delta[4, 0, 2] = -4  # bounce first: the run must start with a drop
+    delta[[5], 0, 2] = -4
+    consecutive = first_detection(delta, -3.0, 2, 3)
+    two_of_three = first_detection(delta, -3.0, 2, 3, window=3)
+    assert consecutive[0].tolist() == [5, NO_DETECTION, 4]
+    assert two_of_three[0].tolist() == [3, NO_DETECTION, 4]

@@ -55,7 +55,11 @@ def build_index(
             "n_polygons": summary["n_polygons"] if summary else 0,
             "area_ha_total": summary["area_ha_total"] if summary else 0,
         },
-        "validation": {"agreement_pct": None, "coverage_pct": None, "reference": "OPERA DIST-ALERT-HLS V1"},
+        "validation": {
+            "agreement_pct": (summary or {}).get("validation", {}).get("agreement_pct_tol"),
+            "coverage_pct": (summary or {}).get("validation", {}).get("coverage_pct_tol"),
+            "reference": "OPERA DIST-ALERT-HLS V1",
+        },
         "provenance": [{"layer": "rgb", "type": "satellite", "source": NISAR_SOURCE}]
         + (
             [

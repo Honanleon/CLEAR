@@ -1,5 +1,5 @@
 # Parts of this file were generated with AI assistance (Claude Code). See docs/AI_USAGE.md
-"""Group flagged pixels into polygons, one detection date per polygon, and export GeoJSON (EPSG:4326)."""
+"""Group neighbouring flagged pixels into polygons (median detection date each) and export GeoJSON (EPSG:4326)."""
 
 from __future__ import annotations
 
@@ -13,19 +13,19 @@ from scipy import ndimage
 from pipeline.process.detect import NO_DETECTION
 
 
-def label_by_date(first: np.ndarray) -> tuple[np.ndarray, list[int]]:
-    """Connected components (8-neighbour) of pixels sharing the same detection date.
+def label_components(first: np.ndarray) -> tuple[np.ndarray, list[int]]:
+    """Connected components (8-neighbour) of all flagged pixels, whatever their detection date.
 
-    Returns a label image (0 = background) and, for each label k (1-based), its date index.
+    Neighbouring pixels of one clearing often get different dates (radar noise, felling over weeks),
+    so splitting by date fragments a clearing into pieces below the minimum area.
+    Returns a label image (0 = background) and, per label k (1-based), the median date index of its pixels.
     """
-    labels = np.zeros(first.shape, dtype=np.int32)
-    date_of: list[int] = []
-    for d in np.unique(first[first != NO_DETECTION]):
-        lab, n = ndimage.label(first == d, structure=np.ones((3, 3)))
-        m = lab > 0
-        labels[m] = lab[m] + len(date_of)
-        date_of.extend([int(d)] * n)
-    return labels, date_of
+    flagged = first != NO_DETECTION
+    labels, n = ndimage.label(flagged, structure=np.ones((3, 3)))
+    if n == 0:
+        return labels.astype(np.int32), []
+    med = ndimage.median(first.astype(np.float64), labels, index=np.arange(1, n + 1))
+    return labels.astype(np.int32), [int(np.floor(m)) for m in np.atleast_1d(med)]
 
 
 def polygons(
@@ -47,7 +47,7 @@ def polygons(
     from shapely.ops import unary_union
 
     px_ha = abs(transform.a * transform.e) / 1e4
-    labels, date_of = label_by_date(first)
+    labels, date_of = label_components(first)
     if not date_of:
         return []
     idx = np.arange(1, len(date_of) + 1)

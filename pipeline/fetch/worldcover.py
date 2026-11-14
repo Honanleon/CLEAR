@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import math
 from collections.abc import Sequence
+from pathlib import Path
 
 import numpy as np
 from affine import Affine
@@ -16,6 +17,14 @@ from affine import Affine
 URL = "https://esa-worldcover.s3.eu-central-1.amazonaws.com/v200/2021/map/ESA_WorldCover_10m_2021_v200_{}_Map.tif"
 TREE_COVER = 10  # WorldCover class "Tree cover"
 SOURCE = "ESA WorldCover 2021 v200 (tree cover), CC-BY 4.0"
+# Without timeouts GDAL can wait forever on a stalled HTTP connection (seen on 2026-11-14).
+GDAL_HTTP = {
+    "GDAL_DISABLE_READDIR_ON_OPEN": "EMPTY_DIR",
+    "GDAL_HTTP_TIMEOUT": "60",
+    "GDAL_HTTP_CONNECTTIMEOUT": "20",
+    "GDAL_HTTP_MAX_RETRY": "3",
+    "GDAL_HTTP_RETRY_DELAY": "5",
+}
 
 
 def tile_names(bbox: Sequence[float]) -> list[str]:
@@ -37,7 +46,7 @@ def forest_mask(bbox: Sequence[float], dst_transform: Affine, dst_shape: tuple[i
     from rasterio.windows import from_bounds
 
     frac = np.zeros(dst_shape, dtype=np.float32)
-    with rasterio.Env(GDAL_DISABLE_READDIR_ON_OPEN="EMPTY_DIR"):
+    with rasterio.Env(**GDAL_HTTP):
         for name in tile_names(bbox):
             with rasterio.open(URL.format(name)) as src:
                 lon_min, lat_min, lon_max, lat_max = bbox
@@ -60,3 +69,33 @@ def forest_mask(bbox: Sequence[float], dst_transform: Affine, dst_shape: tuple[i
                 ok = np.isfinite(tmp)
                 frac[ok] = tmp[ok]
     return frac >= 0.5
+
+
+def cached_forest_mask(
+    cache: Path, bbox: Sequence[float], dst_transform: Affine, dst_shape: tuple[int, int], dst_crs: str
+) -> np.ndarray:
+    """`forest_mask`, stored once as a GeoTIFF in `cache` and reused while the grid stays the same."""
+    import rasterio
+
+    if cache.exists():
+        with rasterio.open(cache) as src:
+            if src.shape == dst_shape and src.transform == dst_transform and src.crs.to_string() == dst_crs:
+                return src.read(1).astype(bool)
+    mask = forest_mask(bbox, dst_transform, dst_shape, dst_crs)
+    cache.parent.mkdir(parents=True, exist_ok=True)
+    tmp = cache.with_suffix(".tmp.tif")
+    profile = {
+        "driver": "GTiff",
+        "width": dst_shape[1],
+        "height": dst_shape[0],
+        "count": 1,
+        "dtype": "uint8",
+        "crs": dst_crs,
+        "transform": dst_transform,
+        "compress": "deflate",
+    }
+    with rasterio.open(tmp, "w", **profile) as dst:
+        dst.write(mask.astype(np.uint8), 1)
+        dst.update_tags(source=SOURCE)
+    tmp.replace(cache)
+    return mask

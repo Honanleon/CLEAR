@@ -118,7 +118,8 @@ def stage_process(cfg: dict[str, Any], ignore_sanity: bool = False) -> bool:
     stack = np.stack(layers)
     del layers
 
-    forest = worldcover.forest_mask(bbox, transform, shape, crs) & np.all(np.isfinite(stack), axis=0)
+    forest = worldcover.cached_forest_mask(interim / aoi_id / "forest_worldcover2021.tif", bbox, transform, shape, crs)
+    forest &= np.all(np.isfinite(stack), axis=0)
     log.info("forest mask (%s): %.0f%% of the AOI", worldcover.SOURCE, forest.mean() * 100)
 
     medians = normalize.forest_medians(stack, forest)
@@ -135,7 +136,9 @@ def stage_process(cfg: dict[str, Any], ignore_sanity: bool = False) -> bool:
         det["min_baseline_db"],
         np.mean(forest_like[forest]) * 100,
     )
-    first = detect.first_detection(delta, det["threshold_db"], det["persistence"], start=det["baseline_dates"])
+    first = detect.first_detection(
+        delta, det["threshold_db"], det["persistence"], start=det["baseline_dates"], window=det["persistence_window"]
+    )
     first[~(forest & forest_like)] = detect.NO_DETECTION
 
     report = detect.sanity_checks(dates, medians, first, forest)
@@ -214,6 +217,86 @@ def stage_process(cfg: dict[str, Any], ignore_sanity: bool = False) -> bool:
     return True
 
 
+def stage_validate(cfg: dict[str, Any]) -> bool:
+    """Compare detections with OPERA DIST-ALERT; set dist_confirmed per polygon; write validation_summary.json."""
+    import json
+    from datetime import date
+
+    import rasterio
+    from rasterio.features import rasterize
+    from rasterio.warp import transform_geom
+    from shapely.geometry import shape
+
+    from pipeline.fetch import dist_alert
+    from pipeline.validate import dist_compare
+
+    aoi_id = cfg["aoi"]
+    bbox = cfg["aois"][aoi_id]["bbox"]
+    out = Path(cfg["paths"]["interim"]) / aoi_id
+    val = cfg["validation"]
+    if not (out / "detection.tif").exists():
+        log.error("no detection yet (run --stage process)")
+        return False
+    with rasterio.open(out / "detection.tif") as d:
+        first, forest = d.read(1), d.read(2).astype(bool)
+        transform, crs, shape_ = d.transform, d.crs.to_string(), (d.height, d.width)
+        dates = json.loads(d.tags()["dates"])
+    radar_days = [dist_alert.to_days(date.fromisoformat(x)) for x in dates]
+    d0, d1 = radar_days[0], radar_days[-1] + val["tol_days"]
+
+    status, days, granules = dist_alert.read_dist(
+        bbox, transform, shape_, crs, nisar.load_token(), (dates[-1], (date.today()).isoformat())
+    )
+    log.info("DIST-ALERT granules: %s", ", ".join(granules))
+    px_ha = abs(transform.a * transform.e) / 1e4
+    alert = dist_compare.alert_mask(status, days, d0, d1, val["reference_statuses"]) & forest
+    alert = dist_compare.drop_small(alert, px_ha, val["min_alert_area_ha"])
+
+    # Only the published polygons count (CLAUDE.md: agreement = % of our polygon area), not loose pixels < min area
+    poly_path = out / "polygons.geojson"
+    fc = json.loads(poly_path.read_text())
+    feats = fc["features"]
+    labels = np.zeros(shape_, dtype=np.int32)
+    if feats:
+        geoms = [(shape(transform_geom("EPSG:4326", crs, f["geometry"])), i + 1) for i, f in enumerate(feats)]
+        labels = rasterize(geoms, out_shape=shape_, transform=transform, fill=0, dtype="int32")
+    first_poly = np.where(labels > 0, first, -1).astype(first.dtype)
+    res = dist_compare.compare(first_poly, radar_days, alert, days, val["tol_days"])
+    log.info(
+        "validation vs DIST-ALERT: agreement %s%% (+-%sd: %s%%), coverage %s%% (+-%sd: %s%%), median lag %s days "
+        "(radar polygons %.0f ha, optical %.0f ha)",
+        res["agreement_pct"],
+        val["tol_days"],
+        res["agreement_pct_tol"],
+        res["coverage_pct"],
+        val["tol_days"],
+        res["coverage_pct_tol"],
+        res["median_lag_days"],
+        res["radar_px"] * px_ha,
+        res["alert_px"] * px_ha,
+    )
+
+    if feats:
+        conf = dist_compare.polygon_confirmed(labels, alert, len(feats), val["polygon_confirmed_frac"])
+        for f, c in zip(feats, conf, strict=True):
+            f["properties"]["dist_confirmed"] = c
+        to_json.write_json(fc, poly_path, compact=True)
+        log.info("dist_confirmed: %d of %d polygons", sum(conf), len(conf))
+        res["polygons_confirmed"] = f"{sum(conf)} of {len(conf)}"
+    to_json.write_json(
+        {
+            **res,
+            "reference": dist_alert.SOURCE,
+            "granules": granules,
+            "tol_days": val["tol_days"],
+            "statuses": val["reference_statuses"],
+            "px_ha": px_ha,
+        },
+        out / "validation_summary.json",
+    )
+    return True
+
+
 def stage_export(cfg: dict[str, Any]) -> bool:
     """RGB PNG per date (one shared stretch) and index.json for the web app."""
     aoi_id = cfg["aoi"]
@@ -275,6 +358,9 @@ def stage_export(cfg: dict[str, Any]) -> bool:
         log.info("copied polygons.geojson (%d polygons)", summary["n_polygons"])
     else:
         log.warning("no detection yet (run --stage process): index.json will report 0 polygons")
+    val_path = interim / aoi_id / "validation_summary.json"
+    if summary is not None and val_path.exists():
+        summary["validation"] = json.loads(val_path.read_text())
 
     index = to_json.build_index(aoi_id, bbox, cfg["nisar"], exported, cfg["detection"], summary=summary)
     to_json.write_json(index, web_data / "index.json")
@@ -306,6 +392,9 @@ def main(argv: list[str] | None = None) -> int:
                 return 1
         elif stage == "process":
             if not stage_process(cfg, args.ignore_sanity):
+                return 1
+        elif stage == "validate":
+            if not stage_validate(cfg):
                 return 1
         elif stage == "export":
             if not stage_export(cfg):

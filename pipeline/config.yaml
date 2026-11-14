@@ -78,9 +78,17 @@ export:
 detection:
   speckle_window: 5 # 5 x 5 pixels = 100 m at 20 m
   baseline_dates: 3 # Nov 21, Dec 3, Dec 15 (2025)
-  min_baseline_db: -3.0 # pixel must look like forest to the radar at baseline (normalized HV); forest p10 was -3.3 dB in C.
-                        # Without it, pastures cleared after 2021 (still 'tree cover' in WorldCover 2021) were flagged when burned or ploughed.
+  min_baseline_db: -4.0 # pixel must look like forest to the radar at baseline (normalized HV).
+                        # -3 (forest p10) dropped half of the Chaco clearings, whose dry forest starts near -3 dB;
+                        # old pastures sit near -4.6 dB, so -4 still excludes them (2026-11-14).
   threshold_db: -3.0 # starting point; the ASF NISAR Cookbook example uses -2 dB
-  persistence: 2 # consecutive dates below threshold; avoids one-date drops (rain, noise)
+  persistence: 2 # dates below threshold needed within the window; avoids one-date drops (rain, noise)
+  persistence_window: 3 # 2 of 3: tolerates one wet date that bounces bare soil back (e.g. 2026-04-26)
   min_area_ha: 5 # matches the DIST-ALERT comparison filter
   normalize: forest_median # per-date median HV of forest pixels in the AOI
+
+validation:
+  reference_statuses: [6, 8] # DIST-ALERT confirmed >=50% vegetation loss (ongoing, finished)
+  tol_days: 24 # CLAUDE.md: same window +-24 days
+  min_alert_area_ha: 5 # optical patches smaller than this are ignored for coverage
+  polygon_confirmed_frac: 0.2 # dist_confirmed = true if >= 20% of the polygon has an optical alert
