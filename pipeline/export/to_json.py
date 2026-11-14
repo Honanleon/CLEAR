@@ -12,7 +12,26 @@ from zoneinfo import ZoneInfo
 
 import numpy as np
 
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2  # v2 (2026-11-14): agreement/coverage are spatial; adds 24-day variants, lead days, confirmed count
+
+
+def validation_block(v: Mapping[str, Any] | None) -> dict[str, Any]:
+    """index.json `validation`. Headline numbers are spatial (any date in the period): the radar sees the felling
+    before the optical alert, so a +-24-day window counts correct early detections as misses (docs/METHODS.md)."""
+    v = v or {}
+    lag = v.get("median_lag_days")
+    return {
+        "agreement_pct": v.get("agreement_pct"),
+        "coverage_pct": v.get("coverage_pct"),
+        "agreement_pct_24d": v.get("agreement_pct_tol"),
+        "coverage_pct_24d": v.get("coverage_pct_tol"),
+        "median_lead_days": -lag if lag is not None else None,
+        "polygons_confirmed": v.get("polygons_confirmed"),
+        "polygons_total": v.get("polygons_total"),
+        "reference": "OPERA DIST-ALERT-HLS V1",
+    }
+
+
 NISAR_SOURCE = "NISAR L2 GCOV (NASA/JPL, ASF DAAC)"
 
 
@@ -54,12 +73,10 @@ def build_index(
             "min_area_ha": detection_cfg["min_area_ha"],
             "n_polygons": summary["n_polygons"] if summary else 0,
             "area_ha_total": summary["area_ha_total"] if summary else 0,
+            "n_hexes": (summary or {}).get("n_hexes", 0),
+            "hex_width_m": (summary or {}).get("hex_width_m"),
         },
-        "validation": {
-            "agreement_pct": (summary or {}).get("validation", {}).get("agreement_pct_tol"),
-            "coverage_pct": (summary or {}).get("validation", {}).get("coverage_pct_tol"),
-            "reference": "OPERA DIST-ALERT-HLS V1",
-        },
+        "validation": validation_block((summary or {}).get("validation")),
         "provenance": [{"layer": "rgb", "type": "satellite", "source": NISAR_SOURCE}]
         + (
             [

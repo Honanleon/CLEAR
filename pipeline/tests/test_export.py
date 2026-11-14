@@ -5,7 +5,7 @@ from zoneinfo import ZoneInfo
 import numpy as np
 
 from pipeline.export.rgb_png import Stretch, channels_db, fit_stretch, grid_4326, to_rgba, write_webp
-from pipeline.export.to_json import build_grid, build_index, db_x10, image_coordinates
+from pipeline.export.to_json import build_grid, build_index, db_x10, image_coordinates, validation_block
 
 BBOX = [-60.78, -21.73, -60.18, -21.33]
 
@@ -59,7 +59,7 @@ def test_index_follows_contract():
     ]
     when = datetime(2026, 11, 14, 18, 0, tzinfo=ZoneInfo("America/Asuncion"))
     idx = build_index("chaco-central-norte", BBOX, nisar_cfg, scenes, det, when)
-    assert idx["schema_version"] == 1
+    assert idx["schema_version"] == 2
     assert idx["generated_at"] == "2026-11-14T18:00:00-03:00"
     assert [s["date"] for s in idx["scenes"]] == ["2026-06-01", "2026-06-13"]
     assert set(idx["scenes"][0]) == {"date", "id", "maturity", "crid", "rgb"}
@@ -96,3 +96,29 @@ def test_grid_layout_follows_contract():
     assert len(g["hv_db_x10"]) == 2 and len(g["hv_db_x10"][0]) == 125 * 89
     assert g["hv_db_x10"][0][0] == -130 and g["hv_db_x10"][0][1] is None
     assert g["hv_db_x10"][1][0] == -170 and g["hh_db_x10"][0][0] == -100
+
+
+def test_validation_block_headline_is_spatial_and_lead_is_positive():
+    v = validation_block(
+        {
+            "agreement_pct": 28.3,
+            "coverage_pct": 30.9,
+            "agreement_pct_tol": 9.5,
+            "coverage_pct_tol": 10.4,
+            "median_lag_days": -36,
+            "polygons_confirmed": 7,
+            "polygons_total": 23,
+        }
+    )
+    assert v == {
+        "agreement_pct": 28.3,
+        "coverage_pct": 30.9,
+        "agreement_pct_24d": 9.5,
+        "coverage_pct_24d": 10.4,
+        "median_lead_days": 36,
+        "polygons_confirmed": 7,
+        "polygons_total": 23,
+        "reference": "OPERA DIST-ALERT-HLS V1",
+    }
+    empty = validation_block(None)
+    assert empty["agreement_pct"] is None and empty["median_lead_days"] is None

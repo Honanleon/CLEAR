@@ -128,11 +128,12 @@ def stage_process(cfg: dict[str, Any], ignore_sanity: bool = False) -> bool:
     )
     stack = normalize.normalize(stack, medians)
     base = detect.baseline(stack, det["baseline_dates"])
+    # forest-like on EVERY baseline date: a crop or tall pasture can match forest HV on one wet-season date
+    forest_like = np.nanmin(stack[: det["baseline_dates"]], axis=0) >= det["min_baseline_db"]
     delta = stack - base[None]
     del stack
-    forest_like = base >= det["min_baseline_db"]
     log.info(
-        "radar forest-like at baseline (normalized HV >= %s dB): %.0f%% of the mask",
+        "radar forest-like on all baseline dates (normalized HV >= %s dB): %.0f%% of the mask",
         det["min_baseline_db"],
         np.mean(forest_like[forest]) * 100,
     )
@@ -158,7 +159,7 @@ def stage_process(cfg: dict[str, Any], ignore_sanity: bool = False) -> bool:
         "driver": "GTiff",
         "width": shape[1],
         "height": shape[0],
-        "count": 2,
+        "count": 3,
         "dtype": "int16",
         "crs": crs,
         "transform": transform,
@@ -169,8 +170,12 @@ def stage_process(cfg: dict[str, Any], ignore_sanity: bool = False) -> bool:
     with rasterio.open(out / "detection.tif", "w", **profile) as dst:
         dst.write(first, 1)
         dst.write(forest.astype(np.int16), 2)
+        d_at = np.take_along_axis(delta, np.clip(first, 0, None)[None].astype(np.int64), axis=0)[0]
+        drop = np.where(first >= 0, np.round(np.nan_to_num(d_at) * 100), -32768).astype(np.int16)
+        dst.write(drop, 3)
         dst.set_band_description(1, "first_detection_date_index")
         dst.set_band_description(2, "forest_mask")
+        dst.set_band_description(3, "drop_at_detection_db_x100")
         dst.update_tags(dates=json.dumps(dates))
     summary = {
         "dates": dates,
@@ -251,6 +256,19 @@ def stage_validate(cfg: dict[str, Any]) -> bool:
     px_ha = abs(transform.a * transform.e) / 1e4
     alert = dist_compare.alert_mask(status, days, d0, d1, val["reference_statuses"]) & forest
     alert = dist_compare.drop_small(alert, px_ha, val["min_alert_area_ha"])
+    with rasterio.open(
+        out / "dist_alert.tif",
+        "w",
+        driver="GTiff",
+        width=shape_[1],
+        height=shape_[0],
+        count=1,
+        dtype="uint8",
+        crs=crs,
+        transform=transform,
+        compress="deflate",
+    ) as dst:
+        dst.write(alert.astype(np.uint8), 1)
 
     # Only the published polygons count (CLAUDE.md: agreement = % of our polygon area), not loose pixels < min area
     poly_path = out / "polygons.geojson"
@@ -282,7 +300,9 @@ def stage_validate(cfg: dict[str, Any]) -> bool:
             f["properties"]["dist_confirmed"] = c
         to_json.write_json(fc, poly_path, compact=True)
         log.info("dist_confirmed: %d of %d polygons", sum(conf), len(conf))
-        res["polygons_confirmed"] = f"{sum(conf)} of {len(conf)}"
+        res["polygons_confirmed"] = int(sum(conf))
+    res["polygons_total"] = len(feats)
+    res.setdefault("polygons_confirmed", 0)
     to_json.write_json(
         {
             **res,
@@ -351,11 +371,20 @@ def stage_export(cfg: dict[str, Any]) -> bool:
     summary = None
     if summary_path.exists():
         import json
-        import shutil
 
         summary = json.loads(summary_path.read_text())
-        shutil.copyfile(interim / aoi_id / "polygons.geojson", web_data / "polygons.geojson")
-        log.info("copied polygons.geojson (%d polygons)", summary["n_polygons"])
+        hex_feats = export_hexes(interim / aoi_id, bbox, exp["hex_width_m"])
+        to_json.write_json(
+            {"type": "FeatureCollection", "features": hex_feats}, web_data / "polygons.geojson", compact=True
+        )
+        summary["n_hexes"] = len(hex_feats)
+        summary["hex_width_m"] = exp["hex_width_m"]
+        log.info(
+            "wrote polygons.geojson as %d hexagons of %s m (from %d exact polygons, kept in data/interim only)",
+            len(hex_feats),
+            exp["hex_width_m"],
+            summary["n_polygons"],
+        )
     else:
         log.warning("no detection yet (run --stage process): index.json will report 0 polygons")
     val_path = interim / aoi_id / "validation_summary.json"
@@ -366,6 +395,34 @@ def stage_export(cfg: dict[str, Any]) -> bool:
     to_json.write_json(index, web_data / "index.json")
     log.info("wrote %s (%d scenes)", web_data / "index.json", len(exported))
     return True
+
+
+def export_hexes(out: Path, bbox: list[float], width_m: float) -> list[dict[str, Any]]:
+    """Hexagon features from the exact polygons' pixels (polygons >= min area only); see pipeline/export/hexes.py."""
+    import json
+
+    import rasterio
+    from rasterio.features import rasterize
+    from rasterio.warp import transform_bounds, transform_geom
+    from shapely.geometry import shape
+
+    from pipeline.export import hexes
+
+    with rasterio.open(out / "detection.tif") as d:
+        first, drop = d.read(1), d.read(3).astype(np.float32) / 100
+        transform, crs, shape_ = d.transform, d.crs.to_string(), (d.height, d.width)
+        dates = json.loads(d.tags()["dates"])
+    exact = json.loads((out / "polygons.geojson").read_text())["features"]
+    if not exact:
+        return []
+    geoms = [(shape(transform_geom("EPSG:4326", crs, f["geometry"])), 1) for f in exact]
+    inside = rasterize(geoms, out_shape=shape_, transform=transform, fill=0, dtype="uint8").astype(bool)
+    alert = None
+    if (out / "dist_alert.tif").exists():
+        with rasterio.open(out / "dist_alert.tif") as a:
+            alert = a.read(1).astype(bool)
+    xmin, ymin, _, _ = transform_bounds("EPSG:4326", crs, *bbox)  # fixed grid anchor per AOI
+    return hexes.aggregate(inside & (first >= 0), first, drop, alert, transform, crs, dates, width_m, (xmin, ymin))
 
 
 def main(argv: list[str] | None = None) -> int:

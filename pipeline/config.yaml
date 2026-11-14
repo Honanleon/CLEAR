@@ -3,15 +3,23 @@
 # CLEAR pipeline configuration. Every parameter says where its value comes from.
 # Paths are relative to the repository root (run the pipeline from there).
 
-aoi: chaco-central-norte # active AOI for this run
+aoi: boqueron-norte # active AOI for this run
 
 aois:
   # [lon_min, lat_min, lon_max, lat_max], EPSG:4326
   chaco-central-norte:
-    # Chapter 1. Moved on 2026-11-14 from [-61.0, -21.95, -60.4, -21.55], where OPERA DIST-ALERT (22 ha) and NISAR (~86 ha)
+    # Chapter 1 until 2026-11-14 afternoon (see boqueron-norte). Moved on 2026-11-14 from [-61.0, -21.95, -60.4, -21.55], where OPERA DIST-ALERT (22 ha) and NISAR (~86 ha)
     # saw almost no clearing in Jun-Oct 2026. This box had 319 ha of confirmed >=50% DIST-ALERT loss and lies inside
     # track 161 / frame 167 (checked against the product footprint). Chosen over boxes further north (PNCAT risk).
     bbox: [-60.78, -21.73, -60.18, -21.33]
+  boqueron-norte:
+    # Chapter 1 since 2026-11-14 (afternoon). Found with a NISAR frequency-B (80 m) scan of the whole frame 167:
+    # forest in Nov-Dec 2025 that was open in Sep-Oct 2026, with new paddock blocks visible (about 950 ha, coarse).
+    # In chaco-central-norte the radar found almost no new clearing (5 ha), only management of existing paddocks.
+    # Ethics: one district only (Mariscal Estigarribia, Boqueron); 139 km from the district of Puerto Casado (ex La Victoria),
+    # Alto Paraguay, where the PNCAT is located (Resolucion N.o 1/2001, Direccion General de Bienes Culturales, MEC).
+    # Published as aggregated hexagons, not exact polygons. Fully inside track 161 / frame 167.
+    bbox: [-61.6, -20.9, -61.0, -20.5]
   neembucu:
     bbox: [-57.9, -27.3, -57.3, -26.6] # Chapter 2; orbit not verified yet
   mbaracayu:
@@ -72,15 +80,17 @@ export:
   rgb_res_deg: 0.0005 # ~50 m; 1200 x 800 px for chaco-central-norte. 20 m would be too heavy for phones
   rgb_webp_quality: 80 # ~250 KB per date vs 2.1 MB as PNG (team decision, 2026-11-14)
   rgb_percentiles: [2, 98] # stretch limits per channel, pooled over all dates (one stretch for the whole time-lapse)
+  hex_width_m: 1000 # published clearing is aggregated into hexagons this wide (~87 ha); exact polygons stay in data/interim
   grid_nx: 125 # grid_500m.json: 0.6 deg / 125 = 0.0048 deg, about 500 m
   grid_ny: 89 # 0.4 deg / 89 = 0.0045 deg, about 500 m
 
 detection:
   speckle_window: 5 # 5 x 5 pixels = 100 m at 20 m
   baseline_dates: 3 # Nov 21, Dec 3, Dec 15 (2025)
-  min_baseline_db: -4.0 # pixel must look like forest to the radar at baseline (normalized HV).
-                        # -3 (forest p10) dropped half of the Chaco clearings, whose dry forest starts near -3 dB;
-                        # old pastures sit near -4.6 dB, so -4 still excludes them (2026-11-14).
+  min_baseline_db: -2.0 # pixel must look like forest to the radar on EVERY baseline date (normalized HV).
+                        # History (2026-11-14): -3 on the median, then -4 on the median. A colour (HLS) check showed that
+                        # -4 let through paddocks with regrowth, crops at peak biomass and pivots; their "clearing" was
+                        # ploughing, burning or harvest of land already open in Nov 2025. Stricter: -2 on all dates.
   threshold_db: -3.0 # starting point; the ASF NISAR Cookbook example uses -2 dB
   persistence: 2 # dates below threshold needed within the window; avoids one-date drops (rain, noise)
   persistence_window: 3 # 2 of 3: tolerates one wet date that bounces bare soil back (e.g. 2026-04-26)
