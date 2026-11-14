@@ -5,7 +5,7 @@ CLEAR is an interactive story map that shows where and when forest is being clea
 
 Results are **radar-estimated land-cover change, dated ±12 days**. They do not say anything about the legality of any clearing.
 
-> Work in progress during the hackathon (Nov 13–15, 2026).
+> Work in progress during the hackathon (Nov 14–15, 2026).
 
 ## Repository
 
