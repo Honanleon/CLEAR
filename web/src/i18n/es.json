@@ -81,7 +81,7 @@
   "map": {
     "kicker": "El mapa",
     "title": "Dónde y cuándo se desmontó",
-    "body": "Este es el Chaco paraguayo en un mapa simple. Dividimos la zona de estudio en hexágonos: los rojos son los que tuvieron desmonte detectado por radar. Cuanto más fuerte el rojo, más hectáreas se desmontaron adentro. Dale play o tocá un hexágono.",
+    "body": "Este es el Paraguay en un mapa simple, con nuestras zonas de estudio en recuadros punteados. Las dividimos en hexágonos: los rojos son los que tuvieron desmonte detectado por radar. Cuanto más fuerte el rojo, más hectáreas se desmontaron adentro. Elegí una zona, dale play o tocá un hexágono.",
     "ethics": "Mostramos cambios en la cobertura del suelo estimados por radar, no si son legales o no. No usamos catastro ni nombres de propietarios.",
     "mode_timeline": "Línea de tiempo",
     "mode_compare": "Antes / después",
@@ -129,18 +129,13 @@
     "help": "¿Cómo leo el mapa?",
     "more": "Más opciones",
     "hex_size": "Cada hexágono grande mide unas {ha} ha. Al acercarte se divide en hexágonos chicos de unas {mini} ha.",
-    "hex_nodata": "Fuera del recuadro, los hexágonos vacíos todavía no tienen datos de radar: no quiere decir que no haya desmonte.",
-    "title_water": "El agua vista por el radar",
-    "body_water": "Ñeembucú, en el sur del Paraguay, se inunda seguido. Acá no buscamos desmonte: mostramos la imagen de radar NISAR de cada fecha, donde el agua abierta se ve muy oscura. Dale play o tocá el mapa para ver la señal del radar y la lluvia en ese punto.",
-    "body_control": "Mbaracayú es bosque protegido del Bosque Atlántico: es nuestra zona de control. Aplicamos la misma detección que en el Chaco y esperamos encontrar poco o nada. Si el radar marcara mucho desmonte acá, el método estaría fallando.",
-    "water_panel": "Zona de agua: solo imágenes de radar, la señal en el tiempo y la lluvia. Sin detección ni hexágonos.",
-    "coach_water": "👆 Tocá el mapa para ver la señal del radar y la lluvia en ese punto"
+    "hex_nodata": "Fuera de los recuadros punteados, los hexágonos vacíos todavía no tienen datos de radar: no quiere decir que no haya desmonte."
   },
   "zone": {
     "title_cleared": "Zona desmontada",
     "title_forest": "Sin desmonte detectado acá",
     "title_outside": "Fuera de la zona de estudio",
-    "outside_body": "Fuera del recuadro punteado todavía no hay datos de radar. Tocá adentro del recuadro.",
+    "outside_body": "Fuera de los recuadros punteados todavía no hay datos de radar. Tocá adentro de un recuadro.",
     "area": "Superficie",
     "area_value": "{ha} ha",
     "fields": "≈ {n} canchas de fútbol",
@@ -264,9 +259,7 @@
     "disclaimer": "Son resultados estimados por radar, no verificados en el terreno.",
     "agreement_desc_any": "del área que marcamos también tiene una alerta óptica en algún momento del período",
     "coverage_desc_any": "del área con alertas ópticas en bosque (≥ 5 ha) también la detecta el radar",
-    "window24": "Si además exigimos que las fechas coincidan (±24 días): acuerdo {a} %, cobertura {c} %.",
-    "na_water": "No aplica en la zona de agua",
-    "na_water_desc": "Acá no detectamos desmonte, así que no hay nada que comparar con las alertas ópticas. Elegí una zona de desmonte para ver la validación."
+    "window24": "Si además exigimos que las fechas coincidan (±24 días): acuerdo {a} %, cobertura {c} %."
   },
   "next": {
     "kicker": "Qué sigue",
@@ -340,9 +333,7 @@
     "kind_water": "Agua",
     "kind_control": "Control",
     "note_water": "Zona de agua (capítulo 2): por ahora solo imágenes de radar, la señal en el tiempo y la lluvia. No hay detección.",
-    "note_control": "Zona de control (capítulo 3): bosque que no debería cambiar. Se esperan pocas detecciones o ninguna.",
-    "go": "Ver esta zona",
-    "other_body": "Es otra zona de estudio ({kind}). Abrila para ver sus datos en el mapa."
+    "note_control": "Zona de control (capítulo 3): bosque que no debería cambiar. Se esperan pocas detecciones o ninguna."
   },
   "point": {
     "title": "Señal del radar en este punto",

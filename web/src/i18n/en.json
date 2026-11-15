@@ -81,7 +81,7 @@
   "map": {
     "kicker": "The map",
     "title": "Where and when forest was cleared",
-    "body": "This is the Paraguayan Chaco on a simple map. We divided the study area into hexagons: the red ones had radar-detected clearing. The stronger the red, the more hectares were cleared inside. Press play or tap a hexagon.",
+    "body": "This is Paraguay on a simple map, with our study zones in dashed boxes. We divided them into hexagons: the red ones had radar-detected clearing. The stronger the red, the more hectares were cleared inside. Pick a zone, press play or tap a hexagon.",
     "ethics": "We show radar-estimated changes in land cover, not whether they are legal. We use no cadastre and no owner names.",
     "mode_timeline": "Timeline",
     "mode_compare": "Before / after",
@@ -129,18 +129,13 @@
     "help": "How do I read the map?",
     "more": "More options",
     "hex_size": "Each big hexagon covers about {ha} ha. Zoom in and it splits into small hexagons of about {mini} ha.",
-    "hex_nodata": "Outside the dashed box, empty hexagons have no radar data yet: that does not mean there is no clearing.",
-    "title_water": "Water as the radar sees it",
-    "body_water": "Ñeembucú, in southern Paraguay, floods often. Here we do not look for clearing: we show the NISAR radar image of each date, where open water looks very dark. Press play or tap the map to see the radar signal and the rain at that point.",
-    "body_control": "Mbaracayú is protected Atlantic Forest: it is our control zone. We run the same detection as in the Chaco and expect to find little or nothing. If the radar flagged a lot of clearing here, the method would be failing.",
-    "water_panel": "Water zone: radar images, the signal over time and rain only. No detection, no hexagons.",
-    "coach_water": "👆 Tap the map to see the radar signal and the rain at that point"
+    "hex_nodata": "Outside the dashed boxes, empty hexagons have no radar data yet: that does not mean there is no clearing."
   },
   "zone": {
     "title_cleared": "Cleared area",
     "title_forest": "No clearing detected here",
     "title_outside": "Outside the study area",
-    "outside_body": "Outside the dashed box there is no radar data yet. Tap inside the box.",
+    "outside_body": "Outside the dashed boxes there is no radar data yet. Tap inside a box.",
     "area": "Size",
     "area_value": "{ha} ha",
     "fields": "≈ {n} soccer fields",
@@ -264,9 +259,7 @@
     "disclaimer": "These are radar-estimated results, not checked on the ground.",
     "agreement_desc_any": "of the area we flag also has an optical alert at some point in the period",
     "coverage_desc_any": "of the optical-alert area in forest (≥ 5 ha) is also detected by radar",
-    "window24": "If dates must also match (±24 days): agreement {a}%, coverage {c}%.",
-    "na_water": "Not applicable in the water zone",
-    "na_water_desc": "We do not detect clearing here, so there is nothing to compare with optical alerts. Pick a clearing zone to see the validation."
+    "window24": "If dates must also match (±24 days): agreement {a}%, coverage {c}%."
   },
   "next": {
     "kicker": "What's next",
@@ -340,9 +333,7 @@
     "kind_water": "Water",
     "kind_control": "Control",
     "note_water": "Water zone (chapter 2): for now only radar images, the signal over time and rain. No detection.",
-    "note_control": "Control zone (chapter 3): forest that should not change. Few or no detections are expected.",
-    "go": "Open this zone",
-    "other_body": "This is another study zone ({kind}). Open it to see its data on the map."
+    "note_control": "Control zone (chapter 3): forest that should not change. Few or no detections are expected."
   },
   "point": {
     "title": "Radar signal at this point",

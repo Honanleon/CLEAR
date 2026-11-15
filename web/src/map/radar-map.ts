@@ -43,10 +43,14 @@ export interface RadarMapOptions {
   mini: HexGrid;
   /** Outline of the small hexagons over the rest of the country inside a box (drawn only where the map looks). */
   miniOutline?: (view: BBox) => GeoJSON;
-  /** false for the water zone: no detection, so no hexagon grid at all. */
-  hexagons?: boolean;
-  /** Boxes of the other study zones (zones.json), drawn so every zone shows on the map. */
-  otherZones?: GeoJSON;
+  /** Dashed box of every study zone (zones.json); defaults to `bbox`. */
+  zoneBoxes?: GeoJSON;
+  /**
+   * Radar images, one set per zone. Each shows its own scene of the date on the timeline (the latest
+   * one up to that date). `always`: shown even in the simple-map view (the water zone has no hexagons,
+   * its images are its content). Defaults to the scenes of `ds`.
+   */
+  imageSets?: ImageSet[];
   bbox: BBox;
   controls: boolean;
   start: "country" | "study";
@@ -112,18 +116,31 @@ function style(offline?: RadarMapOptions["offline"]): StyleSpecification {
 
 const EMPTY: GeoJSON = { type: "FeatureCollection", features: [] };
 
+export interface ImageSet {
+  key: string;
+  ds: Dataset;
+  always: boolean;
+}
+
+interface SceneSet extends ImageSet {
+  present: Set<number>;
+  visible: number;
+  request: number;
+}
+
 export class RadarMap {
   readonly map: MLMap;
   readonly ready: Promise<void>;
-  private present = new Set<number>();
-  private visibleScene = -1;
-  private request = 0;
+  private sets: SceneSet[];
+  /** Date of the scene on the timeline (scenes of `opts.ds`). */
+  private date = "";
   private radarOn = false;
   private radarOpacity = 0.9;
   private pulseRaf = 0;
   private pulsing = false;
 
   constructor(private opts: RadarMapOptions) {
+    this.sets = (opts.imageSets ?? [{ key: "main", ds: opts.ds, always: false }]).map((s) => ({ ...s, present: new Set<number>(), visible: -1, request: 0 }));
     const start = opts.start === "country" && !opts.offline ? PARAGUAY_BBOX : opts.bbox;
     this.map = new MLMap({
       container: opts.container,
@@ -178,11 +195,11 @@ export class RadarMap {
     const [x0, y0, x1, y1] = this.opts.bbox;
     m.addSource("aoi", {
       type: "geojson",
-      data: {
+      data: (this.opts.zoneBoxes ?? {
         type: "Feature",
         properties: {},
         geometry: { type: "Polygon", coordinates: [[[x0, y0], [x1, y0], [x1, y1], [x0, y1], [x0, y0]]] },
-      },
+      }) as never,
     });
     m.addSource("polys", { type: "geojson", data: this.opts.polygons as never });
     m.addSource("hexgrid", { type: "geojson", data: this.opts.hex.outline as never });
@@ -194,9 +211,6 @@ export class RadarMap {
     // roads and borders (under the clearings, over the imagery)
     if (!this.opts.offline) this.addOsmLines();
     this.addOverlays();
-    if (this.opts.hexagons === false) {
-      for (const id of ["hex-nodata", "hex-grid", "mini-world", "mini-grid", "hex-hover", "mini-hover", "hex-selected", "mini-selected"]) this.map.setLayoutProperty(id, "visibility", "none");
-    }
     if (!this.opts.offline) this.addLabels();
   }
 
@@ -353,15 +367,6 @@ export class RadarMap {
       source: "aoi",
       paint: { "line-color": "#1f2937", "line-width": 1.8, "line-opacity": 0.95, "line-dasharray": [3, 2] },
     });
-    // the other study zones: a light box each (their name tag is an HTML marker, see map/index.ts)
-    m.addSource("zones", { type: "geojson", data: (this.opts.otherZones ?? EMPTY) as never });
-    m.addLayer({ id: "zones-fill", type: "fill", source: "zones", paint: { "fill-color": "#1f2937", "fill-opacity": 0.06 } });
-    m.addLayer({
-      id: "zones-line",
-      type: "line",
-      source: "zones",
-      paint: { "line-color": "#4b5563", "line-width": 1.5, "line-opacity": 0.9, "line-dasharray": [2, 2] },
-    });
 
   }
 
@@ -436,14 +441,19 @@ export class RadarMap {
     return this.map.getLayer("roads") ? "roads" : "hex-grid";
   }
 
-  private sceneLayer(i: number): string {
-    return `scene-${i}`;
+  /** Where a set's images go: the water zone's above the empty grid (they are its content), the others under the roads. */
+  private beforeOf(s: SceneSet): string {
+    return s.always && this.map.getLayer("mini-grid") ? "mini-grid" : this.overlayStart();
   }
 
-  private ensureScene(i: number) {
-    if (this.present.has(i)) return;
-    const id = this.sceneLayer(i);
-    this.map.addSource(id, { type: "image", url: this.opts.ds.sceneUrl(i), coordinates: this.opts.ds.index.image_coordinates });
+  private sceneLayer(s: SceneSet, j: number): string {
+    return `scene-${s.key}-${j}`;
+  }
+
+  private ensureScene(s: SceneSet, j: number) {
+    if (s.present.has(j)) return;
+    const id = this.sceneLayer(s, j);
+    this.map.addSource(id, { type: "image", url: s.ds.sceneUrl(j), coordinates: s.ds.index.image_coordinates });
     this.map.addLayer(
       {
         id,
@@ -456,42 +466,67 @@ export class RadarMap {
           "raster-resampling": "linear",
         },
       },
-      this.overlayStart(),
+      this.beforeOf(s),
     );
-    this.present.add(i);
+    s.present.add(j);
   }
 
-  /** Remembers the scene of the current date; draws it (cross-fade) only when the radar view is on. */
-  async showScene(i: number): Promise<void> {
-    const req = ++this.request;
-    const scenes = this.opts.ds.index.scenes;
-    if (!scenes[i]) return;
-    this.visibleScene = i;
-    if (!this.radarOn) return;
+  /** Hides a set's scenes except `keep` (the neighbours stay loaded, transparent, for a smooth play). */
+  private trimScenes(s: SceneSet, keep: number) {
+    for (const j of [...s.present]) {
+      if (j === keep) continue;
+      if (keep < 0 || Math.abs(j - keep) > 1) {
+        this.map.removeLayer(this.sceneLayer(s, j));
+        this.map.removeSource(this.sceneLayer(s, j));
+        s.present.delete(j);
+      } else {
+        this.map.setPaintProperty(this.sceneLayer(s, j), "raster-opacity", 0);
+      }
+    }
+  }
+
+  /** The set's latest scene up to the timeline date (-1: the zone has no image yet). */
+  private sceneFor(s: SceneSet): number {
+    let j = -1;
+    s.ds.index.scenes.forEach((sc, k) => {
+      if (sc.date <= this.date) j = k;
+    });
+    return j;
+  }
+
+  /** Draws (cross-fade) the scene of one set, or hides the set when its images are off. */
+  private async showSet(s: SceneSet): Promise<void> {
+    const req = ++s.request;
+    const j = this.sceneFor(s);
+    s.visible = j;
+    if (!(s.always || this.radarOn) || j < 0) {
+      await this.ready;
+      if (req === s.request) this.trimScenes(s, -1);
+      return;
+    }
     try {
-      await preload(this.opts.ds.sceneUrl(i));
+      await preload(s.ds.sceneUrl(j));
     } catch {
       return;
     }
     await this.ready;
-    if (req !== this.request) return;
-    this.ensureScene(i);
-    this.map.moveLayer(this.sceneLayer(i), this.overlayStart());
-    this.map.setPaintProperty(this.sceneLayer(i), "raster-opacity", this.radarOpacity);
+    if (req !== s.request) return;
+    this.ensureScene(s, j);
+    this.map.moveLayer(this.sceneLayer(s, j), this.beforeOf(s));
+    this.map.setPaintProperty(this.sceneLayer(s, j), "raster-opacity", this.radarOpacity);
     window.setTimeout(() => {
-      if (req !== this.request) return;
-      for (const j of [...this.present]) {
-        if (j === i) continue;
-        if (Math.abs(j - i) > 1) {
-          this.map.removeLayer(this.sceneLayer(j));
-          this.map.removeSource(this.sceneLayer(j));
-          this.present.delete(j);
-        } else {
-          this.map.setPaintProperty(this.sceneLayer(j), "raster-opacity", 0);
-        }
-      }
+      if (req === s.request) this.trimScenes(s, j);
     }, FADE_MS);
-    for (const k of [i + 1, i - 1]) if (scenes[k]) void preload(this.opts.ds.sceneUrl(k)).catch(() => undefined);
+    const scenes = s.ds.index.scenes;
+    for (const k of [j + 1, j - 1]) if (scenes[k]) void preload(s.ds.sceneUrl(k)).catch(() => undefined);
+  }
+
+  /** Remembers the date of scene `i` (timeline); each zone's images follow it when they are on. */
+  async showScene(i: number): Promise<void> {
+    const scene = this.opts.ds.index.scenes[i];
+    if (!scene) return;
+    this.date = scene.date;
+    await Promise.all(this.sets.map((s) => this.showSet(s)));
   }
 
   private miniWorldKey = "";
@@ -531,17 +566,9 @@ export class RadarMap {
 
   /** Radar view on/off (the simple base map underneath stays). */
   async setRadar(on: boolean, opacity = this.radarOpacity): Promise<void> {
-    const wasOn = this.radarOn;
     this.radarOn = on;
     this.radarOpacity = opacity;
-    await this.ready;
-    if (on && (!wasOn || !this.present.has(this.visibleScene))) {
-      if (this.visibleScene >= 0) await this.showScene(this.visibleScene);
-      return;
-    }
-    for (const j of this.present) {
-      this.map.setPaintProperty(this.sceneLayer(j), "raster-opacity", on && j === this.visibleScene ? opacity : 0);
-    }
+    if (this.date) await Promise.all(this.sets.map((s) => this.showSet(s)));
   }
 
   async setOutlines(on: boolean): Promise<void> {

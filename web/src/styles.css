@@ -1114,12 +1114,6 @@ button {
 .zone-kind-control::before {
   background: var(--ok);
 }
-.zone-note {
-  font-size: 14px;
-  color: var(--muted);
-  margin: 12px 0 0;
-  max-width: 70ch;
-}
 /* the other zones on the map (HTML markers that open them) */
 .zone-tag {
   font-family: var(--font);
@@ -1137,6 +1131,11 @@ button {
 .zone-tag:hover {
   background: #ffffff;
   border-style: solid;
+}
+.zone-tag.is-focus {
+  background: #ffffff;
+  border: 1px solid #1f2937;
+  color: #04121f;
 }
 .zone-tag:focus-visible {
   outline: 2px solid var(--accent);
@@ -1172,10 +1171,6 @@ button {
   color: #0a0d12;
   font-weight: 600;
   cursor: default;
-}
-/* water zone: no clearing totals on the timeline */
-body[data-zone-kind="water"] .tl-stats {
-  display: none;
 }
 .ethics {
   display: inline-flex;
@@ -2922,7 +2917,8 @@ body[data-zone-kind="water"] .tl-stats {
   .fact-value {
     font-size: 17px;
   }
-  .aoi-tag {
+  .aoi-tag,
+  .zone-tag {
     font-size: 11.5px;
   }
 }
