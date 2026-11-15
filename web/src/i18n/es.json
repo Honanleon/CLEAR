@@ -5,8 +5,10 @@
   },
   "nav": {
     "skip": "Ir al mapa",
+    "context": "El problema",
     "chapter": "El monte",
     "radar": "Radar",
+    "guide": "Método",
     "map": "Mapa",
     "trust": "¿Es confiable?",
     "next": "Qué sigue",
@@ -153,7 +155,7 @@
     "nw": "noroeste"
   },
   "guide": {
-    "kicker": "Para analizar el mapa",
+    "kicker": "El método",
     "title": "Cómo leer el mapa",
     "colors_title": "Los hexágonos de color",
     "colors_body": "Dividimos la zona de estudio en hexágonos iguales. Se pinta cada hexágono donde el radar detectó desmonte, y el color dice cuántas hectáreas se desmontaron adentro hasta la fecha elegida. Los que laten son los que crecieron en esa pasada.",
@@ -173,7 +175,8 @@
     "stat_zones": "desmontes detectados",
     "stat_largest": "hexágonos con desmonte",
     "fields_total": "≈ {n} canchas de fútbol",
-    "colors_scale": "hectáreas desmontadas por hexágono"
+    "colors_scale": "hectáreas desmontadas por hexágono",
+    "method": "Para el desmonte buscamos una caída sostenida de HV frente a la línea de base de fin de 2025. Para el agua usamos umbrales en HH y HV. Sin aprendizaje automático, y publicamos solo hexágonos, nunca formas exactas."
   },
   "prov": {
     "source": "Fuente",

@@ -5,8 +5,10 @@
   },
   "nav": {
     "skip": "Skip to the map",
+    "context": "The problem",
     "chapter": "The forest",
     "radar": "Radar",
+    "guide": "Method",
     "map": "Map",
     "trust": "Can we trust it?",
     "next": "What's next",
@@ -153,7 +155,7 @@
     "nw": "northwest"
   },
   "guide": {
-    "kicker": "To analyze the map",
+    "kicker": "The method",
     "title": "How to read the map",
     "colors_title": "The colored hexagons",
     "colors_body": "We divided the study area into equal hexagons. Each hexagon where radar detected clearing is colored, and the color says how many hectares were cleared inside up to the chosen date. The pulsing ones grew in that pass.",
@@ -173,7 +175,8 @@
     "stat_zones": "clearings detected",
     "stat_largest": "hexagons with clearing",
     "fields_total": "≈ {n} soccer fields",
-    "colors_scale": "hectares cleared per hexagon"
+    "colors_scale": "hectares cleared per hexagon",
+    "method": "For clearing we look for a sustained HV drop against the late-2025 baseline. For water we use thresholds on HH and HV. No machine learning, and we publish only hexagons, never exact shapes."
   },
   "prov": {
     "source": "Source",

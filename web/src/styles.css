@@ -2811,8 +2811,12 @@ button {
 
 /* guide under the map */
 .guide {
-  padding-block: 64px 24px;
-  background: linear-gradient(var(--bg), var(--bg-2));
+  /* its own section between "how the radar sees" (bg-2) and the map (bg) */
+  padding-block: clamp(90px, 14vw, 160px) 24px;
+  background: linear-gradient(var(--bg-2), var(--bg));
+}
+.guide-method {
+  margin: -8px 0 32px;
 }
 .guide-title {
   font-size: clamp(30px, 4.5vw, 52px);

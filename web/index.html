@@ -25,8 +25,10 @@
         <span>CLEAR</span>
       </a>
       <nav class="nav" aria-label="CLEAR">
+        <a href="#context" data-i18n="nav.context"></a>
         <a href="#chapter" data-i18n="nav.chapter"></a>
         <a href="#radar" data-i18n="nav.radar"></a>
+        <a href="#guide" data-i18n="nav.guide"></a>
         <a href="#map" data-i18n="nav.map"></a>
         <a href="#trust" data-i18n="nav.trust"></a>
         <a href="#next" data-i18n="nav.next"></a>
@@ -60,10 +62,20 @@
           <div class="hud-row"><span data-i18n="hero.hud_signal"></span><b id="hud-signal">—</b></div>
           <small data-i18n="hero.hud_note"></small>
         </div>
-        <a class="scroll-cue" href="#chapter"><span data-i18n="hero.scroll"></span><i aria-hidden="true"></i></a>
+        <a class="scroll-cue" href="#context"><span data-i18n="hero.scroll"></span><i aria-hidden="true"></i></a>
       </section>
 
-      <!-- Chapter 1 intro -->
+      <!-- 2. The problem: what happened before the radar -->
+      <section class="context" id="context">
+        <div class="wrap">
+          <p class="kicker reveal" data-i18n="context.kicker"></p>
+          <h2 class="display reveal" data-i18n="context.title"></h2>
+          <p class="lede reveal" data-i18n="context.body"></p>
+          <div class="ctx" id="context-root"></div>
+        </div>
+      </section>
+
+      <!-- 3. How the radar sees: chapter 1 intro (NISAR, L band, 12 days) -->
       <section class="chapter" id="chapter">
         <div class="wrap">
           <p class="kicker reveal" data-i18n="chapter.kicker"></p>
@@ -91,7 +103,7 @@
         </div>
       </section>
 
-      <!-- 2. How radar sees -->
+      <!-- 3. How the radar sees (continued) -->
       <section class="radar" id="radar">
         <div class="wrap">
           <p class="kicker reveal" data-i18n="radar.kicker"></p>
@@ -143,7 +155,58 @@
         </div>
       </section>
 
-      <!-- 3. The map -->
+      <!-- 4. The method: how to read the map -->
+      <section class="guide" id="guide">
+        <div class="wrap">
+          <p class="kicker reveal" data-i18n="guide.kicker"></p>
+          <h3 class="guide-title reveal" data-i18n="guide.title"></h3>
+          <p class="lede guide-method reveal" data-i18n="guide.method"></p>
+          <div class="guide-stats reveal" id="guide-stats"></div>
+          <div class="guide-grid">
+            <article class="guide-card reveal">
+              <h4 data-i18n="guide.colors_title"></h4>
+              <div class="guide-ramp" id="guide-ramp"></div>
+              <p data-i18n="guide.colors_body"></p>
+            </article>
+            <article class="guide-card reveal">
+              <h4 data-i18n="guide.radar_title"></h4>
+              <div class="chip-row">
+                <span class="chip chip-r" data-i18n="radar.legend_r"></span>
+                <span class="chip chip-g" data-i18n="radar.legend_g"></span>
+                <span class="chip chip-b" data-i18n="radar.legend_b"></span>
+              </div>
+              <ul class="swatches">
+                <li><i class="sw sw-forest"></i><span data-i18n="radar.legend_forest"></span></li>
+                <li><i class="sw sw-pasture"></i><span data-i18n="radar.legend_pasture"></span></li>
+                <li><i class="sw sw-fresh"></i><span data-i18n="radar.legend_fresh"></span></li>
+              </ul>
+              <p data-i18n="guide.radar_body"></p>
+            </article>
+            <article class="guide-card reveal">
+              <h4 data-i18n="guide.chart_title"></h4>
+              <svg class="guide-chart" viewBox="0 0 300 130" aria-hidden="true">
+                <line class="gc-limit" x1="10" x2="290" y1="72" y2="72" />
+                <text class="gc-label gc-label-limit" x="288" y="66" text-anchor="end" data-i18n="guide.chart_demo_limit"></text>
+                <polyline class="gc-line" points="12,34 46,30 80,36 114,32 148,35 168,96 202,100 236,97 270,101 290,99" />
+                <circle class="gc-dot" cx="168" cy="96" r="5" />
+                <text class="gc-label" x="14" y="22" data-i18n="guide.chart_demo_forest"></text>
+                <text class="gc-label gc-label-cut" x="176" y="122" data-i18n="guide.chart_demo_cut"></text>
+              </svg>
+              <p data-i18n="guide.chart_body"></p>
+            </article>
+          </div>
+          <div class="guide-steps reveal">
+            <h4 data-i18n="guide.steps_title"></h4>
+            <ol>
+              <li data-i18n="guide.step1"></li>
+              <li data-i18n="guide.step2"></li>
+              <li data-i18n="guide.step3"></li>
+            </ol>
+          </div>
+        </div>
+      </section>
+
+      <!-- 5-6. The map: results per zone and the whole country -->
       <section class="map-section" id="map">
         <div class="wrap map-intro">
           <p class="kicker reveal" data-i18n="map.kicker"></p>
@@ -166,57 +229,9 @@
           <div class="map-status" id="map-status"><span class="spinner" aria-hidden="true"></span><span data-i18n="map.loading"></span></div>
           <div class="map-ui" id="map-ui" hidden></div>
         </div>
-        <div class="guide" id="guide">
-          <div class="wrap">
-            <p class="kicker reveal" data-i18n="guide.kicker"></p>
-            <h3 class="guide-title reveal" data-i18n="guide.title"></h3>
-            <div class="guide-stats reveal" id="guide-stats"></div>
-            <div class="guide-grid">
-              <article class="guide-card reveal">
-                <h4 data-i18n="guide.colors_title"></h4>
-                <div class="guide-ramp" id="guide-ramp"></div>
-                <p data-i18n="guide.colors_body"></p>
-              </article>
-              <article class="guide-card reveal">
-                <h4 data-i18n="guide.radar_title"></h4>
-                <div class="chip-row">
-                  <span class="chip chip-r" data-i18n="radar.legend_r"></span>
-                  <span class="chip chip-g" data-i18n="radar.legend_g"></span>
-                  <span class="chip chip-b" data-i18n="radar.legend_b"></span>
-                </div>
-                <ul class="swatches">
-                  <li><i class="sw sw-forest"></i><span data-i18n="radar.legend_forest"></span></li>
-                  <li><i class="sw sw-pasture"></i><span data-i18n="radar.legend_pasture"></span></li>
-                  <li><i class="sw sw-fresh"></i><span data-i18n="radar.legend_fresh"></span></li>
-                </ul>
-                <p data-i18n="guide.radar_body"></p>
-              </article>
-              <article class="guide-card reveal">
-                <h4 data-i18n="guide.chart_title"></h4>
-                <svg class="guide-chart" viewBox="0 0 300 130" aria-hidden="true">
-                  <line class="gc-limit" x1="10" x2="290" y1="72" y2="72" />
-                  <text class="gc-label gc-label-limit" x="288" y="66" text-anchor="end" data-i18n="guide.chart_demo_limit"></text>
-                  <polyline class="gc-line" points="12,34 46,30 80,36 114,32 148,35 168,96 202,100 236,97 270,101 290,99" />
-                  <circle class="gc-dot" cx="168" cy="96" r="5" />
-                  <text class="gc-label" x="14" y="22" data-i18n="guide.chart_demo_forest"></text>
-                  <text class="gc-label gc-label-cut" x="176" y="122" data-i18n="guide.chart_demo_cut"></text>
-                </svg>
-                <p data-i18n="guide.chart_body"></p>
-              </article>
-            </div>
-            <div class="guide-steps reveal">
-              <h4 data-i18n="guide.steps_title"></h4>
-              <ol>
-                <li data-i18n="guide.step1"></li>
-                <li data-i18n="guide.step2"></li>
-                <li data-i18n="guide.step3"></li>
-              </ol>
-            </div>
-          </div>
-        </div>
       </section>
 
-      <!-- 4. Can we trust the radar? -->
+      <!-- 7. Validation: can we trust the radar? -->
       <section class="trust" id="trust">
         <div class="wrap">
           <p class="kicker reveal" data-i18n="trust.kicker"></p>
@@ -229,16 +244,8 @@
         </div>
       </section>
 
-      <!-- 6. What's next -->
-      <section class="context" id="context">
-        <div class="wrap">
-          <p class="kicker reveal" data-i18n="context.kicker"></p>
-          <h2 class="display reveal" data-i18n="context.title"></h2>
-          <p class="lede reveal" data-i18n="context.body"></p>
-          <div class="ctx" id="context-root"></div>
-        </div>
-      </section>
 
+      <!-- 8. Closing: what is next, limits, credits -->
       <section class="next" id="next">
         <div class="wrap">
           <p class="kicker reveal" data-i18n="next.kicker"></p>
