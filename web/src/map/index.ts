@@ -9,7 +9,18 @@ import { LngLat, Marker } from "maplibre-gl";
 import { renderBars } from "../charts/bars";
 import { renderSeries } from "../charts/series";
 import { Swipe } from "../compare/swipe";
-import { BASELINE_DATES, type BBox, type Dataset, HEX_GRADIENT, HEX_STOPS, INSTRUMENT_GAP, median, type PolygonCollection } from "../data";
+import {
+  BASELINE_DATES,
+  type BBox,
+  type Dataset,
+  daysBetween,
+  HEX_GRADIENT,
+  HEX_STOPS,
+  INSTRUMENT_GAP,
+  median,
+  type PolygonCollection,
+  REPEAT_DAYS,
+} from "../data";
 import { fmt, lang, onLang, t } from "../i18n";
 import { Timeline } from "../timeline/timeline";
 import { buildHexGrid, HEX_RADIUS_M, type HexCell, type HexGrid, hexOutlineIn, MINI_HEX_RADIUS_M, MINI_ZOOM } from "./hexgrid";
@@ -53,6 +64,14 @@ export async function initMapSection(ds: Dataset): Promise<void> {
   const { index } = ds;
   const scenes = index.scenes;
   const last = scenes.length - 1;
+  /** "±12 days", or the real window when the previous pass is further back (data gaps). */
+  const whenNote = (k: number): string => {
+    const prev = scenes[k - 1];
+    const cur = scenes[k];
+    return prev && cur && daysBetween(prev.date, cur.date) > REPEAT_DAYS
+      ? t("zone.when_between", { prev: fmt.date(prev.date) })
+      : t("zone.when_note");
+  };
   const aoi = index.aoi.bbox;
 
   let polygons: PolygonCollection;
@@ -496,7 +515,7 @@ export async function initMapSection(ds: Dataset): Promise<void> {
           t("hex.cleared_note", { pct: fmt.num((ha / cell.areaHa) * 100), n: fmt.num(ha / SOCCER_FIELD_HA) }),
           "fact-hot",
         ),
-        fact(t("hex.first"), fmt.date(scenes[cell.firstT ?? 0]?.date ?? "", true), t("zone.when_note")),
+        fact(t("hex.first"), fmt.date(scenes[cell.firstT ?? 0]?.date ?? "", true), whenNote(cell.firstT ?? 0)),
       );
       const checked = shownPolys.filter((f) => f.properties.dist_confirmed !== null);
       const yes = checked.filter((f) => f.properties.dist_confirmed === true).length;

@@ -4,6 +4,14 @@
 // Real data lives in web/public/data/. In `npm run dev` only, if that folder is empty, the app
 // falls back to the synthetic fixtures in web/fixtures/ and flags itself as synthetic.
 
+/** Days between two ISO dates (b - a). */
+export function daysBetween(a: string, b: string): number {
+  return Math.round((Date.parse(`${b}T00:00:00Z`) - Date.parse(`${a}T00:00:00Z`)) / 86_400_000);
+}
+
+/** Normal NISAR repeat: a detection is dated ±12 days unless the previous pass is further back. */
+export const REPEAT_DAYS = 12;
+
 export type Maturity = "PROVISIONAL" | "VALIDATED" | "BETA";
 export type ProvenanceType = "satellite" | "modeled" | "measured";
 export type LngLat = [number, number];
@@ -52,6 +60,8 @@ export interface PolygonProps {
   mean_drop_db: number;
   dist_confirmed: boolean | null;
   status: string;
+  /** schema v3: radar date just before first_date; the change happened between the two. */
+  prev_date?: string | null;
   /** Added by the web app: index of the scene of first_date. */
   t?: number;
 }
