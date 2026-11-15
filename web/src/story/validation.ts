@@ -1,7 +1,7 @@
 // Parts of this file were generated with AI assistance (Claude Code). See docs/AI_USAGE.md
 //
 // "Can we trust the radar?": the two validation numbers as animated rings, the
-// "X of N cases" sentence and three close-ups (radar before / after) cropped from the scene PNGs.
+// Sentinel-1 ring and three close-ups (radar before / after) cropped from the scene PNGs.
 
 import { type Dataset, daysBetween, featureBBox, type PolygonCollection, type PolygonFeature, REPEAT_DAYS } from "../data";
 import { fmt, onLang, t } from "../i18n";
@@ -107,9 +107,8 @@ async function drawCrop(canvas: HTMLCanvasElement, ds: Dataset, scene: number, f
 
 export function initValidation(ds: Dataset | null): void {
   const gauges = document.getElementById("gauges");
-  const sentence = document.getElementById("cases-sentence");
   const casesEl = document.getElementById("cases");
-  if (!gauges || !sentence || !casesEl) return;
+  if (!gauges || !casesEl) return;
   let fc: PolygonCollection | null = null;
   // the other radar (Sentinel-1, C band): data/radar_compare.json, computed offline (METHODS)
   let radar: { hexagons_total: number; hexagons_match: number; area_pct: number; chance_pct: number } | null = null;
@@ -118,8 +117,8 @@ export function initValidation(ds: Dataset | null): void {
   function render() {
     const v = ds?.index.validation;
     const pending = !v || (v.agreement_pct === null && v.coverage_pct === null);
-    // the optical agreement / coverage rings were taken out on the team's request (15 Nov): the optical result
-    // stays as the "X of N cases" sentence below; the numbers are in index.json and METHODS.
+    // the optical agreement / coverage rings and the "X of N cases" sentence were taken out on the team's request
+    // (15 Nov): the optical result shows per case below and in each hexagon panel; the numbers are in index.json.
     // median_lead_days is not shown: the "radar sees it earlier" reading does not hold (CLAUDE.md §9, 14/11).
     gauges!.innerHTML = pending
       ? `<div class="pending"><b>${t("trust.pending")}</b><p>${t("trust.pending_desc")}</p></div>`
@@ -135,11 +134,6 @@ export function initValidation(ds: Dataset | null): void {
       countUp(gauges!);
     }
 
-    const checked = fc?.features.filter((f) => f.properties.dist_confirmed !== null) ?? [];
-    const x = checked.filter((f) => f.properties.dist_confirmed === true).length;
-    const nx = v?.polygons_confirmed ?? x;
-    const nn = v?.polygons_total ?? checked.length;
-    sentence!.textContent = nn ? t("trust.cases_sentence", { x: fmt.num(nx), n: fmt.num(nn) }) : "";
     renderCases();
   }
 

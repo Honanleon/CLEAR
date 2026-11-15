@@ -241,8 +241,7 @@
   "trust": {
     "kicker": "¿Es confiable?",
     "title": "Lo comparamos con otros satélites",
-    "body": "Dos sensores distintos: OPERA DIST-ALERT ve la pérdida de vegetación con satélites ópticos (Landsat y Sentinel-2) y Sentinel-1 es otro radar (banda C). Cuando coinciden, ganamos confianza. El óptico coincide menos: nubes, humo y otro método; lo mostramos igual.",
-    "cases_sentence": "En {x} de {n} casos coincide con alertas ópticas.",
+    "body": "Dos sensores distintos: OPERA DIST-ALERT ve la pérdida de vegetación con satélites ópticos (Landsat y Sentinel-2) y Sentinel-1 es otro radar (banda C). Cuando coinciden, ganamos confianza. El óptico coincide menos (nubes, humo, otro método): lo ves caso por caso abajo y en cada hexágono del mapa.",
     "pending": "Validación pendiente",
     "pending_desc": "Todavía no cruzamos las zonas con OPERA DIST-ALERT.",
     "reference": "Referencia: {ref}",
