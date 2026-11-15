@@ -129,7 +129,8 @@
     "help": "¿Cómo leo el mapa?",
     "more": "Más opciones",
     "hex_size": "Cada hexágono grande mide unas {ha} ha. Al acercarte se divide en hexágonos chicos de unas {mini} ha.",
-    "hex_nodata": "Fuera de los recuadros punteados, los hexágonos vacíos todavía no tienen datos de radar: no quiere decir que no haya desmonte."
+    "hex_nodata": "Fuera de los recuadros punteados, los hexágonos vacíos todavía no tienen datos de radar: no quiere decir que no haya desmonte.",
+    "radar_nohex": "En la vista de radar se ve solo la imagen del satélite. Los hexágonos (rojo: desmonte, violeta: inundación) se ven en «Mapa simple»."
   },
   "zone": {
     "title_cleared": "Zona desmontada",

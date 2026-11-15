@@ -131,6 +131,25 @@ function style(offline?: RadarMapOptions["offline"]): StyleSpecification {
 
 const EMPTY: GeoJSON = { type: "FeatureCollection", features: [] };
 
+/** Every hexagon layer (fills, outlines, grids, no-data shading, hover, pulse): hidden over the radar images. */
+const HEX_LAYERS = [
+  "hex-nodata",
+  "hex-grid",
+  "hex-fill",
+  "mini-world",
+  "mini-grid",
+  "mini-fill",
+  "mini-line",
+  "water-fill",
+  "water-mini-fill",
+  "water-mini-line",
+  "hex-line",
+  "hex-hover",
+  "mini-hover",
+  "hex-new",
+  "mini-new",
+];
+
 export interface ImageSet {
   key: string;
   ds: Dataset;
@@ -209,6 +228,16 @@ export class RadarMap {
   /** Purple of a flooding hexagon by the hectares under water at timeline step t. */
   private waterColor(t: number): string {
     return ["interpolate", ["linear"], ["coalesce", ["get", `w${t}`], 0], ...WATER_STOPS.flat()] as unknown as string;
+  }
+
+  /**
+   * Hexagons on or off: on in the simple map, off over the radar images (radar view and before/after),
+   * which then show alone. The zone boxes, tags and the selected-hexagon outline stay.
+   */
+  setHexagons(on: boolean): void {
+    void this.ready.then(() => {
+      for (const id of HEX_LAYERS) if (this.map.getLayer(id)) this.map.setLayoutProperty(id, "visibility", on ? "visible" : "none");
+    });
   }
 
   /** Flooding hexagons (water zone), computed after load from the water-classes images. */

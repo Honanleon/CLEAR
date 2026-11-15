@@ -129,7 +129,8 @@
     "help": "How do I read the map?",
     "more": "More options",
     "hex_size": "Each big hexagon covers about {ha} ha. Zoom in and it splits into small hexagons of about {mini} ha.",
-    "hex_nodata": "Outside the dashed boxes, empty hexagons have no radar data yet: that does not mean there is no clearing."
+    "hex_nodata": "Outside the dashed boxes, empty hexagons have no radar data yet: that does not mean there is no clearing.",
+    "radar_nohex": "The radar view shows the satellite image alone. The hexagons (red: clearing, purple: flooding) are on the «Simple map»."
   },
   "zone": {
     "title_cleared": "Cleared area",

@@ -1037,6 +1037,11 @@ button {
 .map-intro {
   padding-bottom: 36px;
 }
+.panel-note-strong {
+  color: var(--text);
+  border-left: 2px solid var(--accent);
+  padding-left: 10px;
+}
 /* Layers panel folding (computer and phone): the chevron points up when the panel is open */
 .map-panel .panel-head {
   cursor: pointer;

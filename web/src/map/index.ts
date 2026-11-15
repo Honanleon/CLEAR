@@ -365,11 +365,16 @@ export async function initMapSection(ds: Dataset): Promise<void> {
     }
     body.append(seg);
 
-    body.append(h("p", "panel-label", t("map.legend_polys")), hexLegend());
-    body.append(h("p", "panel-note", t("map.hex_size", { ha: fmt.num(hex.cells[0]?.areaHa ?? 0), mini: fmt.num(mini.cells[0]?.areaHa ?? 0) })));
-    body.append(h("p", "panel-note", t("map.hex_nodata")));
-    // flooding legend, always: the purple hexagons are on the map whatever the zone in focus
-    if (waterSet) body.append(h("p", "panel-label", t("water.legend_hex", { zone: waterSet.z ? zoneName(waterSet.z) : "" })), rampLegend(WATER_GRADIENT, WATER_STOPS));
+    if (view === "radar") {
+      // over the radar images there are no hexagons: say where they are
+      body.append(h("p", "panel-note panel-note-strong", t("map.radar_nohex")));
+    } else {
+      body.append(h("p", "panel-label", t("map.legend_polys")), hexLegend());
+      body.append(h("p", "panel-note", t("map.hex_size", { ha: fmt.num(hex.cells[0]?.areaHa ?? 0), mini: fmt.num(mini.cells[0]?.areaHa ?? 0) })));
+      body.append(h("p", "panel-note", t("map.hex_nodata")));
+      // flooding legend, always on the simple map: the purple hexagons show whatever the zone in focus
+      if (waterSet) body.append(h("p", "panel-label", t("water.legend_hex", { zone: waterSet.z ? zoneName(waterSet.z) : "" })), rampLegend(WATER_GRADIENT, WATER_STOPS));
+    }
 
     const zoomedOut = mapA.map.getZoom() < 8.5;
     // the offline test map only has imagery around the study area: no "all of Paraguay" view there
@@ -469,6 +474,8 @@ export async function initMapSection(ds: Dataset): Promise<void> {
       if (!m) continue;
       void m.setRadar(view === "radar", layers.opacity);
       void m.setOutlines(layers.outlines);
+      // red / purple hexagons only on the simple map; over the radar images (radar view, before/after) the image alone
+      m.setHexagons(view !== "radar");
     }
   }
 
@@ -539,7 +546,8 @@ export async function initMapSection(ds: Dataset): Promise<void> {
   const finePointer = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
   let hovered: string | null = null;
   function onMove(e: { lngLat: LngLat; point: { x: number; y: number } }, from: RadarMap) {
-    const cell = gridAt(from).locate(e.lngLat.lng, e.lngLat.lat);
+    // no hexagons over the radar images: no hexagon outline or tooltip either
+    const cell = view === "radar" ? null : gridAt(from).locate(e.lngLat.lng, e.lngLat.lat);
     const key = cell ? `${isMini(cell) ? "m" : "h"}${cell.id}` : null;
     if (key !== hovered) {
       hovered = key;
