@@ -101,7 +101,7 @@
     "view": "Show the map as",
     "view_satellite": "Satellite photo",
     "view_radar": "NISAR radar",
-    "layer_polygons": "Exact outline of each clearing",
+    "layer_polygons": "Detail in 1 km hexagons",
     "opacity": "Radar transparency",
     "legend_polys": "Hectares cleared in each hexagon",
     "tap_hint": "Tap a colored hexagon to see what happened there",
@@ -127,7 +127,7 @@
     "coach": "👆 Tap a colored hexagon to see what happened there",
     "help": "How do I read the map?",
     "more": "More options",
-    "hex_size": "Each hexagon covers about {ha} ha.",
+    "hex_size": "Each big hexagon covers about {ha} ha. Zoom in and it splits into small hexagons of about {mini} ha.",
     "hex_nodata": "Outside the dashed box, empty hexagons have no radar data yet: that does not mean there is no clearing."
   },
   "zone": {
@@ -252,9 +252,7 @@
     "disclaimer": "These are radar-estimated results, not checked on the ground.",
     "agreement_desc_any": "of the area we flag also has an optical alert at some point in the period",
     "coverage_desc_any": "of the optical-alert area in forest (≥ 5 ha) is also detected by radar",
-    "lead": "days before optical satellites: how far ahead the radar is, as a median",
-    "lag": "days after optical satellites, as a median",
-    "window24": "If dates must also match (±24 days): agreement {a}%, coverage {c}%. It is low because radar usually sees the clearing earlier."
+    "window24": "If dates must also match (±24 days): agreement {a}%, coverage {c}%."
   },
   "next": {
     "kicker": "What's next",
@@ -273,7 +271,7 @@
       "Most data is provisional and the last date is validated: we adjust every date so they can be compared.",
       "We only look at what was forest on a 2021 map (ESA WorldCover) and that radar also saw as forest at the start.",
       "Rain and fire move the signal: that is why we require two out of three passes in a row.",
-      "Hexagons summarize the clearings: the exact outline is under \"More options\".",
+      "Hexagons summarize the clearings: the 1 km detail is under \"More options\".",
       "We say nothing about whether a clearing is legal: that needs cadastre and permits we do not use."
     ],
     "steps_title": "Next steps",

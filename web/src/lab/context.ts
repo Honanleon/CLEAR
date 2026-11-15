@@ -202,7 +202,7 @@ export async function buildHexContext(ds: Dataset, cell: HexCell, polys: Polygon
       threshold_db: index.detection.threshold_db,
       persistence: "2 of 3 passes",
       min_area_ha: index.detection.min_area_ha,
-      min_baseline_db: -4,
+      min_baseline_db: -2,
       forest_mask: ds.provenance("forest_mask")?.source ?? "forest mask",
       nisar: index.nisar,
     },

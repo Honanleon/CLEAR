@@ -5,7 +5,7 @@
 
 import { type Dataset, HEX_GRADIENT, HEX_STOPS, type PolygonCollection } from "../data";
 import { fmt, onLang, t } from "../i18n";
-import { buildHexGrid } from "../map/hexgrid";
+import { buildHexGrid, MINI_HEX_RADIUS_M } from "../map/hexgrid";
 import { SOCCER_FIELD_HA } from "../map/zone";
 
 export function initGuide(ds: Dataset | null): void {
@@ -21,7 +21,7 @@ export function initGuide(ds: Dataset | null): void {
     if (!fc || !ds) return;
     const feats = fc.features;
     const total = feats.reduce((s, f) => s + f.properties.area_ha, 0);
-    const grid = buildHexGrid(ds.index.aoi.bbox, fc, ds.index.scenes.length);
+    const grid = buildHexGrid(ds.index.aoi.bbox, fc, ds.index.scenes.length, MINI_HEX_RADIUS_M);
     const hexWith = grid.data.features.length;
     const checked = feats.filter((f) => f.properties.dist_confirmed !== null);
     const yes = checked.filter((f) => f.properties.dist_confirmed === true).length;
