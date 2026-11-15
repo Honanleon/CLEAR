@@ -1108,11 +1108,10 @@ button {
 .zone-kind-clearing::before {
   background: #e60000;
 }
-.zone-kind-water::before {
-  background: var(--hv);
-}
+/* only clearing zones get a coloured (red) dot: blue / green would read as the water classes */
+.zone-kind-water::before,
 .zone-kind-control::before {
-  background: var(--ok);
+  background: #9ca3af;
 }
 /* water zone (chapter 2): legend in the colours of the water-classes PNGs, and the water chart */
 .water-legend {
@@ -1229,6 +1228,16 @@ button {
 }
 .panel-zone:hover {
   border-color: var(--muted);
+}
+.panel-zone-kind {
+  margin-left: auto;
+  padding-left: 10px;
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--dim);
+}
+.panel-zone[aria-pressed="true"] .panel-zone-kind {
+  color: #4b5563;
 }
 .panel-zone[aria-pressed="true"] {
   background: #ffffff;

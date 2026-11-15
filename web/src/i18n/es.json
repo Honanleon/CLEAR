@@ -354,6 +354,7 @@
     "reading": "{date}: agua abierta {open} ha · vegetación inundada {veg} ha (estimado)",
     "rice": "El pico de agua abierta de octubre son arrozales inundados, no una inundación natural.",
     "tap": "Tocá un punto de la zona para ver la señal del radar y la lluvia ahí.",
-    "none": "Todavía no hay datos de agua para esta zona."
+    "none": "Todavía no hay datos de agua para esta zona.",
+    "legend_title": "Capa de agua de {zone}"
   }
 }

@@ -354,6 +354,7 @@
     "reading": "{date}: open water {open} ha · flooded vegetation {veg} ha (estimated)",
     "rice": "The October open-water peak is flooded rice fields, not a natural flood.",
     "tap": "Tap a point in the zone to see the radar signal and the rain there.",
-    "none": "No water data for this zone yet."
+    "none": "No water data for this zone yet.",
+    "legend_title": "{zone} water layer"
   }
 }

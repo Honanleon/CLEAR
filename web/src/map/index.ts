@@ -307,12 +307,14 @@ export async function initMapSection(ds: Dataset): Promise<void> {
         if (!s.z) continue;
         const z = s.z;
         const b = button(`panel-zone zone-kind-${z.kind}`, zoneName(z), () => focusZoneById(z.id));
+        // the kind in words: the dot colour alone could be read as a water class (blue / green)
+        b.append(h("span", "panel-zone-kind", t(`zones.kind_${z.kind}`)));
         b.setAttribute("aria-pressed", String(s === focus));
         list.append(b);
       }
       body.append(list);
       if (focus.z && focus.z.kind !== "clearing") body.append(h("p", "panel-note", t(`zones.note_${focus.z.kind}`)));
-      if (isWater(focus)) body.append(waterLegend());
+      if (isWater(focus)) body.append(h("p", "panel-label", t("water.legend_title", { zone: focus.z ? zoneName(focus.z) : "" })), waterLegend());
     }
     body.append(h("p", "panel-label", t("map.view")));
     const seg = h("div", "seg seg-block");
