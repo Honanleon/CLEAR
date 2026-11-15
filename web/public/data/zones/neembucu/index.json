@@ -1,6 +1,6 @@
 {
   "schema_version": 3,
-  "generated_at": "2026-11-14T21:14:52-03:00",
+  "generated_at": "2026-11-14T22:23:25-03:00",
   "aoi": {
     "id": "neembucu",
     "bbox": [
@@ -11,88 +11,81 @@
     ]
   },
   "nisar": {
-    "track": 60,
-    "direction": "ASCENDING",
-    "frame": 164,
+    "track": 10,
+    "direction": "DESCENDING",
+    "frame": 102,
     "mode": "20+5 DHDH"
   },
   "scenes": [
     {
-      "date": "2025-11-02",
-      "id": "NISAR_L2_PR_GCOV_004_060_A_164_2005_DHDH_A_20251102T094757_20251102T094832_X05009_N_F_J_001",
-      "maturity": "UNKNOWN",
-      "crid": "X05009",
-      "rgb": "zones/neembucu/rgb/2025-11-02.webp"
-    },
-    {
-      "date": "2026-06-18",
-      "id": "NISAR_L2_PR_GCOV_023_060_A_164_2005_DHDH_A_20260618T094759_20260618T094834_P05023_N_F_J_001",
+      "date": "2026-06-26",
+      "id": "NISAR_L2_PR_GCOV_024_010_D_102_2005_DHDH_A_20260626T215816_20260626T215851_P05023_N_F_J_001",
       "maturity": "PROVISIONAL",
       "crid": "P05023",
-      "rgb": "zones/neembucu/rgb/2026-06-18.webp"
+      "rgb": "zones/neembucu/rgb/2026-06-26.webp"
     },
     {
-      "date": "2026-06-30",
-      "id": "NISAR_L2_PR_GCOV_024_060_A_164_2005_DHDH_A_20260630T094759_20260630T094833_P05023_N_F_J_001",
+      "date": "2026-07-08",
+      "id": "NISAR_L2_PR_GCOV_025_010_D_102_2005_DHDH_A_20260708T215816_20260708T215850_P05023_N_F_J_001",
       "maturity": "PROVISIONAL",
       "crid": "P05023",
-      "rgb": "zones/neembucu/rgb/2026-06-30.webp"
+      "rgb": "zones/neembucu/rgb/2026-07-08.webp"
     },
     {
-      "date": "2026-07-12",
-      "id": "NISAR_L2_PR_GCOV_025_060_A_164_2005_DHDH_A_20260712T094758_20260712T094833_P05023_N_F_J_001",
+      "date": "2026-07-20",
+      "id": "NISAR_L2_PR_GCOV_026_010_D_102_2005_DHDH_A_20260720T215815_20260720T215849_P05023_N_F_J_001",
       "maturity": "PROVISIONAL",
       "crid": "P05023",
-      "rgb": "zones/neembucu/rgb/2026-07-12.webp"
+      "rgb": "zones/neembucu/rgb/2026-07-20.webp"
     },
     {
-      "date": "2026-07-24",
-      "id": "NISAR_L2_PR_GCOV_026_060_A_164_2005_DHDH_A_20260724T094757_20260724T094832_P05023_N_F_J_001",
+      "date": "2026-08-13",
+      "id": "NISAR_L2_PR_GCOV_028_010_D_102_2005_DHDH_A_20260813T215814_20260813T215848_P05023_N_F_J_001",
       "maturity": "PROVISIONAL",
       "crid": "P05023",
-      "rgb": "zones/neembucu/rgb/2026-07-24.webp"
+      "rgb": "zones/neembucu/rgb/2026-08-13.webp"
     },
     {
-      "date": "2026-08-17",
-      "id": "NISAR_L2_PR_GCOV_028_060_A_164_2005_DHDH_A_20260817T094756_20260817T094831_P05023_N_F_J_001",
+      "date": "2026-08-25",
+      "id": "NISAR_L2_PR_GCOV_029_010_D_102_2005_DHDH_A_20260825T215813_20260825T215848_P05023_N_F_J_001",
       "maturity": "PROVISIONAL",
       "crid": "P05023",
-      "rgb": "zones/neembucu/rgb/2026-08-17.webp"
+      "rgb": "zones/neembucu/rgb/2026-08-25.webp"
     },
     {
-      "date": "2026-08-29",
-      "id": "NISAR_L2_PR_GCOV_029_060_A_164_2005_DHDH_A_20260829T094756_20260829T094831_P05023_N_F_J_001",
+      "date": "2026-09-06",
+      "id": "NISAR_L2_PR_GCOV_030_010_D_102_2005_DHDH_A_20260906T215813_20260906T215848_P05023_N_F_J_001",
       "maturity": "PROVISIONAL",
       "crid": "P05023",
-      "rgb": "zones/neembucu/rgb/2026-08-29.webp"
+      "rgb": "zones/neembucu/rgb/2026-09-06.webp"
     },
     {
-      "date": "2026-09-10",
-      "id": "NISAR_L2_PR_GCOV_030_060_A_164_2005_DHDH_A_20260910T094756_20260910T094830_P05023_N_F_J_001",
+      "date": "2026-09-18",
+      "id": "NISAR_L2_PR_GCOV_031_010_D_102_2005_DHDH_A_20260918T215813_20260918T215848_P05023_F_F_J_001",
       "maturity": "PROVISIONAL",
       "crid": "P05023",
-      "rgb": "zones/neembucu/rgb/2026-09-10.webp"
+      "rgb": "zones/neembucu/rgb/2026-09-18.webp"
     },
     {
-      "date": "2026-10-04",
-      "id": "NISAR_L2_PR_GCOV_032_060_A_164_2005_DHDH_A_20261004T094756_20261004T094831_P05023_N_F_J_001",
+      "date": "2026-09-30",
+      "id": "NISAR_L2_PR_GCOV_032_010_D_102_2005_DHDH_A_20260930T215813_20260930T215848_P05023_N_F_J_001",
       "maturity": "PROVISIONAL",
       "crid": "P05023",
-      "rgb": "zones/neembucu/rgb/2026-10-04.webp"
+      "rgb": "zones/neembucu/rgb/2026-09-30.webp"
     },
     {
-      "date": "2026-10-16",
-      "id": "NISAR_L2_PR_GCOV_033_060_A_164_2005_DHDH_A_20261016T094756_20261016T094831_P05023_N_F_J_001",
+      "date": "2026-10-12",
+      "id": "NISAR_L2_PR_GCOV_033_010_D_102_2005_DHDH_A_20261012T215813_20261012T215848_P05023_N_F_J_001",
       "maturity": "PROVISIONAL",
       "crid": "P05023",
-      "rgb": "zones/neembucu/rgb/2026-10-16.webp"
+      "rgb": "zones/neembucu/rgb/2026-10-12.webp"
     },
     {
-      "date": "2026-10-28",
-      "id": "NISAR_L2_PR_GCOV_034_060_A_164_2005_DHDH_A_20261028T094756_20261028T094831_P05036_N_F_J_001",
+      "date": "2026-10-24",
+      "id": "NISAR_L2_PR_GCOV_034_010_D_102_2005_DHDH_A_20261024T215814_20261024T215848_P05036_N_F_J_001",
       "maturity": "VALIDATED",
       "crid": "P05036",
-      "rgb": "zones/neembucu/rgb/2026-10-28.webp"
+      "rgb": "zones/neembucu/rgb/2026-10-24.webp"
     }
   ],
   "image_coordinates": [
@@ -137,6 +130,11 @@
       "layer": "rgb",
       "type": "satellite",
       "source": "NISAR L2 GCOV (NASA/JPL, ASF DAAC)"
+    },
+    {
+      "layer": "water",
+      "type": "satellite",
+      "source": "CLEAR water classes on NISAR L2 GCOV (NASA/JPL, ASF DAAC)"
     }
   ],
   "zone": {
@@ -147,5 +145,10 @@
       "en": "Ñeembucú"
     },
     "primary": false
+  },
+  "excluded_scenes": [],
+  "water": {
+    "json": "zones/neembucu/water.json",
+    "status": "estimado"
   }
 }

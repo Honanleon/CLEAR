@@ -45,7 +45,7 @@ Loaded on startup.
 
 ## Changes
 
-- **v3 (2026-11-14):** several zones: `zones.json`, `zones/<id>/` folders, `index.zone`; `rain.json` is produced per zone (NASA POWER, centre of the zone's bbox). Backward compatible: the primary zone keeps the v2 layout at the root.
+- **v3 (2026-11-14):** water zones (`water/`, `water.json`, `index.water`), `excluded_scenes`; several zones: `zones.json`, `zones/<id>/` folders, `index.zone`; `rain.json` is produced per zone (NASA POWER, centre of the zone's bbox). Backward compatible: the primary zone keeps the v2 layout at the root.
 - **v2 (2026-11-14):** `polygons.geojson` holds aggregated hexagons (same properties, new meaning above); `detection` adds `n_hexes` and `hex_width_m`. Also: `agreement_pct` and `coverage_pct` are now spatial (any date) instead of ±24 days; added `agreement_pct_24d`, `coverage_pct_24d`, `median_lead_days`, `polygons_confirmed`, `polygons_total`. Backward compatible: no field was removed or renamed. Reason in `docs/METHODS.md` (validation).
 
 ## Several zones (`zones.json`, v3)
@@ -68,6 +68,25 @@ The pipeline can process several study zones. The **primary zone** (first in `zo
 - `kind`: `clearing` (forest clearing detection), `water` (chapter 2; for now only radar images, time series and rain, no detection, no `polygons.geojson`), `control` (chapter 3: same detection as `clearing`; few or no detections are expected).
 - `path`: folder of the zone's files, relative to `web/public/data/` (`""` for the primary zone).
 - Each zone's `index.json` also has `"zone": {"kind", "chapter", "name", "primary"}`.
+
+## Water zones (`kind: water`, v3)
+
+For a water zone (chapter 2) the zone folder also has:
+
+- `water/<date>.png`: one image per scene on the same grid and corners as the RGB (`image_coordinates`). Transparent background, blue = open water, green = flooded vegetation. Each scene in `index.json` has `"water": "zones/<id>/water/<date>.png"`.
+- `water.json`:
+
+```json
+{ "dates": ["2026-06-26", "..."], "open_water_ha": [1234.5, "..."], "flooded_veg_ha": [5678.9, "..."],
+  "thresholds_db": {"open_water_hh_db": -18.0, "open_water_hv_db": -24.0, "flooded_hh_db": -4.0, "flooded_ratio_db": 10.0},
+  "status": "estimado", "source": "NISAR L2 GCOV (NASA/JPL, ASF DAAC), HH and HV" }
+```
+
+- `index.json` → `"water": {"json": "zones/<id>/water.json", "status": "estimado"}`. There is no `polygons.geojson`.
+
+## Excluded scenes
+
+`index.json` → `excluded_scenes`: `[{"date": "...", "reason": "..."}]`. These are scenes left out by the quality gate (the forest HV level of the whole scene jumps by more than `quality.max_ref_deviation_db`, which means a product problem, not a change on the ground). They are not in `scenes`, `grid_500m.json` or `water.json`.
 
 ## `polygons.geojson`
 
