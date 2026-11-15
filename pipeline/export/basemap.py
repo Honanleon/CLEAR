@@ -18,6 +18,9 @@ from pathlib import Path
 
 BOX = (-67.0, -31.0, -50.0, -16.0)  # MAX_BOUNDS of web/src/map/radar-map.ts
 SIMPLIFY_DEG = 0.004  # ~400 m: enough for a country-scale grey map
+# fixed label points where the automatic one collides with the web's zone tags
+# (Brazil's sat next to the Mbaracayu tag at the country view)
+LABEL_AT = {"BRA": [-52.6, -20.6]}
 DIGITS = 4
 SOURCE = "Natural Earth 1:10m v5.1 (public domain)"
 
@@ -101,6 +104,8 @@ def build(ne: Path, web: Path) -> dict[str, int]:
             # Paraguay at Natural Earth's label point; neighbours inside the part of them that the map shows
             if r["ADM0_A3"] == "PRY":
                 xy = [r["LABEL_X"], r["LABEL_Y"]]
+            elif r["ADM0_A3"] in LABEL_AT:
+                xy = LABEL_AT[r["ADM0_A3"]]
             else:
                 p = r.geometry.representative_point()
                 xy = [p.x, p.y]
