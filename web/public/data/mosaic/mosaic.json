@@ -810,33 +810,45 @@
    "file": "m_2025-11.webp",
    "dates": [
     "2025-11-02",
-    "2025-11-21"
+    "2026-07-06"
    ],
-   "coverage_of_paraguay": 0.603,
-   "frames": 13,
-   "skipped": 0
+   "filled_with": [
+    "2025-12-01",
+    "2026-07-06"
+   ],
+   "coverage_of_paraguay": 0.997,
+   "frames": 52,
+   "skipped": 3
   },
   {
    "until": "2025-12-31",
    "file": "m_2025-12.webp",
    "dates": [
     "2025-11-02",
-    "2025-12-27"
+    "2026-07-06"
    ],
-   "coverage_of_paraguay": 0.669,
-   "frames": 20,
-   "skipped": 0
+   "filled_with": [
+    "2026-01-15",
+    "2026-07-06"
+   ],
+   "coverage_of_paraguay": 0.997,
+   "frames": 52,
+   "skipped": 3
   },
   {
    "until": "2026-01-31",
    "file": "m_2026-01.webp",
    "dates": [
     "2025-11-02",
-    "2026-01-20"
+    "2026-07-06"
    ],
-   "coverage_of_paraguay": 0.669,
-   "frames": 22,
-   "skipped": 0
+   "filled_with": [
+    "2026-06-19",
+    "2026-07-06"
+   ],
+   "coverage_of_paraguay": 0.997,
+   "frames": 52,
+   "skipped": 3
   },
   {
    "until": "2026-06-30",
@@ -845,6 +857,7 @@
     "2026-06-19",
     "2026-06-30"
    ],
+   "filled_with": [],
    "coverage_of_paraguay": 0.994,
    "frames": 48,
    "skipped": 1
@@ -856,6 +869,7 @@
     "2026-07-15",
     "2026-07-27"
    ],
+   "filled_with": [],
    "coverage_of_paraguay": 0.999,
    "frames": 54,
    "skipped": 1
@@ -867,6 +881,7 @@
     "2026-08-10",
     "2026-08-31"
    ],
+   "filled_with": [],
    "coverage_of_paraguay": 1.0,
    "frames": 54,
    "skipped": 1
@@ -878,6 +893,7 @@
     "2026-08-15",
     "2026-09-30"
    ],
+   "filled_with": [],
    "coverage_of_paraguay": 1.0,
    "frames": 54,
    "skipped": 1
@@ -889,6 +905,7 @@
     "2026-10-10",
     "2026-10-31"
    ],
+   "filled_with": [],
    "coverage_of_paraguay": 0.998,
    "frames": 54,
    "skipped": 1

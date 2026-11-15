@@ -5,7 +5,8 @@
 # search API: "after" = latest 2026-09-15..10-31 per track/frame) and the downloaded
 # browse PNGs in before/ and after/. Usage: python browse_mosaic_test.py <out_dir>
 # "before" = earliest pass of each track/frame up to 2026-07-15 (NISAR imaged eastern Paraguay only from June 2026).
-# "monthly" (timeline) = for each month-end, the latest pass of each track/frame up to that day.
+# "monthly" (timeline) = for each month-end, the latest pass of each track/frame up to that day; before June 2026
+# the frames with no pass yet (the east) are filled, underneath, with their first pass (Jun - Jul 2026), flagged "fill".
 # Each browse is georeferenced by matching the 4 corners of its data swath (extreme non-black pixels)
 # to the 4 corners of the product footprint from the ASF search (affine fit; products with a residual
 # over 0.02 deg are skipped). Output: lon/lat grid over Paraguay, clipped to the country, RGBA WebP.
@@ -53,6 +54,8 @@ def fit(arr, ring):
 
 def build(kind, latest_on_top, items=None, name=None):
     items = sorted(items if items is not None else sel[kind], key=lambda x: x["date"], reverse=not latest_on_top)
+    # fills (a later first pass used where a region had no pass yet) go underneath the passes of the period
+    items = [x for x in items if x.get("fill")] + [x for x in items if not x.get("fill")]
     rgb = np.zeros((H, W, 3), np.uint8)
     have = np.zeros((H, W), bool)
     used, skipped = [], []
@@ -116,7 +119,8 @@ for cutoff, items in sorted(sel.get("monthly", {}).items()):
     name = "m_" + cutoff[:7]
     r = build("monthly", latest_on_top=True, items=items, name=name)
     ds = [p["date"] for p in r["products"]]
-    meta["timeline"].append({"until": cutoff, "file": name + ".webp", "dates": [min(ds), max(ds)] if ds else [], "coverage_of_paraguay": r["coverage_of_paraguay"], "frames": len(r["products"]), "skipped": len(r["skipped"])})
+    fills = sorted(x["date"] for x in items if x.get("fill"))
+    meta["timeline"].append({"until": cutoff, "file": name + ".webp", "dates": [min(ds), max(ds)] if ds else [], "filled_with": [fills[0], fills[-1]] if fills else [], "coverage_of_paraguay": r["coverage_of_paraguay"], "frames": len(r["products"]), "skipped": len(r["skipped"])})
     print(name, "frames", len(r["products"]), "skipped", len(r["skipped"]), "coverage", r["coverage_of_paraguay"])
 for k in ("before", "after"):
     m = meta[k]
