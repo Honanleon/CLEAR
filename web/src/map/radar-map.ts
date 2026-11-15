@@ -1,8 +1,8 @@
 // Parts of this file were generated with AI assistance (Claude Code). See docs/AI_USAGE.md
 //
-// One MapLibre map of Paraguay: real satellite imagery, place names / roads / borders from
-// OpenStreetMap, the study area divided into hexagons coloured by hectares cleared up to a date
-// (cells that grew in the current pass pulse), optional exact clearing outlines and, on demand,
+// One MapLibre map of Paraguay: a simple grey-and-white base map (water, roads, borders, names from
+// OpenStreetMap), Paraguay divided into hexagons coloured red by hectares cleared up to a date
+// (cells that grew in the current pass pulse), optional 1 km clearing hexagons and, on demand,
 // the NISAR RGB scene of a date. The map section uses one instance in timeline mode
 // and two (synced, one clipped) in before/after mode.
 
@@ -19,14 +19,12 @@ import workerUrl from "maplibre-gl/dist/maplibre-gl-worker.mjs?url";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { type BBox, type Dataset, HEX_STOPS, type PolygonCollection } from "../data";
 import { type GeoJSON, type HexGrid, MINI_ZOOM } from "./hexgrid";
+import paraguay from "./paraguay.json";
 import { type Lang, lang, t } from "../i18n";
 
 setWorkerUrl(workerUrl);
 
-/** Esri World Imagery: high-resolution satellite basemap (attribution required). */
-const SATELLITE_TILES = "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}";
-const SATELLITE_ATTR = "Esri, Maxar, Earthstar Geographics, GIS User Community";
-/** OpenFreeMap vector tiles (OpenMapTiles schema, OpenStreetMap data): names, roads, borders. */
+/** OpenFreeMap vector tiles (OpenMapTiles schema, OpenStreetMap data): the simple grey base map (water, roads, borders, names). */
 const LABELS_TILEJSON = "https://tiles.openfreemap.org/planet";
 const LABELS_ATTR = "OpenFreeMap © OpenMapTiles · © OpenStreetMap contributors";
 const GLYPHS = "https://tiles.openfreemap.org/fonts/{fontstack}/{range}.pbf";
@@ -88,12 +86,22 @@ function style(offline?: RadarMapOptions["offline"]): StyleSpecification {
     version: 8,
     glyphs: GLYPHS,
     sources: {
-      satellite: { type: "raster", tiles: [SATELLITE_TILES], tileSize: 256, maxzoom: 18, attribution: SATELLITE_ATTR },
       osm: { type: "vector", url: LABELS_TILEJSON, attribution: LABELS_ATTR },
+      country: { type: "geojson", data: { type: "Feature", properties: {}, geometry: { type: "Polygon", coordinates: [paraguay as [number, number][]] } } },
     },
+    // simple grey-and-white map: neighbours light grey, Paraguay white, water grey (red is kept for clearing only)
     layers: [
-      { id: "bg", type: "background", paint: { "background-color": "#0b0f14" } },
-      { id: "satellite", type: "raster", source: "satellite", paint: { "raster-contrast": 0.06, "raster-fade-duration": 200 } },
+      { id: "bg", type: "background", paint: { "background-color": "#dedfe1" } },
+      { id: "country-fill", type: "fill", source: "country", paint: { "fill-color": "#ffffff" } },
+      { id: "water", type: "fill", source: "osm", "source-layer": "water", paint: { "fill-color": "#c4c9cf" } },
+      {
+        id: "waterway",
+        type: "line",
+        source: "osm",
+        "source-layer": "waterway",
+        minzoom: 6,
+        paint: { "line-color": "#c4c9cf", "line-width": ["interpolate", ["linear"], ["zoom"], 6, 0.6, 12, 2] },
+      },
     ],
   };
 }
@@ -194,8 +202,8 @@ export class RadarMap {
       "source-layer": "transportation",
       filter: ["in", ["get", "class"], ["literal", ["motorway", "trunk", "primary", "secondary"]]],
       paint: {
-        "line-color": "#ffe2a8",
-        "line-opacity": ["interpolate", ["linear"], ["zoom"], 5, 0.35, 10, 0.6],
+        "line-color": "#c3c5c9",
+        "line-opacity": ["interpolate", ["linear"], ["zoom"], 5, 0.6, 10, 0.95],
         "line-width": ["interpolate", ["linear"], ["zoom"], 5, 0.5, 9, 1.2, 14, 3],
       },
     });
@@ -205,7 +213,7 @@ export class RadarMap {
       source: "osm",
       "source-layer": "boundary",
       filter: ["all", ["==", ["get", "admin_level"], 4], ["!=", ["get", "maritime"], 1]],
-      paint: { "line-color": "#ffffff", "line-opacity": 0.45, "line-width": 1, "line-dasharray": [3, 2] },
+      paint: { "line-color": "#9a9ca1", "line-opacity": 0.8, "line-width": 1, "line-dasharray": [3, 2] },
     });
     m.addLayer({
       id: "admin-country",
@@ -213,7 +221,7 @@ export class RadarMap {
       source: "osm",
       "source-layer": "boundary",
       filter: ["all", ["==", ["get", "admin_level"], 2], ["!=", ["get", "maritime"], 1]],
-      paint: { "line-color": "#ffffff", "line-opacity": 0.85, "line-width": ["interpolate", ["linear"], ["zoom"], 4, 1, 10, 2.5] },
+      paint: { "line-color": "#5f6268", "line-opacity": 0.9, "line-width": ["interpolate", ["linear"], ["zoom"], 4, 1, 10, 2.5] },
     });
 
   }
@@ -228,15 +236,15 @@ export class RadarMap {
       type: "fill",
       source: "hexgrid",
       filter: ["==", ["get", "s"], 0],
-      paint: { "fill-color": "#0b0f14", "fill-opacity": ["interpolate", ["linear"], ["zoom"], 5, 0.14, 10, 0.22] as never },
+      paint: { "fill-color": "#9ca3af", "fill-opacity": ["interpolate", ["linear"], ["zoom"], 5, 0.12, 10, 0.14] as never },
     });
     m.addLayer({
       id: "hex-grid",
       type: "line",
       source: "hexgrid",
       paint: {
-        "line-color": "#ffffff",
-        "line-opacity": ["interpolate", ["linear"], ["zoom"], 5, ["case", studied, 0.4, 0.16], 11, ["case", studied, 0.3, 0.12]] as never,
+        "line-color": "#7b8190",
+        "line-opacity": ["interpolate", ["linear"], ["zoom"], 5, ["case", studied, 0.55, 0.3], 11, ["case", studied, 0.45, 0.25]] as never,
         "line-width": ["interpolate", ["linear"], ["zoom"], 5, 0.5, 10, 1] as never,
       },
     });
@@ -246,7 +254,7 @@ export class RadarMap {
       type: "fill",
       source: "hexdata",
       filter: [">", ["get", "a0"], 0],
-      paint: { "fill-color": this.hexColor(0), "fill-opacity": ["interpolate", ["linear"], ["zoom"], 5, 0.88, z0, 0.85, z1, 0] as never },
+      paint: { "fill-color": this.hexColor(0), "fill-opacity": ["interpolate", ["linear"], ["zoom"], 5, 0.9, z0, 0.9, z1, 0] as never },
     });
     // mini hexagons over the rest of the country (no data), recomputed for the area on screen
     m.addLayer({
@@ -254,7 +262,7 @@ export class RadarMap {
       type: "line",
       source: "miniworld",
       minzoom: z0,
-      paint: { "line-color": "#ffffff", "line-opacity": ["interpolate", ["linear"], ["zoom"], z0, 0, z1, 0.14, 12, 0.2] as never, "line-width": 0.8 },
+      paint: { "line-color": "#7b8190", "line-opacity": ["interpolate", ["linear"], ["zoom"], z0, 0, z1, 0.25, 12, 0.3] as never, "line-width": 0.8 },
     });
     // mini hexagons inside the study area, shown when zoomed in
     m.addLayer({
@@ -262,7 +270,7 @@ export class RadarMap {
       type: "line",
       source: "minigrid",
       minzoom: z0,
-      paint: { "line-color": "#ffffff", "line-opacity": ["interpolate", ["linear"], ["zoom"], z0, 0, z1, 0.22, 12, 0.3] as never, "line-width": 0.8 },
+      paint: { "line-color": "#7b8190", "line-opacity": ["interpolate", ["linear"], ["zoom"], z0, 0, z1, 0.4, 12, 0.45] as never, "line-width": 0.8 },
     });
     m.addLayer({
       id: "mini-fill",
@@ -270,7 +278,7 @@ export class RadarMap {
       source: "minidata",
       minzoom: z0,
       filter: [">", ["get", "a0"], 0],
-      paint: { "fill-color": this.hexColor(0), "fill-opacity": ["interpolate", ["linear"], ["zoom"], z0, 0, z1, 0.85, 11, 0.72, 13, 0.36, 15, 0.2] as never },
+      paint: { "fill-color": this.hexColor(0), "fill-opacity": ["interpolate", ["linear"], ["zoom"], z0, 0, z1, 0.9, 13, 0.9, 15, 0.75] as never },
     });
     m.addLayer({
       id: "mini-line",
@@ -294,7 +302,7 @@ export class RadarMap {
         type: "line",
         source: src,
         filter: ["==", ["get", "id"], -1],
-        paint: { "line-color": "#ffffff", "line-width": 2, "line-opacity": 0.8 },
+        paint: { "line-color": "#111827", "line-width": 2, "line-opacity": 0.8 },
       });
     }
     for (const [prefix, src] of [["hex", "hexdata"], ["mini", "minidata"]] as const) {
@@ -304,7 +312,7 @@ export class RadarMap {
         source: src,
         ...(prefix === "mini" ? { minzoom: z0 } : { maxzoom: z1 }),
         filter: ["==", ["get", "id"], -1],
-        paint: { "line-color": "#ffffff", "line-width": 2, "line-opacity": 0.9, "line-blur": 1 },
+        paint: { "line-color": "#111827", "line-width": 2, "line-opacity": 0.9, "line-blur": 1 },
       });
     }
     for (const [prefix, src] of [["hex", "hexgrid"], ["mini", "minigrid"]] as const) {
@@ -313,7 +321,7 @@ export class RadarMap {
         type: "line",
         source: src,
         filter: ["==", ["get", "id"], -1],
-        paint: { "line-color": "#ffffff", "line-width": 3.5 },
+        paint: { "line-color": "#111827", "line-width": 3.5 },
       });
     }
     // exact outline of each clearing (optional, for detail when zoomed in)
@@ -324,19 +332,19 @@ export class RadarMap {
       minzoom: 10,
       layout: { visibility: "none" },
       filter: ["<=", ["get", "t"], -1],
-      paint: { "line-color": "#ffffff", "line-width": 1.5, "line-dasharray": [2, 1.5] },
+      paint: { "line-color": "#111827", "line-width": 1.5, "line-dasharray": [2, 1.5] },
     });
     m.addLayer({
       id: "aoi-glow",
       type: "line",
       source: "aoi",
-      paint: { "line-color": "#7cc8ff", "line-width": 10, "line-blur": 8, "line-opacity": 0.35 },
+      paint: { "line-color": "#111827", "line-width": 10, "line-blur": 8, "line-opacity": 0.08 },
     });
     m.addLayer({
       id: "aoi-line",
       type: "line",
       source: "aoi",
-      paint: { "line-color": "#ffffff", "line-width": 1.8, "line-opacity": 0.95, "line-dasharray": [3, 2] },
+      paint: { "line-color": "#1f2937", "line-width": 1.8, "line-opacity": 0.95, "line-dasharray": [3, 2] },
     });
 
   }
@@ -344,7 +352,7 @@ export class RadarMap {
   private addLabels() {
     const m = this.map;
     // labels on top of everything
-    const halo = { "text-halo-color": "rgba(5,8,12,0.85)", "text-halo-width": 1.6, "text-halo-blur": 0.5 };
+    const halo = { "text-halo-color": "rgba(255,255,255,0.92)", "text-halo-width": 1.6, "text-halo-blur": 0.5 };
     const name = nameExpr(lang()) as never;
     m.addLayer({
       id: "place-country",
@@ -359,7 +367,7 @@ export class RadarMap {
         "text-transform": "uppercase",
         "text-letter-spacing": 0.2,
       },
-      paint: { "text-color": "#ffffff", ...halo },
+      paint: { "text-color": "#1f2937", ...halo },
     });
     m.addLayer({
       id: "place-state",
@@ -376,7 +384,7 @@ export class RadarMap {
         "text-transform": "uppercase",
         "text-letter-spacing": 0.15,
       },
-      paint: { "text-color": "rgba(255,255,255,0.75)", ...halo },
+      paint: { "text-color": "#6b7280", ...halo },
     });
     m.addLayer({
       id: "place-city",
@@ -386,7 +394,7 @@ export class RadarMap {
       minzoom: 4.5,
       filter: ["==", ["get", "class"], "city"],
       layout: { "text-field": name, "text-font": ["Noto Sans Bold"], "text-size": ["interpolate", ["linear"], ["zoom"], 5, 12, 12, 17] },
-      paint: { "text-color": "#ffffff", ...halo },
+      paint: { "text-color": "#1f2937", ...halo },
     });
     // Only towns (never villages or hamlets): no community-level labels (CLAUDE.md §4).
     m.addLayer({
@@ -397,7 +405,7 @@ export class RadarMap {
       minzoom: 6.5,
       filter: ["==", ["get", "class"], "town"],
       layout: { "text-field": name, "text-font": ["Noto Sans Regular"], "text-size": ["interpolate", ["linear"], ["zoom"], 7, 12, 13, 16] },
-      paint: { "text-color": "#ffffff", ...halo },
+      paint: { "text-color": "#1f2937", ...halo },
     });
   }
 
@@ -505,7 +513,7 @@ export class RadarMap {
     this.map.setFilter("poly-outline", ["<=", ["get", "t"], upTo] as never);
   }
 
-  /** Radar view on/off (satellite photo underneath stays). */
+  /** Radar view on/off (the simple base map underneath stays). */
   async setRadar(on: boolean, opacity = this.radarOpacity): Promise<void> {
     const wasOn = this.radarOn;
     this.radarOn = on;

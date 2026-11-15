@@ -263,8 +263,7 @@ export async function initMapSection(ds: Dataset): Promise<void> {
     if (pp) prov.append(provRow(t("prov.layer_polygons"), pp.type, pp.source));
     const fm = ds.provenance("forest_mask");
     if (fm) prov.append(provRow(t("prov.layer_mask"), fm.type, fm.source));
-    prov.append(provRow(t("prov.layer_basemap"), "satellite", "Esri World Imagery"));
-    prov.append(provRow(t("prov.layer_labels"), "measured", "OpenStreetMap / OpenFreeMap"));
+    prov.append(provRow(t("prov.layer_basemap"), "measured", "OpenStreetMap / OpenFreeMap"));
     more.append(prov, h("p", "fineprint", t("map.ethics")));
     body.append(more);
     panel.append(head, body);

@@ -205,11 +205,11 @@ export function median(values: number[]): number | null {
 
 /** Hexagon colour scale: hectares cleared inside a hexagon (pale gold → orange → red → magenta). */
 export const HEX_STOPS: [number, string][] = [
-  [1, "#ffe07a"],
-  [10, "#ffb03a"],
-  [25, "#ff6b3d"],
-  [50, "#ff2f6d"],
-  [100, "#c13cff"],
+  [1, "#ff3d3d"],
+  [10, "#f51c1c"],
+  [25, "#e60000"],
+  [50, "#c40000"],
+  [100, "#8f0000"],
 ];
 
 export const HEX_GRADIENT = `linear-gradient(90deg, ${HEX_STOPS.map(([, c]) => c).join(", ")})`;
