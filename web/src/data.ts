@@ -1,6 +1,6 @@
 // Parts of this file were generated with AI assistance (Claude Code). See docs/AI_USAGE.md
 //
-// Types and loaders for the pipeline -> web data contract (docs/DATA_CONTRACT.md, schema_version 1).
+// Types and loaders for the pipeline -> web data contract (docs/DATA_CONTRACT.md, schema_version 3).
 // Real data lives in web/public/data/. In `npm run dev` only, if that folder is empty, the app
 // falls back to the synthetic fixtures in web/fixtures/ and flags itself as synthetic.
 
@@ -99,8 +99,8 @@ export interface Rain {
   point: LngLat;
 }
 
-/** v2 only adds optional validation fields (docs/DATA_CONTRACT.md, "Changes"). */
-export const SUPPORTED_SCHEMA = 2;
+/** v2 adds optional validation fields; v3 adds zones (the root stays the primary zone) and prev_date. */
+export const SUPPORTED_SCHEMA = 3;
 /** Baseline = median of the first N dates (CLAUDE.md §9 step 6, config.yaml detection.baseline_dates). */
 export const BASELINE_DATES = 3;
 /** Instrument gap with no acquisitions (CLAUDE.md §8.1). */
