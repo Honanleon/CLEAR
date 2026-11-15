@@ -332,7 +332,7 @@
     "kind_clearing": "Clearing",
     "kind_water": "Water",
     "kind_control": "Control",
-    "note_water": "Water zone (chapter 2): for now only radar images, the signal over time and rain. No detection.",
+    "note_water": "Water zone (chapter 2): open water and flooded vegetation estimated by radar at each date, the radar signal and rain. No clearing detection.",
     "note_control": "Control zone (chapter 3): forest that should not change. Few or no detections are expected."
   },
   "point": {
@@ -340,5 +340,20 @@
     "where": "Lat. {lat}, lon. {lon}",
     "help": "HH and HV in dB at each radar pass (500 m cell), with daily rain below. Open water pulls both signals down sharply.",
     "note": "Radar-estimated, not checked on the ground."
+  },
+  "water": {
+    "title": "Water in {zone}",
+    "subtitle": "Water estimated by NISAR radar at each date",
+    "open": "Open water",
+    "flooded": "Flooded vegetation",
+    "estimated": "estimated",
+    "layer": "Water classes",
+    "chart_title": "Hectares under water per date (estimated)",
+    "chart_help": "Blue: open water. Green: flooded vegetation. The vertical line marks the timeline's date.",
+    "axis": "thousand ha",
+    "reading": "{date}: open water {open} ha · flooded vegetation {veg} ha (estimated)",
+    "rice": "The October open-water peak is flooded rice fields, not a natural flood.",
+    "tap": "Tap a point in the zone to see the radar signal and the rain there.",
+    "none": "No water data for this zone yet."
   }
 }

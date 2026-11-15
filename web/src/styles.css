@@ -1114,6 +1114,71 @@ button {
 .zone-kind-control::before {
   background: var(--ok);
 }
+/* water zone (chapter 2): legend in the colours of the water-classes PNGs, and the water chart */
+.water-legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 14px;
+  font-size: 13px;
+  color: var(--muted);
+  margin: 4px 0 12px;
+}
+.water-legend .wl::before {
+  content: "";
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  margin-right: 6px;
+  vertical-align: -2px;
+}
+.water-legend .wl-open::before {
+  background: rgb(30, 110, 255);
+}
+.water-legend .wl-veg::before {
+  background: rgb(0, 200, 120);
+}
+.water-legend .wl-est {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--warn);
+}
+.water-chart .water-line {
+  fill: none;
+  stroke-width: 2.5;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+.water-chart .water-open {
+  stroke: rgb(30, 110, 255);
+  fill: rgb(30, 110, 255);
+}
+.water-chart .water-veg {
+  stroke: rgb(0, 200, 120);
+  fill: rgb(0, 200, 120);
+}
+.water-chart path.water-open,
+.water-chart path.water-veg {
+  fill: none;
+}
+.water-chart .water-dot {
+  stroke: var(--panel-solid);
+  stroke-width: 1.5;
+}
+.water-chart .water-now {
+  stroke: rgba(255, 255, 255, 0.55);
+  stroke-dasharray: 3 3;
+}
+.water-note {
+  font-size: 13px;
+  color: var(--muted);
+  border-left: 2px solid var(--warn);
+  padding: 2px 0 2px 10px;
+  margin: 10px 0 0;
+}
 /* the other zones on the map (HTML markers that open them) */
 .zone-tag {
   font-family: var(--font);

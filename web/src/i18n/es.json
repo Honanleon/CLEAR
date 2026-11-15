@@ -332,7 +332,7 @@
     "kind_clearing": "Desmonte",
     "kind_water": "Agua",
     "kind_control": "Control",
-    "note_water": "Zona de agua (capítulo 2): por ahora solo imágenes de radar, la señal en el tiempo y la lluvia. No hay detección.",
+    "note_water": "Zona de agua (capítulo 2): agua abierta y vegetación inundada estimadas por radar en cada fecha, la señal del radar y la lluvia. No hay detección de desmonte.",
     "note_control": "Zona de control (capítulo 3): bosque que no debería cambiar. Se esperan pocas detecciones o ninguna."
   },
   "point": {
@@ -340,5 +340,20 @@
     "where": "Lat. {lat}, lon. {lon}",
     "help": "HH y HV en dB en cada pasada del radar (celda de 500 m), con la lluvia diaria abajo. El agua abierta baja mucho las dos señales.",
     "note": "Estimado por radar, no verificado en el terreno."
+  },
+  "water": {
+    "title": "Agua en {zone}",
+    "subtitle": "Agua estimada por radar NISAR en cada fecha",
+    "open": "Agua abierta",
+    "flooded": "Vegetación inundada",
+    "estimated": "estimado",
+    "layer": "Clases de agua",
+    "chart_title": "Hectáreas con agua por fecha (estimado)",
+    "chart_help": "Azul: agua abierta. Verde: vegetación inundada. La línea vertical marca la fecha de la línea de tiempo.",
+    "axis": "miles de ha",
+    "reading": "{date}: agua abierta {open} ha · vegetación inundada {veg} ha (estimado)",
+    "rice": "El pico de agua abierta de octubre son arrozales inundados, no una inundación natural.",
+    "tap": "Tocá un punto de la zona para ver la señal del radar y la lluvia ahí.",
+    "none": "Todavía no hay datos de agua para esta zona."
   }
 }

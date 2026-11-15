@@ -8,6 +8,7 @@
 import { LngLat, Marker } from "maplibre-gl";
 import { renderBars } from "../charts/bars";
 import { renderSeries } from "../charts/series";
+import { renderWater } from "../charts/water";
 import { Swipe } from "../compare/swipe";
 import {
   baselineDates,
@@ -143,8 +144,13 @@ export async function initMapSection(ds: Dataset): Promise<void> {
       return { type: "Feature", properties: { id: s.z?.id ?? "", kind: s.ds.kind }, geometry: { type: "Polygon", coordinates: [[[x0, y0], [x1, y0], [x1, y1], [x0, y1], [x0, y0]]] } };
     }),
   };
-  // radar images of every zone, shown in the "NISAR radar" view only (the simple map stays grey and white)
-  const imageSets: ImageSet[] = zoneSets.map((s) => ({ key: s.z?.id ?? "main", ds: s.ds, always: false }));
+  // radar images of every zone, shown in the "NISAR radar" view only (the simple map stays grey and white),
+  // and the water classes of the water zone (blue open water, green flooded vegetation) always, over the radar
+  const imageSets: ImageSet[] = [
+    ...zoneSets.map((s): ImageSet => ({ key: s.z?.id ?? "main", ds: s.ds, always: false })),
+    ...zoneSets.filter(isWater).map((s): ImageSet => ({ key: `${s.z?.id ?? "main"}-water`, ds: s.ds, always: true, layer: "water" })),
+  ];
+  const waterProv = zoneSets.find(isWater)?.ds.provenance("water");
 
   // TEST build only (vite --mode lab): AI assistant, expert mode, offline basemap. Never in the official build.
   const lab =
@@ -261,6 +267,13 @@ export async function initMapSection(ds: Dataset): Promise<void> {
     return li;
   }
 
+  /** Swatches of the water-classes layer (colours of the published PNGs). */
+  function waterLegend(): HTMLElement {
+    const wrap = h("div", "water-legend");
+    wrap.append(h("span", "wl wl-open", t("water.open")), h("span", "wl wl-veg", t("water.flooded")), h("span", "wl-est", t("water.estimated")));
+    return wrap;
+  }
+
   function hexLegend(): HTMLElement {
     const wrap = h("div", "hex-legend");
     const ramp = h("div", "ramp");
@@ -299,6 +312,7 @@ export async function initMapSection(ds: Dataset): Promise<void> {
       }
       body.append(list);
       if (focus.z && focus.z.kind !== "clearing") body.append(h("p", "panel-note", t(`zones.note_${focus.z.kind}`)));
+      if (isWater(focus)) body.append(waterLegend());
     }
     body.append(h("p", "panel-label", t("map.view")));
     const seg = h("div", "seg seg-block");
@@ -362,6 +376,7 @@ export async function initMapSection(ds: Dataset): Promise<void> {
     if (pp) prov.append(provRow(t("prov.layer_polygons"), pp.type, pp.source));
     const fm = ds.provenance("forest_mask");
     if (fm) prov.append(provRow(t("prov.layer_mask"), fm.type, fm.source));
+    if (waterProv) prov.append(provRow(t("water.layer"), waterProv.type, waterProv.source, t("water.estimated")));
     prov.append(provRow(t("prov.layer_basemap"), "measured", "OpenStreetMap / OpenFreeMap"));
     more.append(prov, h("p", "fineprint", t("map.ethics")));
     body.append(more);
@@ -426,6 +441,7 @@ export async function initMapSection(ds: Dataset): Promise<void> {
     void mapA.setTime(i);
     renderPanel();
     if (selected && !zone.hidden) renderHex(selected, false);
+    waterRedraw?.();
   }
 
   function showCompare() {
@@ -440,6 +456,7 @@ export async function initMapSection(ds: Dataset): Promise<void> {
     renderCompareBar();
     renderPanel();
     if (selected && !zone.hidden) renderHex(selected, false);
+    waterRedraw?.();
   }
 
   function setMode(next: Mode) {
@@ -529,7 +546,7 @@ export async function initMapSection(ds: Dataset): Promise<void> {
     coachShown = true;
     const zs = zoneAt(lngLat.lng, lngLat.lat);
     if (zs && isWater(zs)) {
-      renderPoint(lngLat, zs);
+      renderWaterZone(zs, lngLat);
       return;
     }
     const cell = gridAt(mapA).locate(lngLat.lng, lngLat.lat);
@@ -551,27 +568,62 @@ export async function initMapSection(ds: Dataset): Promise<void> {
     });
   }
 
-  /** Water zone: the radar signal and the rain at the tapped point (no hexagons). */
-  function renderPoint(lngLat: LngLat, zs: ZoneSet) {
+  /**
+   * Water zone panel: estimated water areas per date (water.json, synced with the timeline) and, when a
+   * point was tapped, the radar signal and the rain there.
+   */
+  let waterRedraw: (() => void) | null = null;
+  function renderWaterZone(zs: ZoneSet, lngLat?: LngLat) {
     closeZone();
     zone.hidden = false;
-    if (!marker) marker = new Marker({ element: h("div", "probe-marker") });
-    marker.setLngLat(lngLat).addTo(mapA.map);
+    if (lngLat) {
+      if (!marker) marker = new Marker({ element: h("div", "probe-marker") });
+      marker.setLngLat(lngLat).addTo(mapA.map);
+    }
+    const name = zs.z ? zoneName(zs.z) : "";
     const head = h("div", "zone-head");
-    head.append(h("h3", "", t("point.title")), closeButton());
+    const titles = h("div");
+    titles.append(h("h3", "", t("water.title", { zone: name })), h("p", "zone-where", t("water.subtitle")));
+    head.append(titles, closeButton());
+    zone.append(head, waterLegend());
+
+    const sec = h("section", "zone-chart");
     const reading = h("p", "probe-reading", t("chart.loading"));
-    const chart = h("div", "probe-chart");
-    const legend = h("div", "probe-legend");
-    zone.append(
-      head,
-      h("p", "zone-where", `${zs.z ? `${zoneName(zs.z)} · ` : ""}${t("point.where", { lat: fmt.num(lngLat.lat, 4), lon: fmt.num(lngLat.lng, 4) })}`),
-      h("p", "zone-help", t("point.help")),
-      reading,
-      chart,
-      legend,
-      h("p", "fineprint", t("point.note")),
-    );
-    void drawSignal([lngLat.lng, lngLat.lat], undefined, reading, chart, legend, true, zs);
+    const host = h("div", "probe-chart");
+    sec.append(h("h4", "", t("water.chart_title")), h("p", "zone-help", t("water.chart_help")), reading, host, h("p", "water-note", t("water.rice")));
+    zone.append(sec);
+    void zs.ds.waterSeries().then((w) => {
+      if (!w || !host.isConnected) {
+        reading.textContent = t("water.none");
+        return;
+      }
+      const draw = () => renderWater(host, reading, w, scenes[upTo()]?.date ?? "");
+      waterRedraw = () => {
+        if (host.isConnected) draw();
+      };
+      draw();
+      new ResizeObserver(() => waterRedraw?.()).observe(host);
+    });
+
+    if (lngLat) {
+      const signal = h("details", "zone-signal");
+      signal.open = true;
+      signal.append(h("summary", "", t("point.title")));
+      const r2 = h("p", "probe-reading", t("chart.loading"));
+      const chart = h("div", "probe-chart");
+      const legend = h("div", "probe-legend");
+      signal.append(
+        h("p", "zone-help", `${t("point.where", { lat: fmt.num(lngLat.lat, 4), lon: fmt.num(lngLat.lng, 4) })} · ${t("point.help")}`),
+        r2,
+        chart,
+        legend,
+      );
+      zone.append(signal);
+      void drawSignal([lngLat.lng, lngLat.lat], undefined, r2, chart, legend, true, zs);
+    } else {
+      zone.append(h("p", "zone-help", t("water.tap")));
+    }
+    zone.append(h("p", "fineprint", t("point.note")));
   }
 
   function renderOutside() {
@@ -767,6 +819,7 @@ export async function initMapSection(ds: Dataset): Promise<void> {
   }
 
   function closeZone() {
+    waterRedraw = null;
     zone.hidden = true;
     zone.innerHTML = "";
     selected = null;
@@ -805,6 +858,8 @@ export async function initMapSection(ds: Dataset): Promise<void> {
     paintZoneTags();
     renderPanel();
     closeZone();
+    // the water zone opens its panel (water areas per date) right away
+    if (isWater(focus)) renderWaterZone(focus);
     // before the intro has run, the intro itself flies to the focused zone
     if (introduced) flyToStudy(1600);
   });

@@ -12,6 +12,15 @@ export function daysBetween(a: string, b: string): number {
 /** Normal NISAR repeat: a detection is dated ±12 days unless the previous pass is further back. */
 export const REPEAT_DAYS = 12;
 
+/**
+ * Last date that still belongs to a timeline step: other zones are on other orbits, so their passes
+ * fall a few days off the primary zone's. A pass up to half a repeat after the step is shown with it
+ * (e.g. Ñeembucú's 2026-10-24 pass with the primary 2026-10-23 step).
+ */
+export function stepEnd(iso: string): string {
+  return new Date(Date.parse(`${iso}T00:00:00Z`) + (REPEAT_DAYS / 2) * 86_400_000).toISOString().slice(0, 10);
+}
+
 export type Maturity = "PROVISIONAL" | "VALIDATED" | "BETA";
 export type ProvenanceType = "satellite" | "modeled" | "measured";
 export type LngLat = [number, number];
@@ -23,6 +32,8 @@ export interface Scene {
   maturity: Maturity;
   crid: string;
   rgb: string;
+  /** Water zones (v3): PNG of the water classes of this date, relative to data/ (blue open water, green flooded vegetation). */
+  water?: string;
 }
 
 export interface Provenance {
@@ -59,6 +70,8 @@ export interface IndexData {
     polygons_total?: number | null;
   };
   provenance: Provenance[];
+  /** Water zones (v3): the per-date water areas (`json`, relative to data/). */
+  water?: { json: string; status: string };
   /** schema v3: which kind of zone this index describes. */
   zone?: { kind: ZoneKind; chapter: number; name: { es: string; en: string }; primary: boolean };
 }
@@ -122,6 +135,15 @@ export interface Grid {
   ny: number;
   hv_db_x10: (number | null)[][];
   hh_db_x10: (number | null)[][];
+}
+
+/** Water zones (v3, water.json): estimated hectares of open water and flooded vegetation per date. */
+export interface WaterSeries {
+  dates: string[];
+  open_water_ha: (number | null)[];
+  flooded_veg_ha: (number | null)[];
+  status: string;
+  source: string;
 }
 
 export interface Rain {
@@ -211,6 +233,22 @@ export class Dataset {
 
   rain(): Promise<Rain | null> {
     return this.json<Rain>("rain.json").catch(() => null);
+  }
+
+  private water: Promise<WaterSeries | null> | null = null;
+  /** Water zones: hectares of open water and flooded vegetation per date (null when the zone has none). */
+  waterSeries(): Promise<WaterSeries | null> {
+    const path = this.index.water?.json;
+    if (!path) return Promise.resolve(null);
+    this.water ??= fetchJson<WaterSeries>(this.url(path)).catch(() => null);
+    return this.water;
+  }
+
+  /** Water zones: the water-classes PNG of scene i (`scenes[].water`, else `<zone>/water/<date>.png` as in the contract). */
+  waterUrl(i: number): string {
+    const scene = this.index.scenes[i];
+    if (!scene || this.kind !== "water") return "";
+    return this.url(scene.water ?? `${this.zone?.path ?? ""}water/${scene.date}.png`);
   }
 
   provenance(layer: string): Provenance | undefined {

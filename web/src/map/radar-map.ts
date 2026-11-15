@@ -17,7 +17,7 @@ import {
 } from "maplibre-gl";
 import workerUrl from "maplibre-gl/dist/maplibre-gl-worker.mjs?url";
 import "maplibre-gl/dist/maplibre-gl.css";
-import { type BBox, type Dataset, HEX_STOPS, type PolygonCollection } from "../data";
+import { type BBox, type Dataset, HEX_STOPS, type PolygonCollection, stepEnd } from "../data";
 import { type GeoJSON, type HexGrid, MINI_ZOOM } from "./hexgrid";
 import paraguay from "./paraguay.json";
 import { type Lang, lang, t } from "../i18n";
@@ -120,6 +120,8 @@ export interface ImageSet {
   key: string;
   ds: Dataset;
   always: boolean;
+  /** "rgb" (radar scene, default) or "water" (water classes of a water zone, drawn over the radar). */
+  layer?: "rgb" | "water";
 }
 
 interface SceneSet extends ImageSet {
@@ -446,6 +448,10 @@ export class RadarMap {
     return s.always && this.map.getLayer("mini-grid") ? "mini-grid" : this.overlayStart();
   }
 
+  private urlOf(s: SceneSet, j: number): string {
+    return s.layer === "water" ? s.ds.waterUrl(j) : s.ds.sceneUrl(j);
+  }
+
   private sceneLayer(s: SceneSet, j: number): string {
     return `scene-${s.key}-${j}`;
   }
@@ -453,7 +459,7 @@ export class RadarMap {
   private ensureScene(s: SceneSet, j: number) {
     if (s.present.has(j)) return;
     const id = this.sceneLayer(s, j);
-    this.map.addSource(id, { type: "image", url: s.ds.sceneUrl(j), coordinates: s.ds.index.image_coordinates });
+    this.map.addSource(id, { type: "image", url: this.urlOf(s, j), coordinates: s.ds.index.image_coordinates });
     this.map.addLayer(
       {
         id,
@@ -485,11 +491,12 @@ export class RadarMap {
     }
   }
 
-  /** The set's latest scene up to the timeline date (-1: the zone has no image yet). */
+  /** The set's latest scene up to the timeline step (-1: the zone has no image yet). */
   private sceneFor(s: SceneSet): number {
+    const end = stepEnd(this.date);
     let j = -1;
     s.ds.index.scenes.forEach((sc, k) => {
-      if (sc.date <= this.date) j = k;
+      if (sc.date <= end) j = k;
     });
     return j;
   }
@@ -505,7 +512,7 @@ export class RadarMap {
       return;
     }
     try {
-      await preload(s.ds.sceneUrl(j));
+      await preload(this.urlOf(s, j));
     } catch {
       return;
     }
@@ -518,7 +525,7 @@ export class RadarMap {
       if (req === s.request) this.trimScenes(s, j);
     }, FADE_MS);
     const scenes = s.ds.index.scenes;
-    for (const k of [j + 1, j - 1]) if (scenes[k]) void preload(s.ds.sceneUrl(k)).catch(() => undefined);
+    for (const k of [j + 1, j - 1]) if (scenes[k]) void preload(this.urlOf(s, k)).catch(() => undefined);
   }
 
   /** Remembers the date of scene `i` (timeline); each zone's images follow it when they are on. */
