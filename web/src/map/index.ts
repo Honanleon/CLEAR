@@ -305,9 +305,17 @@ export async function initMapSection(ds: Dataset): Promise<void> {
     return rampLegend(HEX_GRADIENT, HEX_STOPS);
   }
 
+  // Layers panel open / folded: open on a computer, folded on a phone (the map needs the room); the
+  // chevron works on both (it used to fold only on phones).
+  let panelOpen = !isNarrow();
+  const paintPanelState = (toggle?: HTMLElement) => {
+    panel.classList.toggle("is-open", panelOpen);
+    panel.classList.toggle("is-closed", !panelOpen);
+    toggle?.setAttribute("aria-expanded", String(panelOpen));
+  };
+
   function renderPanel() {
     const scene = scenes[upTo()];
-    const wasOpen = panel.classList.contains("is-open");
     const moreOpen = panel.querySelector("details.more")?.hasAttribute("open") ?? false;
     panel.innerHTML = "";
     const head = h("div", "panel-head");
@@ -316,9 +324,16 @@ export async function initMapSection(ds: Dataset): Promise<void> {
     toggle.type = "button";
     toggle.setAttribute("aria-label", t("map.panel"));
     toggle.innerHTML = ICON_CHEVRON;
-    toggle.addEventListener("click", () => panel.classList.toggle("is-open"));
+    toggle.addEventListener("click", () => {
+      panelOpen = !panelOpen;
+      paintPanelState(toggle);
+    });
+    // the whole header row folds / unfolds too (a bigger target than the chevron)
+    head.addEventListener("click", (e) => {
+      if (e.target === head || (e.target as HTMLElement).tagName === "H3") toggle.click();
+    });
     head.append(toggle);
-    panel.classList.toggle("is-open", wasOpen);
+    paintPanelState(toggle);
 
     const body = h("div", "panel-body");
     if (zoneSets.length > 1) {

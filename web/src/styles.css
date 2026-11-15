@@ -1037,6 +1037,19 @@ button {
 .map-intro {
   padding-bottom: 36px;
 }
+/* Layers panel folding (computer and phone): the chevron points up when the panel is open */
+.map-panel .panel-head {
+  cursor: pointer;
+}
+.map-panel.is-closed .panel-body {
+  display: none;
+}
+.map-panel .panel-toggle svg {
+  transition: transform 0.2s;
+}
+.map-panel.is-open .panel-toggle svg {
+  transform: rotate(180deg);
+}
 /* study-zone picker (zones.json, schema v3) */
 .zone-picker {
   margin: 4px 0 22px;
