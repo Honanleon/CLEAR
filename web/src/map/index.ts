@@ -186,9 +186,8 @@ export async function initMapSection(ds: Dataset): Promise<void> {
   const mosaic = mosaicMeta
     ? { before: ds.url("mosaic/before.webp"), after: ds.url("mosaic/after.webp"), coordinates: mosaicMeta.coordinates }
     : undefined;
-  /** The mosaic of a date: "before" up to January 2026, "after" from October 2026, none in between. */
-  const mosaicFor = (iso: string | undefined): "before" | "after" | null =>
-    !mosaicMeta || !iso ? null : iso <= "2026-01-31" ? "before" : iso >= "2026-10-01" ? "after" : null;
+  // The "before" mosaic mixes dates (Nov 2025 - Jan 2026 in the west and centre, Jun - Jul 2026 in the east, where
+  // NISAR first passed in June), so it is shown only in before / after, never as one timeline date.
   const mapOpts = { ds, polygons, hex, mini, miniOutline, zoneBoxes, imageSets, mosaic, offline: lab?.offline };
   const mapA = new RadarMap({ container: containerA, ...mapOpts, bbox: boxOf(focus), controls: true, start: "country" });
   let mapB: RadarMap | null = null;
@@ -387,15 +386,13 @@ export async function initMapSection(ds: Dataset): Promise<void> {
       if (mosaicMeta) {
         // TEST SITE: what the country mosaic is (and is not)
         const es = lang() === "es";
-        const pct = (x: MosaicSide) => Math.round(x.coverage_of_paraguay * 100);
-        const d = (x: MosaicSide) => x.dates.map((v) => fmt.date(v)).join(" – ");
         body.append(
           h(
             "p",
             "panel-note test-note",
             es
-              ? `PRUEBA · Mosaico de todo el Paraguay con vistas rápidas de NISAR (ASF): antes ${d(mosaicMeta.before)} (${pct(mosaicMeta.before)} % del país), después ${d(mosaicMeta.after)} (${pct(mosaicMeta.after)} %). Colores de ASF, sin calibrar; cada franja es otra pasada y otra fecha.`
-              : `TEST · Paraguay-wide mosaic of NISAR quick-looks (ASF): before ${d(mosaicMeta.before)} (${pct(mosaicMeta.before)} % of the country), after ${d(mosaicMeta.after)} (${pct(mosaicMeta.after)} %). ASF colours, not calibrated; each strip is another pass and date.`,
+              ? "PRUEBA · En «Antes / después», todo el Paraguay con vistas rápidas de NISAR (ASF). Antes: nov. 2025 – ene. 2026 en el oeste y el centro; jun. – jul. 2026 en el este (NISAR pasó ahí por primera vez en junio). Después: 10 – 31 oct. 2026. Colores de ASF, sin calibrar; cada franja es otra pasada."
+              : "TEST · In «Before / after», all of Paraguay in NISAR quick-looks (ASF). Before: Nov 2025 – Jan 2026 in the west and centre; Jun – Jul 2026 in the east (NISAR's first pass there was in June). After: 10 – 31 Oct 2026. ASF colours, not calibrated; each strip is another pass.",
           ),
         );
       }
@@ -519,7 +516,7 @@ export async function initMapSection(ds: Dataset): Promise<void> {
   // ------------------------------------------------------------------ modes
   function showTimeline(i: number) {
     cur = i;
-    mapA.setMosaic(mosaicFor(scenes[i]?.date));
+    mapA.setMosaic(null);
     void mapA.showScene(i);
     void mapA.setTime(i);
     renderPanel();
@@ -528,8 +525,8 @@ export async function initMapSection(ds: Dataset): Promise<void> {
   }
 
   function showCompare() {
-    mapA.setMosaic(mosaicFor(scenes[before]?.date));
-    mapB?.setMosaic(mosaicFor(scenes[after]?.date));
+    mapA.setMosaic(mosaicMeta ? "before" : null);
+    mapB?.setMosaic(mosaicMeta ? "after" : null);
     void mapA.showScene(before);
     void mapA.setTime(before);
     if (mapB) {

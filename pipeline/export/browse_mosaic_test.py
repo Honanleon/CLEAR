@@ -2,8 +2,9 @@
 #
 # TEST SITE ONLY (branch test/nisar-paraguay-mosaic). Paraguay-wide NISAR quick-look mosaics from ASF GCOV
 # browse PNGs. Inputs (in this script's folder): selection.json (one product per track/frame from the ASF
-# search API: "after" = latest 2026-09-15..10-31, "before" = earliest 2025-10..2026-03) and the downloaded
+# search API: "after" = latest 2026-09-15..10-31 per track/frame) and the downloaded
 # browse PNGs in before/ and after/. Usage: python browse_mosaic_test.py <out_dir>
+# "before" = earliest pass of each track/frame up to 2026-07-15 (NISAR imaged eastern Paraguay only from June 2026).
 # Each browse is georeferenced by matching the 4 corners of its data swath (extreme non-black pixels)
 # to the 4 corners of the product footprint from the ASF search (affine fit; products with a residual
 # over 0.02 deg are skipped). Output: lon/lat grid over Paraguay, clipped to the country, RGBA WebP.
