@@ -69,7 +69,7 @@ class Scene:
     cycle: int
     crid: str
     version: int
-    maturity: str  # PROVISIONAL | VALIDATED | UNKNOWN
+    maturity: str  # PROVISIONAL | VALIDATED | BETA | UNKNOWN
 
 
 def parse_granule_name(name: str) -> GranuleName:
@@ -113,7 +113,7 @@ def pick_one_per_date(granules: Iterable[GranuleName]) -> list[GranuleName]:
 
 
 def maturity_for(crid: str, crid_maturity: Mapping[str, str]) -> str:
-    """PROVISIONAL / VALIDATED from the CRID; UNKNOWN (with a warning) otherwise."""
+    """PROVISIONAL / VALIDATED / BETA from the CRID; UNKNOWN (with a warning) otherwise."""
     m = crid_maturity.get(crid)
     if m is None:
         log.warning("unknown CRID %s: maturity set to UNKNOWN; add it to config nisar.crid_maturity", crid)

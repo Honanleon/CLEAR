@@ -20,14 +20,14 @@
     {
       "date": "2025-12-27",
       "id": "NISAR_L2_PR_GCOV_008_161_A_166_2005_DHDH_A_20251227T095726_20251227T095800_X05010_N_F_J_001",
-      "maturity": "UNKNOWN",
+      "maturity": "BETA",
       "crid": "X05010",
       "rgb": "zones/boqueron-sur/rgb/2025-12-27.webp"
     },
     {
       "date": "2026-01-08",
       "id": "NISAR_L2_PR_GCOV_009_161_A_166_2005_DHDH_A_20260108T095726_20260108T095801_X05010_N_F_J_001",
-      "maturity": "UNKNOWN",
+      "maturity": "BETA",
       "crid": "X05010",
       "rgb": "zones/boqueron-sur/rgb/2026-01-08.webp"
     },

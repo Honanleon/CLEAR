@@ -20,7 +20,7 @@
     {
       "date": "2025-11-02",
       "id": "NISAR_L2_PR_GCOV_004_060_A_164_2005_DHDH_A_20251102T094757_20251102T094832_X05009_N_F_J_001",
-      "maturity": "UNKNOWN",
+      "maturity": "BETA",
       "crid": "X05009",
       "rgb": "zones/neembucu/rgb/2025-11-02.webp"
     },

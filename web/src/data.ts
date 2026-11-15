@@ -4,7 +4,7 @@
 // Real data lives in web/public/data/. In `npm run dev` only, if that folder is empty, the app
 // falls back to the synthetic fixtures in web/fixtures/ and flags itself as synthetic.
 
-export type Maturity = "PROVISIONAL" | "VALIDATED";
+export type Maturity = "PROVISIONAL" | "VALIDATED" | "BETA";
 export type ProvenanceType = "satellite" | "modeled" | "measured";
 export type LngLat = [number, number];
 export type BBox = [number, number, number, number];

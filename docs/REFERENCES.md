@@ -15,6 +15,7 @@ Status: `used` = already in the code or the app; `planned` = listed in the plan,
 | Source | Provider | Type | How we use it | Citation / link | Status |
 |---|---|---|---|---|---|
 | NISAR L2 GCOV, PROVISIONAL V1 (`NISAR_L2_GCOV_PROVISIONAL_V1`, CRID P05023) | NASA/JPL, ASF DAAC | satellite | HH and HV backscatter, track 161 ascending, frame 167, Nov 2025 – Oct 2026 | DOI 10.5067/NIL2GCOV-P1 · CMR C2854338529-ASF · https://www.earthdata.nasa.gov/data/catalog/asf-nisar-l2-gcov-provisional-v1-1 | used |
+| NISAR L2 GCOV BETA V1 (`NISAR_L2_GCOV_BETA_V1`, not calibrated, CRIDs X05009 and X05010) | NASA/JPL, ASF DAAC | satellite | Baseline dates of `boqueron-sur` (2025-12-27, 2026-01-08) and first date of `neembucu` (2025-11-02) | DOI 10.5067/NIL2GCOV-B1 · CMR C3622214170-ASF | used |
 | NISAR L2 GCOV V1 (`NISAR_L2_GCOV_V1`, VALIDATED, CRID P05036) | NASA/JPL, ASF DAAC | satellite | Same as above, for 2026-10-23 | DOI 10.5067/NIL2GCOV-V1 · CMR C3622241360-ASF · https://search.earthdata.nasa.gov/search/granules?p=C3622241360-ASF | used |
 | OPERA DIST-ALERT-HLS V1 (`OPERA_L3_DIST-ALERT-HLS_V1`) | NASA JPL / LP DAAC | satellite | Validation: optical vegetation-loss alerts; also used to choose the study area | DOI 10.5067/SNWG/OPERA_L3_DIST-ALERT-HLS_V1.001 | used |
 | MapBiomas Paraguay, Collection 2 | MapBiomas | modeled | 2023 forest mask | https://paraguay.mapbiomas.org/ | planned |

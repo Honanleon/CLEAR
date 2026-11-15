@@ -8,7 +8,7 @@ General rules:
 - Coordinates are EPSG:4326 (lon, lat).
 - Dates are ISO `YYYY-MM-DD`.
 - RGB images are WebP (lossy, quality 80, ~250 KB each), reprojected to EPSG:4326 before export so they align as a MapLibre `image` source. Changed from PNG on 2026-11-14 (PNG was 2.1 MB per date), before any consumer used v1, so `schema_version` stays 1.
-- Every layer shown has a provenance entry: `type` (`satellite`, `modeled` or `measured`), `source` and, for NISAR, maturity (`PROVISIONAL` or `VALIDATED`).
+- Every layer shown has a provenance entry: `type` (`satellite`, `modeled` or `measured`), `source` and, for NISAR, maturity (`PROVISIONAL`, `VALIDATED` or `BETA`; `BETA` = not calibrated, so far only in secondary zones).
 
 ## `index.json`
 
