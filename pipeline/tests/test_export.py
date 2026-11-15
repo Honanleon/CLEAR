@@ -40,7 +40,7 @@ def test_to_rgba_scales_clips_and_masks():
 
 def test_index_follows_contract():
     nisar_cfg = {"relative_orbit": 161, "flight_direction": "ASCENDING", "frame": 167}
-    det = {"threshold_db": -3.0, "persistence": 2, "min_area_ha": 5}
+    det = {"threshold_db": -3.0, "persistence": 2, "min_area_ha": 5, "baseline_dates": 2}
     scenes = [
         {
             "date": "2026-06-13",
@@ -66,6 +66,7 @@ def test_index_follows_contract():
     assert idx["image_coordinates"] == [[-60.78, -21.33], [-60.18, -21.33], [-60.18, -21.73], [-60.78, -21.73]]
     assert image_coordinates(BBOX)[0] == [-60.78, -21.33]
     assert idx["validation"]["agreement_pct"] is None
+    assert idx["detection"]["baseline_dates"] == 2  # per-zone value, read by the web chart
     assert idx["provenance"][0]["type"] == "satellite"
 
 

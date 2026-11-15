@@ -38,7 +38,15 @@ export interface IndexData {
   nisar: { track: number; direction: string; frame: number; mode: string };
   scenes: Scene[];
   image_coordinates: [LngLat, LngLat, LngLat, LngLat];
-  detection: { threshold_db: number; persistence: number; min_area_ha: number; n_polygons: number; area_ha_total: number };
+  detection: {
+    threshold_db: number;
+    persistence: number;
+    min_area_ha: number;
+    n_polygons: number;
+    area_ha_total: number;
+    /** Dates in the baseline median (per zone: boqueron-sur uses 2). Older files: BASELINE_DATES. */
+    baseline_dates?: number;
+  };
   validation: {
     agreement_pct: number | null;
     coverage_pct: number | null;
@@ -127,6 +135,10 @@ export interface Rain {
 export const SUPPORTED_SCHEMA = 3;
 /** Baseline = median of the first N dates (CLAUDE.md §9 step 6, config.yaml detection.baseline_dates). */
 export const BASELINE_DATES = 3;
+/** Baseline length of one zone's data (index.json detection.baseline_dates, default BASELINE_DATES). */
+export function baselineDates(index: { detection: { baseline_dates?: number } }): number {
+  return index.detection.baseline_dates ?? BASELINE_DATES;
+}
 /** Instrument gap with no acquisitions (CLAUDE.md §8.1). */
 export const INSTRUMENT_GAP: [string, string] = ["2026-07-27", "2026-08-10"];
 /** Study area, used only when no data has been exported yet (CLAUDE.md §8.2). */

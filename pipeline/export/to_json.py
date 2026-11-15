@@ -71,6 +71,7 @@ def build_index(
             "threshold_db": detection_cfg["threshold_db"],
             "persistence": detection_cfg["persistence"],
             "min_area_ha": detection_cfg["min_area_ha"],
+            "baseline_dates": detection_cfg["baseline_dates"],
             "n_polygons": summary["n_polygons"] if summary else 0,
             "area_ha_total": summary["area_ha_total"] if summary else 0,
             "n_hexes": (summary or {}).get("n_hexes", 0),

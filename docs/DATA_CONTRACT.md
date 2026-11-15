@@ -25,7 +25,7 @@ Loaded on startup.
       "rgb": "rgb/2026-06-01.webp" }
   ],
   "image_coordinates": [[-61.6, -20.5], [-61.0, -20.5], [-61.0, -20.9], [-61.6, -20.9]],
-  "detection": { "threshold_db": -3.0, "persistence": 2, "min_area_ha": 5, "n_polygons": 0, "area_ha_total": 0 },
+  "detection": { "threshold_db": -3.0, "persistence": 2, "min_area_ha": 5, "baseline_dates": 3, "n_polygons": 0, "area_ha_total": 0 },
   "validation": { "agreement_pct": 28.3, "coverage_pct": 30.9, "agreement_pct_24d": 9.5, "coverage_pct_24d": 10.4,
                   "median_lead_days": 36, "polygons_confirmed": 7, "polygons_total": 23, "reference": "OPERA DIST-ALERT-HLS V1" },
   "provenance": [

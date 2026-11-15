@@ -10,7 +10,7 @@ import { renderBars } from "../charts/bars";
 import { renderSeries } from "../charts/series";
 import { Swipe } from "../compare/swipe";
 import {
-  BASELINE_DATES,
+  baselineDates,
   type BBox,
   type Dataset,
   daysBetween,
@@ -173,7 +173,7 @@ export async function initMapSection(ds: Dataset): Promise<void> {
   let mode: Mode = "timeline";
   let view: View = "satellite";
   let cur = 0;
-  let before = Math.min(BASELINE_DATES - 1, last);
+  let before = Math.min(baselineDates(index) - 1, last);
   let after = last;
   let selected: HexCell | null = null;
   let marker: Marker | null = null;
@@ -742,7 +742,9 @@ export async function initMapSection(ds: Dataset): Promise<void> {
           ];
       if (rain) items.push(["lg-rain", "chart.rain"]);
       for (const [cls, key] of items) legend.append(h("span", `lg ${cls}`, t(key, { db: fmt.signed(thresholdDb, 0) })));
-      const baseline = water ? null : median(hv.slice(0, BASELINE_DATES).filter((v): v is number => v !== null));
+      const baseline = water
+        ? null
+        : median(hv.slice(0, baselineDates(zs.ds.index)).filter((v): v is number => v !== null));
       const detectedIndex = firstDate ? grid.dates.indexOf(firstDate) : -1;
       if (!animate) chart.classList.add("no-anim");
       const draw = () =>

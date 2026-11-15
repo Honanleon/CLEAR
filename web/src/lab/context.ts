@@ -5,7 +5,7 @@
 // - hexagon context: one tapped hexagon in detail;
 // - radar signal at any point (also offered to the expert assistant as a tool).
 
-import { BASELINE_DATES, type Dataset, median, type PolygonCollection, type PolygonFeature, type Rain } from "../data";
+import { baselineDates, type Dataset, median, type PolygonCollection, type PolygonFeature, type Rain } from "../data";
 import type { HexCell, HexGrid } from "../map/hexgrid";
 import { center, nearestTown } from "../map/zone";
 
@@ -40,7 +40,8 @@ export async function signalAt(ds: Dataset, lon: number, lat: number, atDate?: s
   const hh = grid.hh_db_x10.map((r) => (r[k] == null ? null : (r[k] as number) / 10));
   const nn = (a: (number | null)[]) => a.filter((v): v is number => v !== null);
   if (!nn(hv).length) return null;
-  const hvBase = median(nn(hv.slice(0, BASELINE_DATES)));
+  const nBase = baselineDates(ds.index);
+  const hvBase = median(nn(hv.slice(0, nBase)));
   const hvLast = [...hv].reverse().find((v) => v !== null) ?? null;
   const di = atDate ? grid.dates.indexOf(atDate) : -1;
   const minV = Math.min(...nn(hv));
@@ -57,7 +58,7 @@ export async function signalAt(ds: Dataset, lon: number, lat: number, atDate?: s
     hv_delta_last_minus_baseline_db: hvBase !== null && hvLast !== null ? r1(hvLast - hvBase) : null,
     hv_min_db: r1(minV),
     hv_min_date: grid.dates[hv.indexOf(minV)] ?? null,
-    hh_baseline_db: r1(median(nn(hh.slice(0, BASELINE_DATES)))),
+    hh_baseline_db: r1(median(nn(hh.slice(0, nBase)))),
     hh_last_db: r1([...hh].reverse().find((v) => v !== null) ?? null),
   };
 }

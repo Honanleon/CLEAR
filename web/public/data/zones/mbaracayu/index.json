@@ -116,7 +116,7 @@
   "detection": {
     "threshold_db": -3.0,
     "persistence": 2,
-    "min_area_ha": 5,
+    "min_area_ha": 5, "baseline_dates": 3,
     "n_polygons": 1,
     "area_ha_total": 5.6,
     "n_hexes": 3,
