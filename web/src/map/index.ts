@@ -524,7 +524,12 @@ export async function initMapSection(ds: Dataset): Promise<void> {
       for (const s of zoneSets) {
         if (!s.z) continue;
         const z = s.z;
-        const b = button(`panel-zone zone-kind-${z.kind}`, zoneName(z), () => focusZoneById(z.id));
+        // the zone list in the Layers panel is a "go to" control: it selects the zone and flies there
+        // (the zone tags on the map and the hexagons never move the map)
+        const b = button(`panel-zone zone-kind-${z.kind}`, zoneName(z), () => {
+          focusZoneById(z.id);
+          flyToStudy(1600);
+        });
         // the kind in words: the dot colour alone could be read as a water class (blue / green)
         b.append(h("span", "panel-zone-kind", t(`zones.kind_${z.kind}`)));
         b.setAttribute("aria-pressed", String(s === focus));
