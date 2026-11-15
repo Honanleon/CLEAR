@@ -3413,3 +3413,86 @@ button {
   stroke: var(--c);
   stroke-width: 2.5;
 }
+
+/* compact timeline (14/11): smaller and centred, so the map (Ñeembucú at the south edge) stays visible */
+.tl {
+  max-width: 820px;
+  gap: 12px;
+  padding: 8px 14px 4px 10px;
+}
+.tl-play {
+  width: 40px;
+  height: 40px;
+}
+.tl-play svg {
+  width: 17px;
+  height: 17px;
+}
+.tl-date {
+  font-size: 17px;
+}
+.tl-pm,
+.tl-new {
+  font-size: 11px;
+}
+.tl-when .badge {
+  font-size: 9.5px;
+  padding: 1px 6px;
+}
+.tl-stats {
+  gap: 12px;
+  font-size: 11.5px;
+}
+.tl-stats b {
+  font-size: 16px;
+}
+.tl-stats small {
+  font-size: 11.5px;
+}
+/* one header line: the "new this pass" note goes (the pulsing hexagons on the map already show it) */
+.tl .tl-new {
+  display: none;
+}
+.tl-track {
+  height: 44px;
+  margin: 2px 6px 0;
+}
+.tl-rail {
+  top: 22px;
+}
+.tl-tick {
+  height: 44px;
+}
+.tl-dot {
+  top: 18px;
+  width: 10px;
+  height: 10px;
+  margin-left: -5px;
+}
+.tl-bar {
+  bottom: 22px;
+  max-height: 18px;
+}
+.tl-gap {
+  top: 2px;
+  height: 30px;
+}
+.tl-month {
+  top: 30px;
+  font-size: 10px;
+}
+.tl-label {
+  top: 30px;
+}
+@media (max-width: 760px) {
+  .tl-play {
+    width: 36px;
+    height: 36px;
+  }
+  .tl-date {
+    font-size: 15px;
+  }
+  .tl-stats b {
+    font-size: 14px;
+  }
+}

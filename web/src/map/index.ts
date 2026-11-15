@@ -259,9 +259,14 @@ export async function initMapSection(ds: Dataset): Promise<void> {
     const p = padding();
     mapA.map.fitBounds(boxOf(focus), { padding: { ...p, right: isNarrow() ? 24 : 80, bottom: isNarrow() ? 190 : p.bottom }, duration, essential: true });
   }
+  /** Room for the Layers panel (left) and the timeline (bottom), so the whole country, Ñeembucú included, shows. */
+  const countryPadding = () => {
+    const dockH = (dock.offsetHeight || 90) + 48;
+    return isNarrow() ? { top: 70, bottom: dockH, left: 16, right: 16 } : { top: 80, bottom: dockH, left: 340, right: 70 };
+  };
   function flyToCountry() {
     closeZone();
-    mapA.map.fitBounds(PARAGUAY_BBOX, { padding: 40, duration: 2000, essential: true });
+    mapA.map.fitBounds(PARAGUAY_BBOX, { padding: countryPadding(), duration: 2000, essential: true });
   }
 
   let toastTimer = 0;
@@ -988,6 +993,8 @@ export async function initMapSection(ds: Dataset): Promise<void> {
   renderModes();
   timeline.set(0, false);
   showTimeline(0);
+  // frame the whole country once, at once (no animation), clear of the Layers panel and the timeline
+  if (!lab?.offline) mapA.map.fitBounds(PARAGUAY_BBOX, { padding: countryPadding(), duration: 0 });
   if (layers.outlines) applyLayers();
 }
 

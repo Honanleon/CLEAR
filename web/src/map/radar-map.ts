@@ -31,7 +31,12 @@ const basemapUrl = (file: string) => new URL(`basemap/${file}`, document.baseURI
 const FADE_MS = 520;
 
 export const PARAGUAY_BBOX: BBox = [-62.65, -27.61, -54.25, -19.29];
-const MAX_BOUNDS: BBox = [-67, -31, -50, -16];
+/**
+ * How far the map can pan / zoom out. Wider than the base-map clip (-67, -31, -50, -16): the country view
+ * needs room for the Layers panel and the timeline; beyond the clip the background is the same grey as the
+ * neighbouring countries, so the edge does not show.
+ */
+const MAX_BOUNDS: BBox = [-74, -35, -43, -12];
 /** A base-map name (public/basemap/labels.json). Labels are HTML (the site's own font): no glyph server. */
 interface BaseLabel {
   kind: "country" | "department" | "town";
@@ -306,6 +311,9 @@ export class RadarMap {
       id: "admin-country",
       type: "line",
       source: "ne-countries",
+      // Paraguay's outline only: the neighbours are clipped at the base-map box, and their outline would draw
+      // the clip edge as a fake border once the map is zoomed out (Paraguay's borders with them stay)
+      filter: ["==", ["get", "iso"], "PRY"],
       paint: { "line-color": "#5f6268", "line-opacity": 0.9, "line-width": ["interpolate", ["linear"], ["zoom"], 4, 1, 10, 2.5] },
     });
 
