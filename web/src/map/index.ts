@@ -224,6 +224,115 @@ export async function initMapSection(ds: Dataset): Promise<void> {
   mapA.map.on("error", (e) => console.warn("CLEAR map:", e.error?.message));
   if (import.meta.env.DEV || import.meta.env.MODE === "lab") (window as unknown as { __clear: unknown }).__clear = { mapA, hex };
   await mapA.ready.catch(() => undefined);
+
+  // ------------------------------------------------------------------ TEST SITE: fires (VIIRS), red hatched
+  // NASA FIRMS VIIRS detections (GIBS daily images, Nov 2025 - Oct 2026) aggregated offline into the site's own
+  // hexagons (data/hazards/fires.json): days with fire per hexagon over the country (map layer) and, inside the
+  // zones, the fire dates (hexagon panel: clearing with or without fire around its date). Red like the clearing,
+  // but hatched, and drawn under it.
+  type FireData = {
+    meta: { start: string };
+    big: [number, number, number][];
+    mini: [number, number, number][];
+    big_dates: Record<string, number[]>;
+    mini_dates: Record<string, number[]>;
+  };
+  let fires: FireData | null = null;
+  let firesOn = true;
+  // only the quarter of hexagons with the most fire days: there are burns almost everywhere, all of them would
+  // paint the country red and hide the radar clearing
+  const FIRE_MIN = { big: 80, mini: 6 };
+  const [g0, g1, g2, g3] = studyBoxes[0]!;
+  const gLon0 = (g0 + g2) / 2;
+  const gLat0 = (g1 + g3) / 2;
+  const gkx = 111_320 * Math.cos((gLat0 * Math.PI) / 180);
+  const gky = 110_574;
+  const S3 = Math.sqrt(3);
+  /** Axial key "q,r" of the hexagon of radius R holding lon/lat (same grid as hexgrid.ts). */
+  const fireKey = (lon: number, lat: number, R: number): string => {
+    const x = (lon - gLon0) * gkx;
+    const y = (lat - gLat0) * gky;
+    const fq = ((S3 / 3) * x - y / 3) / R;
+    const fr = ((2 / 3) * y) / R;
+    const fs = -fq - fr;
+    let q = Math.round(fq);
+    let r = Math.round(fr);
+    const s = Math.round(fs);
+    const dq = Math.abs(q - fq);
+    const dr = Math.abs(r - fr);
+    const ds2 = Math.abs(s - fs);
+    if (dq > dr && dq > ds2) q = -r - s;
+    else if (dr > ds2) r = -q - s;
+    return `${q},${r}`;
+  };
+  const fireGeo = (cells: [number, number, number][], R: number, min: number) => ({
+    type: "FeatureCollection",
+    features: cells
+      .filter((c) => c[2] >= min)
+      .map(([q, r, v]) => {
+        const cx = R * S3 * (q + r / 2);
+        const cy = R * 1.5 * r;
+        const ring: [number, number][] = [];
+        for (let i = 0; i <= 6; i++) {
+          const a = ((60 * (i % 6) - 30) * Math.PI) / 180;
+          ring.push([gLon0 + (cx + R * Math.cos(a)) / gkx, gLat0 + (cy + R * Math.sin(a)) / gky]);
+        }
+        return { type: "Feature", properties: { v }, geometry: { type: "Polygon", coordinates: [ring] } };
+      }),
+  });
+  /** Red diagonal stripes on transparent: the fire pattern (and the panel swatch). */
+  const hatch = () => {
+    const n = 12;
+    const c = document.createElement("canvas");
+    c.width = c.height = n;
+    const x = c.getContext("2d")!;
+    x.strokeStyle = "rgba(214, 0, 0, 0.85)";
+    x.lineWidth = 3;
+    for (const o of [-n, 0, n]) {
+      x.beginPath();
+      x.moveTo(o, n);
+      x.lineTo(o + n, 0);
+      x.stroke();
+    }
+    return x.getImageData(0, 0, n, n);
+  };
+  async function paintFires() {
+    const mm = mapA.map;
+    if (!fires) {
+      fires = await fetch(ds.url("hazards/fires.json"))
+        .then((r) => (r.ok ? (r.json() as Promise<FireData>) : null))
+        .catch(() => null);
+      if (!fires) return;
+    }
+    // (checked after the fetch: two calls may have waited for it)
+    if (!mm.getSource("fire-big")) {
+      if (!mm.hasImage("fire-hatch")) mm.addImage("fire-hatch", hatch());
+      const below = mm.getLayer("hex-fill") ? "hex-fill" : undefined;
+      const [z0, z1] = [MINI_ZOOM - 0.4, MINI_ZOOM + 0.4];
+      mm.addSource("fire-big", { type: "geojson", data: fireGeo(fires.big, HEX_RADIUS_M, FIRE_MIN.big) as never });
+      mm.addSource("fire-mini", { type: "geojson", data: fireGeo(fires.mini, MINI_HEX_RADIUS_M, FIRE_MIN.mini) as never });
+      mm.addLayer({ id: "fire-big", type: "fill", source: "fire-big", paint: { "fill-pattern": "fire-hatch", "fill-opacity": ["interpolate", ["linear"], ["zoom"], 5, 0.9, z0, 0.9, z1, 0] as never } }, below);
+      mm.addLayer({ id: "fire-big-line", type: "line", source: "fire-big", paint: { "line-color": "#d60000", "line-width": 0.8, "line-opacity": ["interpolate", ["linear"], ["zoom"], 5, 0.6, z0, 0.6, z1, 0] as never } }, below);
+      mm.addLayer({ id: "fire-mini", type: "fill", source: "fire-mini", minzoom: z0, paint: { "fill-pattern": "fire-hatch", "fill-opacity": ["interpolate", ["linear"], ["zoom"], z0, 0, z1, 0.9] as never } }, below);
+      mm.addLayer({ id: "fire-mini-line", type: "line", source: "fire-mini", minzoom: z0, paint: { "line-color": "#d60000", "line-width": 0.8, "line-opacity": ["interpolate", ["linear"], ["zoom"], z0, 0, z1, 0.6] as never } }, below);
+    }
+    const on = firesOn && view !== "radar";
+    for (const id of ["fire-big", "fire-big-line", "fire-mini", "fire-mini-line"]) {
+      if (mm.getLayer(id)) mm.setLayoutProperty(id, "visibility", on ? "visible" : "none");
+    }
+  }
+  /** Fire facts of a hexagon around a clearing date: days with fire, and the ones from 36 days before to 60 after. */
+  const fireNear = (cell: HexCell, isoDate: string) => {
+    if (!fires) return null;
+    const miniCell = isMini(cell);
+    const key = fireKey(cell.center[0], cell.center[1], miniCell ? MINI_HEX_RADIUS_M : HEX_RADIUS_M);
+    const offs = (miniCell ? fires.mini_dates : fires.big_dates)[key] ?? [];
+    const t0 = Date.parse(fires.meta.start);
+    const at = isoDate ? Math.round((Date.parse(isoDate) - t0) / 86_400_000) : NaN;
+    const near = Number.isFinite(at) ? offs.filter((o) => o >= at - 36 && o <= at + 60) : [];
+    const iso = (o: number) => new Date(t0 + o * 86_400_000).toISOString().slice(0, 10);
+    return { days: offs.length, near: near.length, from: near.length ? iso(near[0]!) : "", to: near.length ? iso(near[near.length - 1]!) : "" };
+  };
   status.hidden = true;
   ui.hidden = false;
 
@@ -457,6 +566,29 @@ export async function initMapSection(ds: Dataset): Promise<void> {
       body.append(h("p", "panel-label", t("map.legend_polys")), hexLegend());
       body.append(h("p", "panel-note", t("map.hex_size", { ha: fmt.num(hex.cells[0]?.areaHa ?? 0), mini: fmt.num(mini.cells[0]?.areaHa ?? 0) })));
       body.append(h("p", "panel-note", t("map.hex_nodata")));
+      // TEST SITE: fire layer toggle
+      {
+        const es = lang() === "es";
+        const row = h("label", "fire-row");
+        const cb = h("input");
+        cb.type = "checkbox";
+        cb.checked = firesOn;
+        cb.addEventListener("change", () => {
+          firesOn = cb.checked;
+          void paintFires();
+        });
+        row.append(cb, h("i", "fire-swatch"), h("span", "", es ? "Focos de incendio (VIIRS)" : "Fire detections (VIIRS)"));
+        body.append(
+          row,
+          h(
+            "p",
+            "panel-note",
+            es
+              ? `PRUEBA · Rayas rojas: hexágonos con focos de incendio, nov. 2025 – oct. 2026 (desde ${FIRE_MIN.big} días en el grande y ${FIRE_MIN.mini} en el chico). Fuente: NASA FIRMS VIIRS vía GIBS; el área de cada foco se ve más grande de lo real. Estimado por satélite.`
+              : `TEST · Red stripes: hexagons with fire detections, Nov 2025 – Oct 2026 (from ${FIRE_MIN.big} days in a big one, ${FIRE_MIN.mini} in a small one). Source: NASA FIRMS VIIRS via GIBS; each fire looks bigger than it is. Satellite estimate.`,
+          ),
+        );
+      }
       // flooding legend, always on the simple map: the purple hexagons show whatever the zone in focus
       if (waterSet) body.append(h("p", "panel-label", t("water.legend_hex", { zone: waterSet.z ? zoneName(waterSet.z) : "" })), rampLegend(WATER_GRADIENT, WATER_STOPS));
     }
@@ -562,6 +694,7 @@ export async function initMapSection(ds: Dataset): Promise<void> {
       // red / purple hexagons only on the simple map; over the radar images (radar view, before/after) the image alone
       m.setHexagons(view !== "radar");
     }
+    void paintFires();
   }
 
   function setView(v: View) {
@@ -876,6 +1009,26 @@ export async function initMapSection(ds: Dataset): Promise<void> {
         ),
         fact(t("hex.clearings"), fmt.num(shownPolys.length)),
       );
+      // TEST SITE: clearing with or without fire (VIIRS) around its date
+      const fn = fireNear(cell, firstDate);
+      if (fn) {
+        const es = lang() === "es";
+        const withFire = fn.near > 0;
+        facts.append(
+          fact(
+            es ? "Causa probable" : "Probable cause",
+            withFire ? (es ? "Con incendio" : "With fire") : es ? "Sin incendio: desmonte mecánico" : "No fire: mechanical clearing",
+            withFire
+              ? es
+                ? `El satélite VIIRS detectó focos de incendio en este hexágono ${fn.near === 1 ? `el ${fmt.date(fn.from)}` : `entre el ${fmt.date(fn.from)} y el ${fmt.date(fn.to)} (${fn.near} días)`}, cerca de la fecha del desmonte. Puede ser el fuego que abrió el monte o la quema de los restos. Estimado por satélite.`
+                : `The VIIRS satellite detected fires in this hexagon ${fn.near === 1 ? `on ${fmt.date(fn.from)}` : `between ${fmt.date(fn.from)} and ${fmt.date(fn.to)} (${fn.near} days)`}, close to the clearing date. It may be the fire that opened the forest or the burning of the debris. Satellite estimate.`
+              : es
+                ? `Sin focos de incendio (VIIRS) cerca de la fecha del desmonte${fn.days ? ` (hubo focos en otras fechas del año: ${fn.days} días)` : ""}: el monte se habría quitado con máquinas. Estimado por satélite.`
+                : `No fire detections (VIIRS) close to the clearing date${fn.days ? ` (there were fires on other dates of the year: ${fn.days} days)` : ""}: the forest was probably removed with machines. Satellite estimate.`,
+            withFire ? "fact-fire" : "",
+          ),
+        );
+      }
     } else if (total > 0) {
       facts.append(
         fact(t("zone.status"), t("zone.status_forest"), t("hex.later_note", { ha: fmt.num(total, total < 10 ? 1 : 0), date: fmt.date(firstDate, true) })),
@@ -1078,6 +1231,7 @@ export async function initMapSection(ds: Dataset): Promise<void> {
   showTimeline(0);
   // frame the whole country once, at once (no animation), clear of the Layers panel and the timeline
   if (!lab?.offline) mapA.map.fitBounds(PARAGUAY_BBOX, { padding: countryPadding(), duration: 0 });
+  void paintFires();
   if (layers.outlines) applyLayers();
 }
 
