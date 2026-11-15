@@ -162,6 +162,8 @@ El 04/11 solo existe el frame 166. Nombre de ejemplo: `NISAR_L2_PR_GCOV_032_161_
 | `neembucu` | `[-57.9, -27.3, -57.3, -26.6]` | Capítulo 2. Hay 6 productos GCOV entre el 1 y el 27/07 y 6 entre el 10 y el 31/08; la órbita no está verificada: buscarla |
 | `mbaracayu` | `[-55.7, -24.3, -55.2, -23.9]` | Capítulo 3. 60 productos entre jun y nov; órbita sin elegir |
 
+**Zonas actuales (14/11, noche).** `pipeline/config.yaml` → `zones`: `boqueron-norte` (cap. 1, desmonte, principal), `boqueron-sur` (desmonte, frame 166), `neembucu` (cap. 2, agua: por ahora solo imágenes, series y lluvia) y `mbaracayu` (cap. 3, control; corrida 0,1° al sur para entrar en un frame). Ninguna sube al norte de −20° de latitud: lo verifica un test (`pipeline/tests/test_zones.py`), por la regla del §4.
+
 **Revisado el 14/11 con OPERA DIST-ALERT y NISAR.** El bbox original `[-61.0, -21.95, -60.4, -21.55]` casi no tuvo desmonte en jun–oct (22 ha en DIST-ALERT, ~86 ha en NISAR). La actividad estaba al norte y al este, dentro del mismo frame 167, así que no hizo falta pasar al frame 166. Se eligió la caja actual (unas 320 ha de pérdida confirmada ≥ 50 % en DIST-ALERT) y no las de más al norte, por cercanía al PNCAT. En el sur de Boquerón (frame 166) hubo más desmonte, pero en jun–jul, antes de la línea de base del radar: no se puede detectar.
 
 ### 8.3 Datos complementarios
@@ -223,7 +225,7 @@ No cambiarlo sin acordar; si cambia, subir `schema_version`. Coordenadas en EPSG
 
 `web/public/data/index.json`
 ```json
-{ "schema_version": 2, "generated_at": "2026-11-14T18:00:00-03:00",
+{ "schema_version": 3, "generated_at": "2026-11-14T18:00:00-03:00",
   "aoi": { "id": "chaco-central-norte", "bbox": [-60.78, -21.73, -60.18, -21.33] },
   "nisar": { "track": 161, "direction": "ASCENDING", "frame": 167, "mode": "20+5 DHDH" },
   "scenes": [ { "date": "2026-06-01", "id": "NISAR_L2_PR_GCOV_021_...", "maturity": "PROVISIONAL", "crid": "P05023",
@@ -243,6 +245,8 @@ No cambiarlo sin acordar; si cambia, subir `schema_version`. Coordenadas en EPSG
 ```
 Una fila por fecha, alineada con `dates`; las celdas van en orden fila por fila; los valores son enteros dB×10 o `null`.
 
+**Varias zonas (v3, 14/11):** la zona principal (primera de `zones` en `config.yaml`) se exporta en la raíz de `web/public/data/` como siempre; las demás en `web/public/data/zones/<id>/`, con los mismos archivos. `web/public/data/zones.json` las lista (id, nombre, tipo `clearing`/`water`/`control`, capítulo, `path`, bbox, órbita). Detalle en `docs/DATA_CONTRACT.md`.
+
 `web/public/data/rain.json`: `{ "dates": [...], "mm": [...], "source": "NASA POWER PRECTOTCORR", "point": [-60.7, -21.75] }`
 
 ## 11. Web
@@ -256,7 +260,7 @@ Una fila por fecha, alineada con `dates`; las celdas van en orden fila por fila;
      - **línea de tiempo con play** en pasos de 12 días;
      - polígonos coloreados por fecha de detección;
      - al tocar: gráfico de HH y HV en el tiempo + barras de lluvia + si hubo alerta óptica.
-  4. **¿Le creemos al radar?:** los dos números de validación y 3 casos lado a lado (radar vs. HLS).
+  4. **¿Le creemos al radar?:** los números de validación y la revisión visual con HLS como texto ("en ~25 de 31 desmontes la imagen óptica muestra potreros nuevos"). **Decisión del equipo (14/11): no se publican recortes de casos (radar vs. HLS)**, porque muestran potreros puntuales en alta resolución y contradicen el anonimato de los hexágonos. Los paneles de revisión quedan fuera del repo.
   5. **Agua bajo el monte** (capítulo 2, si llega).
   6. **Qué sigue:** usos futuros de NISAR, límites del método y créditos.
 - **Requisitos:**

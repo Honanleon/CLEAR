@@ -3,7 +3,9 @@
 # CLEAR pipeline configuration. Every parameter says where its value comes from.
 # Paths are relative to the repository root (run the pipeline from there).
 
-aoi: boqueron-norte # active AOI for this run
+# Zones processed by default, in order. The first one is the primary zone: it is exported to web/public/data/
+# (as before); the others go to web/public/data/zones/<id>/. web/public/data/zones.json lists them all.
+zones: [boqueron-norte, boqueron-sur, neembucu, mbaracayu]
 
 aois:
   # [lon_min, lat_min, lon_max, lat_max], EPSG:4326
@@ -20,10 +22,38 @@ aois:
     # Alto Paraguay, where the PNCAT is located (Resolucion N.o 1/2001, Direccion General de Bienes Culturales, MEC).
     # Published as aggregated hexagons, not exact polygons. Fully inside track 161 / frame 167.
     bbox: [-61.6, -20.9, -61.0, -20.5]
+    kind: clearing
+    chapter: 1
+    name: {es: "Norte de Boquerón", en: "Northern Boquerón"}
+    orbit: {relative_orbit: 161, flight_direction: ASCENDING, frame: 167}
+    expected_dates: [2025-11-21, 2025-12-03, 2025-12-15, 2025-12-27, 2026-01-08, 2026-01-20, 2026-02-01, 2026-02-13,
+                     2026-02-25, 2026-03-09, 2026-03-21, 2026-04-02, 2026-04-26, 2026-05-08, 2026-05-20, 2026-06-01,
+                     2026-06-13, 2026-06-25, 2026-07-07, 2026-07-19, 2026-08-24, 2026-09-05, 2026-09-17, 2026-09-29,
+                     2026-10-11, 2026-10-23]
+  boqueron-sur:
+    # Second clearing zone (2026-11-14). NISAR frequency-B scan of frame 166: new paddock blocks, ~1,200 ha (coarse).
+    # District of Mariscal Estigarribia, 133 km from the district of Puerto Casado (PNCAT). Frame 166 has 12 dates
+    # with a gap from 2026-01-08 to 2026-06-25, so the baseline is the 2 dates before the gap.
+    bbox: [-61.7, -22.8, -61.1, -22.4]
+    kind: clearing
+    chapter: 1
+    name: {es: "Sur de Boquerón", en: "Southern Boquerón"}
+    orbit: {relative_orbit: 161, flight_direction: ASCENDING, frame: 166}
+    detection: {baseline_dates: 2}
   neembucu:
-    bbox: [-57.9, -27.3, -57.3, -26.6] # Chapter 2; orbit not verified yet
+    bbox: [-57.9, -27.3, -57.3, -26.6] # Chapter 2 (water). Track 60 ascending, frame 164: 12 dates, Nov 2025 - Oct 2026
+    kind: water # RGB and time series only for now; water classification (process/water.py) still to do
+    chapter: 2
+    name: {es: "Ñeembucú", en: "Ñeembucú"}
+    orbit: {relative_orbit: 60, flight_direction: ASCENDING, frame: 164}
   mbaracayu:
-    bbox: [-55.7, -24.3, -55.2, -23.9] # Chapter 3; orbit not chosen yet
+    # Chapter 3 (control: forest that should not change). The CLAUDE.md box [-55.7, -24.3, -55.2, -23.9] does not fit
+    # inside any single frame; shifted 0.1 deg south to fit track 82 descending, frame 101 (11 dates, Jun - Oct 2026).
+    bbox: [-55.7, -24.4, -55.2, -24.0]
+    kind: control
+    chapter: 3
+    name: {es: "Mbaracayú", en: "Mbaracayú"}
+    orbit: {relative_orbit: 82, flight_direction: DESCENDING, frame: 101}
 
 nisar:
   # Search parameters (asf_search); values checked in ASF Vertex on 2026-11-14
@@ -42,34 +72,7 @@ nisar:
   crid_maturity:
     P05023: PROVISIONAL # NISAR_L2_GCOV_PROVISIONAL_V1
     P05036: VALIDATED # NISAR_L2_GCOV_V1
-  # Dates we expect after de-duplication (ASF Vertex and asf_search, 2026-11-14). Used only to warn.
-  expected_dates:
-    - "2025-11-21"
-    - "2025-12-03"
-    - "2025-12-15"
-    - "2025-12-27"
-    - "2026-01-08"
-    - "2026-01-20"
-    - "2026-02-01"
-    - "2026-02-13"
-    - "2026-02-25"
-    - "2026-03-09"
-    - "2026-03-21"
-    - "2026-04-02"
-    - "2026-04-26" # 2026-04-14 missing in the archive
-    - "2026-05-08"
-    - "2026-05-20"
-    - "2026-06-01"
-    - "2026-06-13"
-    - "2026-06-25"
-    - "2026-07-07"
-    - "2026-07-19"
-    - "2026-08-24"
-    - "2026-09-05"
-    - "2026-09-17"
-    - "2026-09-29"
-    - "2026-10-11"
-    - "2026-10-23"
+  # expected_dates: per zone (aois.<id>.expected_dates), used only to warn
 
 paths:
   raw: data/raw # never committed

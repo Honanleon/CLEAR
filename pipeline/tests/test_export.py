@@ -59,7 +59,7 @@ def test_index_follows_contract():
     ]
     when = datetime(2026, 11, 14, 18, 0, tzinfo=ZoneInfo("America/Asuncion"))
     idx = build_index("chaco-central-norte", BBOX, nisar_cfg, scenes, det, when)
-    assert idx["schema_version"] == 2
+    assert idx["schema_version"] == 3
     assert idx["generated_at"] == "2026-11-14T18:00:00-03:00"
     assert [s["date"] for s in idx["scenes"]] == ["2026-06-01", "2026-06-13"]
     assert set(idx["scenes"][0]) == {"date", "id", "maturity", "crid", "rgb"}

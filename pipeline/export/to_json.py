@@ -12,7 +12,7 @@ from zoneinfo import ZoneInfo
 
 import numpy as np
 
-SCHEMA_VERSION = 2  # v2 (2026-11-14): agreement/coverage are spatial; adds 24-day variants, lead days, confirmed count
+SCHEMA_VERSION = 3  # v3 (2026-11-14): several zones (zones.json, index.zone); v2: spatial validation, hexagons
 
 
 def validation_block(v: Mapping[str, Any] | None) -> dict[str, Any]:

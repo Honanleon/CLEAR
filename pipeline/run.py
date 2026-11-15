@@ -1,7 +1,9 @@
 # Parts of this file were generated with AI assistance (Claude Code). See docs/AI_USAGE.md
 """CLEAR pipeline entry point.
 
-python -m pipeline.run --config pipeline/config.yaml --stage fetch|process|validate|export|all
+python -m pipeline.run --config pipeline/config.yaml --stage fetch|process|validate|export|all [--aoi ID ...]
+
+Without --aoi, every zone in `zones` (config) is processed in order; the first one is the primary zone.
 """
 
 from __future__ import annotations
@@ -32,6 +34,44 @@ def load_config(path: Path) -> dict[str, Any]:
         return yaml.safe_load(f)
 
 
+def zone_ids(cfg: dict[str, Any]) -> list[str]:
+    """Zones in processing order; the first is the primary zone. Falls back to the old single `aoi` key."""
+    return list(cfg.get("zones") or [cfg["aoi"]])
+
+
+def zone_cfg(cfg: dict[str, Any], aoi_id: str) -> dict[str, Any]:
+    """Config for one zone: its orbit, date range and detection overrides, plus where its outputs go.
+
+    The primary zone is exported to web/public/data/ (as before); the others to web/public/data/zones/<id>/.
+    """
+    import copy
+
+    z = copy.deepcopy(cfg)
+    a = cfg["aois"][aoi_id]
+    primary = aoi_id == zone_ids(cfg)[0]
+    z["aoi"] = aoi_id
+    z["nisar"].update(a.get("orbit", {}))
+    for k in ("start", "end"):
+        if k in a:
+            z["nisar"][k] = str(a[k])
+    z["nisar"]["expected_dates"] = [str(d) for d in a.get("expected_dates", [])]
+    z["detection"].update(a.get("detection", {}))
+    z["zone"] = {
+        "id": aoi_id,
+        "kind": a.get("kind", "clearing"),
+        "chapter": a.get("chapter"),
+        "name": a.get("name", {}),
+        "primary": primary,
+        "prefix": "" if primary else f"zones/{aoi_id}/",
+        "orbit": {k: z["nisar"][k] for k in ("relative_orbit", "flight_direction", "frame")},
+    }
+    return z
+
+
+def manifest_path(cfg: dict[str, Any]) -> Path:
+    return Path(cfg["paths"]["interim"]) / cfg["aoi"] / "nisar_scenes.json"
+
+
 def stage_fetch(cfg: dict[str, Any], only_dates: list[str] | None = None) -> bool:
     """Search NISAR, write the scene manifest and crop the AOI for each date.
 
@@ -39,14 +79,15 @@ def stage_fetch(cfg: dict[str, Any], only_dates: list[str] | None = None) -> boo
     """
     nisar_cfg = cfg["nisar"]
     scenes = nisar.search_scenes(nisar_cfg)
-    manifest = Path(cfg["paths"]["interim"]) / "nisar_scenes.json"
+    manifest = manifest_path(cfg)
     nisar.write_manifest(scenes, manifest)
 
     for s in scenes:
         log.info("  %s  cycle %03d  %s  %s  v%03d", s.date, s.cycle, s.crid, s.maturity, s.version)
     log.info("wrote %s (%d scenes)", manifest, len(scenes))
 
-    missing, extra = nisar.compare_dates([s.date for s in scenes], nisar_cfg.get("expected_dates", []))
+    expected = nisar_cfg.get("expected_dates", [])
+    missing, extra = nisar.compare_dates([s.date for s in scenes], expected) if expected else ([], [])
     if missing:
         log.warning("expected dates not found: %s", ", ".join(missing))
     if extra:
@@ -60,8 +101,25 @@ def stage_fetch(cfg: dict[str, Any], only_dates: list[str] | None = None) -> boo
         log.warning(
             "some requested dates are not in the manifest: %s", sorted(set(only_dates) - {s.date for s in todo})
         )
+    rain_path = Path(cfg["paths"]["interim"]) / cfg["aoi"] / "rain.json"
+    try:  # small request; the crops do not depend on it
+        from datetime import date, timedelta
+
+        from pipeline.fetch import power
+
+        d0 = date.fromisoformat(scenes[0].date) - timedelta(days=12)
+        d1 = min(date.fromisoformat(scenes[-1].date), date.today())
+        rain = power.fetch_rain(cfg["aois"][cfg["aoi"]]["bbox"], d0, d1)
+        to_json.write_json(rain, rain_path, compact=True)
+        log.info(
+            "wrote %s (%d days, %d with data)", rain_path, len(rain["dates"]), sum(v is not None for v in rain["mm"])
+        )
+    except Exception as e:
+        log.warning("rain (NASA POWER) not updated: %s", e)
+
     token = nisar.load_token()
     failed: list[str] = []
+    no_pol: list[str] = []
     for s in todo:
         out = nisar.crop_path(interim, aoi_id, s.date)
         if out.exists():
@@ -72,6 +130,10 @@ def stage_fetch(cfg: dict[str, Any], only_dates: list[str] | None = None) -> boo
         t0 = time.monotonic()
         try:
             crop = nisar.read_crop(s.url, token, bbox, nisar_cfg["frequency"], nisar_cfg["polarizations"])
+        except KeyError as e:  # the product lacks a polarization (other acquisition mode): leave the date out
+            log.warning("%s: product has no %s, date left out: %s", s.date, "/".join(nisar_cfg["polarizations"]), e)
+            no_pol.append(s.date)
+            continue
         except Exception as e:  # one bad date must not stop the others; no automatic retries
             log.error("%s: crop failed: %s", s.date, e)
             failed.append(s.date)
@@ -85,6 +147,10 @@ def stage_fetch(cfg: dict[str, Any], only_dates: list[str] | None = None) -> boo
             time.monotonic() - t0,
             out.stat().st_size / 1e6,
         )
+    if no_pol:
+        scenes = [s for s in scenes if s.date not in no_pol]
+        nisar.write_manifest(scenes, manifest)
+        log.warning("manifest rewritten without %s (%d scenes)", ", ".join(no_pol), len(scenes))
     if failed:
         log.error("failed dates (re-run to try again): %s", ", ".join(failed))
     return not failed
@@ -100,7 +166,7 @@ def stage_process(cfg: dict[str, Any], ignore_sanity: bool = False) -> bool:
     bbox = cfg["aois"][aoi_id]["bbox"]
     interim = Path(cfg["paths"]["interim"])
     det = cfg["detection"]
-    scenes = nisar.read_manifest(interim / "nisar_scenes.json")
+    scenes = nisar.read_manifest(manifest_path(cfg))
     paths = [nisar.crop_path(interim, aoi_id, s.date) for s in scenes]
     missing = [s.date for s, p in zip(scenes, paths, strict=True) if not p.exists() or nisar.crop_bbox(p) != list(bbox)]
     if missing:
@@ -322,9 +388,10 @@ def stage_export(cfg: dict[str, Any]) -> bool:
     aoi_id = cfg["aoi"]
     bbox = cfg["aois"][aoi_id]["bbox"]
     interim = Path(cfg["paths"]["interim"])
-    web_data = Path(cfg["paths"]["web_data"])
+    prefix = cfg["zone"]["prefix"]
+    web_data = Path(cfg["paths"]["web_data"]) / prefix  # zone folder; rgb paths in index.json stay relative to the root
     exp = cfg["export"]
-    scenes = nisar.read_manifest(interim / "nisar_scenes.json")
+    scenes = nisar.read_manifest(manifest_path(cfg))
 
     channels: dict[str, dict[str, Any]] = {}
     for s in scenes:
@@ -350,7 +417,7 @@ def stage_export(cfg: dict[str, Any]) -> bool:
         rel = f"rgb/{s.date}.webp"
         rgb_png.write_webp(rgb_png.to_rgba(channels[s.date], stretch), web_data / rel, exp["rgb_webp_quality"])
         log.info("%s: wrote %s (%.0f KB)", s.date, web_data / rel, (web_data / rel).stat().st_size / 1e3)
-        exported.append({**asdict(s), "rgb": rel})
+        exported.append({**asdict(s), "rgb": prefix + rel})
 
     # Time series for the chart (grid_500m.json); speckle filter not needed at 500 m
     dates, hv, hh = [], [], []
@@ -367,11 +434,11 @@ def stage_export(cfg: dict[str, Any]) -> bool:
     to_json.write_json(to_json.build_grid(bbox, dates, hv, hh), grid_path, compact=True)
     log.info("wrote %s (%d dates, %.0f KB)", grid_path, len(dates), grid_path.stat().st_size / 1e3)
 
+    import json
+
     summary_path = interim / aoi_id / "detection_summary.json"
     summary = None
-    if summary_path.exists():
-        import json
-
+    if cfg["zone"]["kind"] != "water" and summary_path.exists():
         summary = json.loads(summary_path.read_text())
         hex_feats = export_hexes(interim / aoi_id, bbox, exp["hex_width_m"])
         to_json.write_json(
@@ -385,13 +452,23 @@ def stage_export(cfg: dict[str, Any]) -> bool:
             exp["hex_width_m"],
             summary["n_polygons"],
         )
-    else:
+    elif cfg["zone"]["kind"] != "water":
         log.warning("no detection yet (run --stage process): index.json will report 0 polygons")
     val_path = interim / aoi_id / "validation_summary.json"
     if summary is not None and val_path.exists():
         summary["validation"] = json.loads(val_path.read_text())
 
+    rain_src = interim / aoi_id / "rain.json"
+    if rain_src.exists():
+        import shutil
+
+        shutil.copyfile(rain_src, web_data / "rain.json")
+        log.info("copied rain.json")
+    else:
+        log.warning("no rain.json yet (run --stage fetch)")
+
     index = to_json.build_index(aoi_id, bbox, cfg["nisar"], exported, cfg["detection"], summary=summary)
+    index["zone"] = {k: cfg["zone"][k] for k in ("kind", "chapter", "name", "primary")}
     to_json.write_json(index, web_data / "index.json")
     log.info("wrote %s (%d scenes)", web_data / "index.json", len(exported))
     return True
@@ -425,12 +502,68 @@ def export_hexes(out: Path, bbox: list[float], width_m: float) -> list[dict[str,
     return hexes.aggregate(inside & (first >= 0), first, drop, alert, transform, crs, dates, width_m, (xmin, ymin))
 
 
+def write_zones_index(cfg: dict[str, Any]) -> None:
+    """web/public/data/zones.json: every configured zone that has been exported, with where to find its files."""
+    import json
+
+    root = Path(cfg["paths"]["web_data"])
+    zones = []
+    for aoi_id in zone_ids(cfg):
+        z = zone_cfg(cfg, aoi_id)["zone"]
+        idx_path = root / z["prefix"] / "index.json"
+        if not idx_path.exists():
+            continue
+        idx = json.loads(idx_path.read_text())
+        det = idx.get("detection", {})
+        zones.append(
+            {
+                "id": aoi_id,
+                "name": z["name"],
+                "kind": z["kind"],
+                "chapter": z["chapter"],
+                "primary": z["primary"],
+                "path": z["prefix"],
+                "bbox": idx["aoi"]["bbox"],
+                "orbit": z["orbit"],
+                "n_scenes": len(idx["scenes"]),
+                "first_date": idx["scenes"][0]["date"] if idx["scenes"] else None,
+                "last_date": idx["scenes"][-1]["date"] if idx["scenes"] else None,
+                "n_polygons": det.get("n_polygons", 0) if z["kind"] != "water" else None,
+                "area_ha_total": det.get("area_ha_total", 0) if z["kind"] != "water" else None,
+            }
+        )
+    to_json.write_json({"schema_version": to_json.SCHEMA_VERSION, "zones": zones}, root / "zones.json")
+    log.info("wrote %s (%d zones)", root / "zones.json", len(zones))
+
+
+def run_zone(cfg: dict[str, Any], stages: tuple[str, ...], args: argparse.Namespace) -> bool:
+    kind = cfg["zone"]["kind"]
+    log.info("=== zone %s (%s, chapter %s)", cfg["aoi"], kind, cfg["zone"]["chapter"])
+    for stage in stages:
+        if stage in ("process", "validate") and kind == "water":
+            log.info("%s: skipped for a water zone (no water classification yet)", stage)
+            continue
+        if stage == "fetch":
+            ok = stage_fetch(cfg, args.dates)
+        elif stage == "process":
+            ok = stage_process(cfg, args.ignore_sanity)
+        elif stage == "validate":
+            ok = stage_validate(cfg)
+        else:
+            ok = stage_export(cfg)
+        if not ok:
+            log.error("zone %s: stage %s failed", cfg["aoi"], stage)
+            return False
+    return True
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--config", type=Path, default=Path("pipeline/config.yaml"))
     parser.add_argument("--stage", choices=(*STAGES, "all"), default="all")
     parser.add_argument("--date", action="append", dest="dates", metavar="YYYY-MM-DD", help="only crop these dates")
     parser.add_argument("--ignore-sanity", action="store_true", help="continue after a failed sanity check")
+    parser.add_argument("--aoi", action="append", dest="aois", metavar="ID", help="only these zones (default: all)")
     parser.add_argument("-v", "--verbose", action="store_true")
     args = parser.parse_args(argv)
 
@@ -443,21 +576,17 @@ def main(argv: list[str] | None = None) -> int:
         logging.getLogger(noisy).setLevel(logging.INFO if args.verbose else logging.WARNING)
     cfg = load_config(args.config)
     stages = STAGES if args.stage == "all" else (args.stage,)
-    for stage in stages:
-        if stage == "fetch":
-            if not stage_fetch(cfg, args.dates):
-                return 1
-        elif stage == "process":
-            if not stage_process(cfg, args.ignore_sanity):
-                return 1
-        elif stage == "validate":
-            if not stage_validate(cfg):
-                return 1
-        elif stage == "export":
-            if not stage_export(cfg):
-                return 1
-        else:
-            log.warning("stage %r is not implemented yet, skipping", stage)
+    ids = args.aois or zone_ids(cfg)
+    unknown = [i for i in ids if i not in cfg["aois"]]
+    if unknown:
+        log.error("unknown zone(s): %s", ", ".join(unknown))
+        return 2
+    failed = [i for i in ids if not run_zone(zone_cfg(cfg, i), stages, args)]
+    if "export" in stages:
+        write_zones_index(cfg)
+    if failed:
+        log.error("zones with errors: %s", ", ".join(failed))
+        return 1
     return 0
 
 

@@ -2,7 +2,7 @@
 
 # Data contract: pipeline → web
 
-**Current `schema_version`: 2.** The pipeline writes these files to `web/public/data/` and the web app reads them. Do not change this contract without agreeing with the team. If it changes, bump `schema_version` and update this file in the same commit.
+**Current `schema_version`: 3.** The pipeline writes these files to `web/public/data/` and the web app reads them. Do not change this contract without agreeing with the team. If it changes, bump `schema_version` and update this file in the same commit.
 
 General rules:
 - Coordinates are EPSG:4326 (lon, lat).
@@ -16,7 +16,7 @@ Loaded on startup.
 
 ```json
 {
-  "schema_version": 2,
+  "schema_version": 3,
   "generated_at": "2026-11-14T18:00:00-03:00",
   "aoi": { "id": "boqueron-norte", "bbox": [-61.6, -20.9, -61.0, -20.5] },
   "nisar": { "track": 161, "direction": "ASCENDING", "frame": 167, "mode": "20+5 DHDH" },
@@ -45,7 +45,29 @@ Loaded on startup.
 
 ## Changes
 
+- **v3 (2026-11-14):** several zones: `zones.json`, `zones/<id>/` folders, `index.zone`; `rain.json` is produced per zone (NASA POWER, centre of the zone's bbox). Backward compatible: the primary zone keeps the v2 layout at the root.
 - **v2 (2026-11-14):** `polygons.geojson` holds aggregated hexagons (same properties, new meaning above); `detection` adds `n_hexes` and `hex_width_m`. Also: `agreement_pct` and `coverage_pct` are now spatial (any date) instead of ±24 days; added `agreement_pct_24d`, `coverage_pct_24d`, `median_lead_days`, `polygons_confirmed`, `polygons_total`. Backward compatible: no field was removed or renamed. Reason in `docs/METHODS.md` (validation).
+
+## Several zones (`zones.json`, v3)
+
+The pipeline can process several study zones. The **primary zone** (first in `zones` in `pipeline/config.yaml`) is written to the root of `web/public/data/` exactly as before, so a web app that only knows one zone keeps working. Every other zone is written to `web/public/data/zones/<id>/` with the same files (`index.json`, `rgb/`, `grid_500m.json`, `polygons.geojson`, `rain.json`). In each zone's `index.json`, `scenes[].rgb` stays relative to `web/public/data/` (e.g. `zones/boqueron-sur/rgb/2026-01-08.webp`).
+
+`web/public/data/zones.json`:
+
+```json
+{ "schema_version": 3,
+  "zones": [
+    { "id": "boqueron-norte", "name": {"es": "Norte de Boquerón", "en": "Northern Boquerón"},
+      "kind": "clearing", "chapter": 1, "primary": true, "path": "",
+      "bbox": [-61.6, -20.9, -61.0, -20.5], "orbit": {"relative_orbit": 161, "flight_direction": "ASCENDING", "frame": 167},
+      "n_scenes": 26, "first_date": "2025-11-21", "last_date": "2026-10-23", "n_polygons": 31, "area_ha_total": 596.4 },
+    { "id": "neembucu", "kind": "water", "chapter": 2, "primary": false, "path": "zones/neembucu/",
+      "n_polygons": null, "area_ha_total": null, "...": "..." } ] }
+```
+
+- `kind`: `clearing` (forest clearing detection), `water` (chapter 2; for now only radar images, time series and rain, no detection, no `polygons.geojson`), `control` (chapter 3: same detection as `clearing`; few or no detections are expected).
+- `path`: folder of the zone's files, relative to `web/public/data/` (`""` for the primary zone).
+- Each zone's `index.json` also has `"zone": {"kind", "chapter", "name", "primary"}`.
 
 ## `polygons.geojson`
 
@@ -55,6 +77,7 @@ A `FeatureCollection` of **hexagons** (pointy-top, `hex_width_m` wide, 1000 m by
 |---|---|---|
 | `id` | string | Stable id |
 | `first_date` | string (ISO) | Median first-detection date of the cleared pixels in the hexagon (±12 days) |
+| `prev_date` | string (ISO) or `null` | Radar date just before `first_date`: the change happened **between `prev_date` and `first_date`**. Usually 12 days apart, but longer after a gap in the data (e.g. 2026-01-08 → 2026-06-25 in `boqueron-sur`). Added in v3. |
 | `area_ha` | number | Cleared area inside the hexagon, in hectares (not the hexagon's area) |
 | `mean_drop_db` | number | Mean ΔHV at detection of the cleared pixels, in dB (negative) |
 | `dist_confirmed` | `true` / `false` / `null` | ≥ 20 % of the cleared pixels have an OPERA DIST-ALERT alert; `null` = not checked |

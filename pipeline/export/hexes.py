@@ -86,12 +86,14 @@ def aggregate(
         ring = hex_ring(qq, rr, radius, origin)
         geom = transform_geom(crs, "EPSG:4326", {"type": "Polygon", "coordinates": [ring]}, precision=5)
         conf = None if alert is None else bool(alert[rows[m], cols[m]].mean() >= confirmed_frac)
+        idx = int(np.floor(np.median(first[rows[m], cols[m]])))
         feats.append(
             {
                 "type": "Feature",
                 "geometry": geom,
                 "properties": {
-                    "first_date": dates[int(np.floor(np.median(first[rows[m], cols[m]])))],
+                    "first_date": dates[idx],
+                    "prev_date": dates[idx - 1] if idx > 0 else None,  # the change happened between the two
                     "area_ha": round(float(m.sum() * px_ha), 1),
                     "mean_drop_db": round(float(np.nanmean(delta_at[rows[m], cols[m]])), 2),
                     "dist_confirmed": conf,
