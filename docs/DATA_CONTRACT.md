@@ -77,6 +77,7 @@ A `FeatureCollection` of **hexagons** (pointy-top, `hex_width_m` wide, 1000 m by
 |---|---|---|
 | `id` | string | Stable id |
 | `first_date` | string (ISO) | Median first-detection date of the cleared pixels in the hexagon (±12 days) |
+| `prev_date` | string (ISO) or `null` | Radar date just before `first_date`: the change happened **between `prev_date` and `first_date`**. Usually 12 days apart, but longer after a gap in the data (e.g. 2026-01-08 → 2026-06-25 in `boqueron-sur`). Added in v3. |
 | `area_ha` | number | Cleared area inside the hexagon, in hectares (not the hexagon's area) |
 | `mean_drop_db` | number | Mean ΔHV at detection of the cleared pixels, in dB (negative) |
 | `dist_confirmed` | `true` / `false` / `null` | ≥ 20 % of the cleared pixels have an OPERA DIST-ALERT alert; `null` = not checked |

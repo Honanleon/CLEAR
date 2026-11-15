@@ -104,6 +104,7 @@ def test_polygons_filter_by_area_and_carry_properties():
     assert p == {
         "id": "p0001",
         "first_date": "2026-04-01",
+        "prev_date": "2026-03-01",
         "area_ha": 9.0,
         "mean_drop_db": -4.0,
         "dist_confirmed": None,

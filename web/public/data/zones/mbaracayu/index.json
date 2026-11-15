@@ -1,0 +1,161 @@
+{
+  "schema_version": 3,
+  "generated_at": "2026-11-14T21:15:01-03:00",
+  "aoi": {
+    "id": "mbaracayu",
+    "bbox": [
+      -55.7,
+      -24.4,
+      -55.2,
+      -24.0
+    ]
+  },
+  "nisar": {
+    "track": 82,
+    "direction": "DESCENDING",
+    "frame": 101,
+    "mode": "20+5 DHDH"
+  },
+  "scenes": [
+    {
+      "date": "2026-06-19",
+      "id": "NISAR_L2_PR_GCOV_023_082_D_101_2005_DHDH_A_20260619T214924_20260619T214958_P05023_N_F_J_001",
+      "maturity": "PROVISIONAL",
+      "crid": "P05023",
+      "rgb": "zones/mbaracayu/rgb/2026-06-19.webp"
+    },
+    {
+      "date": "2026-07-01",
+      "id": "NISAR_L2_PR_GCOV_024_082_D_101_2005_DHDH_A_20260701T214923_20260701T214958_P05023_N_F_J_001",
+      "maturity": "PROVISIONAL",
+      "crid": "P05023",
+      "rgb": "zones/mbaracayu/rgb/2026-07-01.webp"
+    },
+    {
+      "date": "2026-07-13",
+      "id": "NISAR_L2_PR_GCOV_025_082_D_101_2005_DHDH_A_20260713T214922_20260713T214957_P05023_N_F_J_001",
+      "maturity": "PROVISIONAL",
+      "crid": "P05023",
+      "rgb": "zones/mbaracayu/rgb/2026-07-13.webp"
+    },
+    {
+      "date": "2026-07-25",
+      "id": "NISAR_L2_PR_GCOV_026_082_D_101_2005_DHDH_A_20260725T214922_20260725T214956_P05023_N_F_J_001",
+      "maturity": "PROVISIONAL",
+      "crid": "P05023",
+      "rgb": "zones/mbaracayu/rgb/2026-07-25.webp"
+    },
+    {
+      "date": "2026-08-18",
+      "id": "NISAR_L2_PR_GCOV_028_082_D_101_2005_DHDH_A_20260818T214921_20260818T214955_P05023_N_F_J_001",
+      "maturity": "PROVISIONAL",
+      "crid": "P05023",
+      "rgb": "zones/mbaracayu/rgb/2026-08-18.webp"
+    },
+    {
+      "date": "2026-08-30",
+      "id": "NISAR_L2_PR_GCOV_029_082_D_101_2005_DHDH_A_20260830T214920_20260830T214955_P05023_N_F_J_001",
+      "maturity": "PROVISIONAL",
+      "crid": "P05023",
+      "rgb": "zones/mbaracayu/rgb/2026-08-30.webp"
+    },
+    {
+      "date": "2026-09-11",
+      "id": "NISAR_L2_PR_GCOV_030_082_D_101_2005_DHDH_A_20260911T214920_20260911T214955_P05023_N_F_J_001",
+      "maturity": "PROVISIONAL",
+      "crid": "P05023",
+      "rgb": "zones/mbaracayu/rgb/2026-09-11.webp"
+    },
+    {
+      "date": "2026-09-23",
+      "id": "NISAR_L2_PR_GCOV_031_082_D_101_2005_DHDH_A_20260923T214920_20260923T214955_P05023_N_F_J_001",
+      "maturity": "PROVISIONAL",
+      "crid": "P05023",
+      "rgb": "zones/mbaracayu/rgb/2026-09-23.webp"
+    },
+    {
+      "date": "2026-10-05",
+      "id": "NISAR_L2_PR_GCOV_032_082_D_101_2005_DHDH_A_20261005T214920_20261005T214955_P05023_N_F_J_001",
+      "maturity": "PROVISIONAL",
+      "crid": "P05023",
+      "rgb": "zones/mbaracayu/rgb/2026-10-05.webp"
+    },
+    {
+      "date": "2026-10-17",
+      "id": "NISAR_L2_PR_GCOV_033_082_D_101_2005_DHDH_A_20261017T214920_20261017T214955_P05023_N_F_J_001",
+      "maturity": "PROVISIONAL",
+      "crid": "P05023",
+      "rgb": "zones/mbaracayu/rgb/2026-10-17.webp"
+    },
+    {
+      "date": "2026-10-29",
+      "id": "NISAR_L2_PR_GCOV_034_082_D_101_2005_DHDH_A_20261029T214921_20261029T214955_P05036_N_F_J_001",
+      "maturity": "VALIDATED",
+      "crid": "P05036",
+      "rgb": "zones/mbaracayu/rgb/2026-10-29.webp"
+    }
+  ],
+  "image_coordinates": [
+    [
+      -55.7,
+      -24.0
+    ],
+    [
+      -55.2,
+      -24.0
+    ],
+    [
+      -55.2,
+      -24.4
+    ],
+    [
+      -55.7,
+      -24.4
+    ]
+  ],
+  "detection": {
+    "threshold_db": -3.0,
+    "persistence": 2,
+    "min_area_ha": 5,
+    "n_polygons": 1,
+    "area_ha_total": 5.6,
+    "n_hexes": 3,
+    "hex_width_m": 1000
+  },
+  "validation": {
+    "agreement_pct": 0.0,
+    "coverage_pct": 0.0,
+    "agreement_pct_24d": 0.0,
+    "coverage_pct_24d": 0.0,
+    "median_lead_days": null,
+    "polygons_confirmed": 0,
+    "polygons_total": 1,
+    "reference": "OPERA DIST-ALERT-HLS V1"
+  },
+  "provenance": [
+    {
+      "layer": "rgb",
+      "type": "satellite",
+      "source": "NISAR L2 GCOV (NASA/JPL, ASF DAAC)"
+    },
+    {
+      "layer": "polygons",
+      "type": "satellite",
+      "source": "CLEAR change detection on NISAR L2 GCOV (NASA/JPL, ASF DAAC), HV"
+    },
+    {
+      "layer": "forest_mask",
+      "type": "satellite",
+      "source": "ESA WorldCover 2021 v200 (tree cover), CC-BY 4.0"
+    }
+  ],
+  "zone": {
+    "kind": "control",
+    "chapter": 3,
+    "name": {
+      "es": "Mbaracayú",
+      "en": "Mbaracayú"
+    },
+    "primary": false
+  }
+}

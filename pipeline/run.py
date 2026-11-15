@@ -86,7 +86,8 @@ def stage_fetch(cfg: dict[str, Any], only_dates: list[str] | None = None) -> boo
         log.info("  %s  cycle %03d  %s  %s  v%03d", s.date, s.cycle, s.crid, s.maturity, s.version)
     log.info("wrote %s (%d scenes)", manifest, len(scenes))
 
-    missing, extra = nisar.compare_dates([s.date for s in scenes], nisar_cfg.get("expected_dates", []))
+    expected = nisar_cfg.get("expected_dates", [])
+    missing, extra = nisar.compare_dates([s.date for s in scenes], expected) if expected else ([], [])
     if missing:
         log.warning("expected dates not found: %s", ", ".join(missing))
     if extra:
@@ -118,6 +119,7 @@ def stage_fetch(cfg: dict[str, Any], only_dates: list[str] | None = None) -> boo
 
     token = nisar.load_token()
     failed: list[str] = []
+    no_pol: list[str] = []
     for s in todo:
         out = nisar.crop_path(interim, aoi_id, s.date)
         if out.exists():
@@ -128,6 +130,10 @@ def stage_fetch(cfg: dict[str, Any], only_dates: list[str] | None = None) -> boo
         t0 = time.monotonic()
         try:
             crop = nisar.read_crop(s.url, token, bbox, nisar_cfg["frequency"], nisar_cfg["polarizations"])
+        except KeyError as e:  # the product lacks a polarization (other acquisition mode): leave the date out
+            log.warning("%s: product has no %s, date left out: %s", s.date, "/".join(nisar_cfg["polarizations"]), e)
+            no_pol.append(s.date)
+            continue
         except Exception as e:  # one bad date must not stop the others; no automatic retries
             log.error("%s: crop failed: %s", s.date, e)
             failed.append(s.date)
@@ -141,6 +147,10 @@ def stage_fetch(cfg: dict[str, Any], only_dates: list[str] | None = None) -> boo
             time.monotonic() - t0,
             out.stat().st_size / 1e6,
         )
+    if no_pol:
+        scenes = [s for s in scenes if s.date not in no_pol]
+        nisar.write_manifest(scenes, manifest)
+        log.warning("manifest rewritten without %s (%d scenes)", ", ".join(no_pol), len(scenes))
     if failed:
         log.error("failed dates (re-run to try again): %s", ", ".join(failed))
     return not failed

@@ -75,6 +75,7 @@ def polygons(
                 "geometry": g4326,
                 "properties": {
                     "first_date": dates[date_of[k - 1]],
+                    "prev_date": dates[date_of[k - 1] - 1] if date_of[k - 1] > 0 else None,
                     "area_ha": round(float(counts[k - 1] * px_ha), 1),
                     "mean_drop_db": round(float(mean_drop[k - 1]), 2),
                     "dist_confirmed": None,

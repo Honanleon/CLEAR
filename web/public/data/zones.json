@@ -1,0 +1,113 @@
+{
+  "schema_version": 3,
+  "zones": [
+    {
+      "id": "boqueron-norte",
+      "name": {
+        "es": "Norte de Boquerón",
+        "en": "Northern Boquerón"
+      },
+      "kind": "clearing",
+      "chapter": 1,
+      "primary": true,
+      "path": "",
+      "bbox": [
+        -61.6,
+        -20.9,
+        -61.0,
+        -20.5
+      ],
+      "orbit": {
+        "relative_orbit": 161,
+        "flight_direction": "ASCENDING",
+        "frame": 167
+      },
+      "n_scenes": 26,
+      "first_date": "2025-11-21",
+      "last_date": "2026-10-23",
+      "n_polygons": 31,
+      "area_ha_total": 596.4
+    },
+    {
+      "id": "boqueron-sur",
+      "name": {
+        "es": "Sur de Boquerón",
+        "en": "Southern Boquerón"
+      },
+      "kind": "clearing",
+      "chapter": 1,
+      "primary": false,
+      "path": "zones/boqueron-sur/",
+      "bbox": [
+        -61.7,
+        -22.8,
+        -61.1,
+        -22.4
+      ],
+      "orbit": {
+        "relative_orbit": 161,
+        "flight_direction": "ASCENDING",
+        "frame": 166
+      },
+      "n_scenes": 11,
+      "first_date": "2025-12-27",
+      "last_date": "2026-10-23",
+      "n_polygons": 24,
+      "area_ha_total": 1599.9
+    },
+    {
+      "id": "neembucu",
+      "name": {
+        "es": "Ñeembucú",
+        "en": "Ñeembucú"
+      },
+      "kind": "water",
+      "chapter": 2,
+      "primary": false,
+      "path": "zones/neembucu/",
+      "bbox": [
+        -57.9,
+        -27.3,
+        -57.3,
+        -26.6
+      ],
+      "orbit": {
+        "relative_orbit": 60,
+        "flight_direction": "ASCENDING",
+        "frame": 164
+      },
+      "n_scenes": 11,
+      "first_date": "2025-11-02",
+      "last_date": "2026-10-28",
+      "n_polygons": null,
+      "area_ha_total": null
+    },
+    {
+      "id": "mbaracayu",
+      "name": {
+        "es": "Mbaracayú",
+        "en": "Mbaracayú"
+      },
+      "kind": "control",
+      "chapter": 3,
+      "primary": false,
+      "path": "zones/mbaracayu/",
+      "bbox": [
+        -55.7,
+        -24.4,
+        -55.2,
+        -24.0
+      ],
+      "orbit": {
+        "relative_orbit": 82,
+        "flight_direction": "DESCENDING",
+        "frame": 101
+      },
+      "n_scenes": 11,
+      "first_date": "2026-06-19",
+      "last_date": "2026-10-29",
+      "n_polygons": 1,
+      "area_ha_total": 5.6
+    }
+  ]
+}

@@ -1,6 +1,6 @@
 {
-  "schema_version": 2,
-  "generated_at": "2026-11-14T20:29:10-03:00",
+  "schema_version": 3,
+  "generated_at": "2026-11-14T21:14:24-03:00",
   "aoi": {
     "id": "boqueron-norte",
     "bbox": [
@@ -253,5 +253,14 @@
       "type": "satellite",
       "source": "ESA WorldCover 2021 v200 (tree cover), CC-BY 4.0"
     }
-  ]
+  ],
+  "zone": {
+    "kind": "clearing",
+    "chapter": 1,
+    "name": {
+      "es": "Norte de Boquerón",
+      "en": "Northern Boquerón"
+    },
+    "primary": true
+  }
 }

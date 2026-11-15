@@ -67,6 +67,12 @@ NISAR L2 GCOV, frequency A (20 MHz, ~20 m), HH and HV, γ⁰ linear with radiome
 - **Reading:** the low agreement with DIST-ALERT comes mostly from the optical alert product missing new clearings that are visible in the HLS images; the radar found them. The detector is conservative: many new paddocks in the HLS images are larger than the radar polygon, so 596 ha is a lower bound.
 - The radar-earlier question remains open here: the median lag on the few overlapping pixels is +43 days (radar *later*), from only 3 confirmed clearings.
 
+## Results for the other zones (2026-11-14, night)
+
+- **`boqueron-sur`** (`[-61.7, -22.8, -61.1, -22.4]`, track 161 frame 166, 11 dates; baseline 2025-12-27 and 2026-01-08 because the frame has no data from 2026-01-08 to 2026-06-25): **24 clearings, 1,600 ha**, published as 60 hexagons. Most are dated 2026-06-25, which means **between 2026-01-08 and 2026-06-25** (`prev_date` → `first_date` in the data), not "±12 days". DIST-ALERT: coverage 81.6 %, agreement 20.1 %, 7 of 24 confirmed. Visual HLS review (2026-01-08 vs 2026-11-04): about 19–20 of 24 are new paddock blocks (≈ 90 ha squares and one new centre pivot) in forest; about 4 are next to existing paddocks. **Sanity check:** the forest median jumped 2.09 dB between 2026-10-11 and 2026-10-23 (limit 2 dB). The cause was rain, not the product version: NASA POWER gives 116.7 mm on 2026-10-05 and rain until 10-11 (the 10-11 median is +2 dB above the usual level), while 10-23 (VALIDATED) is in line with 09-29 (PROVISIONAL). The per-date normalization corrects it, so the run continued with `--ignore-sanity`.
+- **`mbaracayu`** (control, `[-55.7, -24.4, -55.2, -24.0]`, track 82 descending frame 101, 11 dates Jun–Oct 2026): **1 polygon of 6 ha**. Forest that should not change does not change, as expected. Note that this series has only 4 months.
+- **`neembucu`** (chapter 2, water, track 60 frame 164): radar images, time series and rain only. 2026-09-22 was left out because that product has no HV channel. Water classification is still to do.
+
 ## Default parameters
 
 | Parameter | Value | Origin |

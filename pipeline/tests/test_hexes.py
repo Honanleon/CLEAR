@@ -50,6 +50,7 @@ def test_aggregate_hides_shape_and_keeps_totals():
     assert (
         p["id"] == "h0001"
         and p["first_date"] == "2026-05-01"
+        and p["prev_date"] == "2026-04-01"
         and p["mean_drop_db"] == -4.0
         and p["status"] == "estimado"
     )

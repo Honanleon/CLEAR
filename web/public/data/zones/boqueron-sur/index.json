@@ -1,0 +1,161 @@
+{
+  "schema_version": 3,
+  "generated_at": "2026-11-14T21:14:34-03:00",
+  "aoi": {
+    "id": "boqueron-sur",
+    "bbox": [
+      -61.7,
+      -22.8,
+      -61.1,
+      -22.4
+    ]
+  },
+  "nisar": {
+    "track": 161,
+    "direction": "ASCENDING",
+    "frame": 166,
+    "mode": "20+5 DHDH"
+  },
+  "scenes": [
+    {
+      "date": "2025-12-27",
+      "id": "NISAR_L2_PR_GCOV_008_161_A_166_2005_DHDH_A_20251227T095726_20251227T095800_X05010_N_F_J_001",
+      "maturity": "UNKNOWN",
+      "crid": "X05010",
+      "rgb": "zones/boqueron-sur/rgb/2025-12-27.webp"
+    },
+    {
+      "date": "2026-01-08",
+      "id": "NISAR_L2_PR_GCOV_009_161_A_166_2005_DHDH_A_20260108T095726_20260108T095801_X05010_N_F_J_001",
+      "maturity": "UNKNOWN",
+      "crid": "X05010",
+      "rgb": "zones/boqueron-sur/rgb/2026-01-08.webp"
+    },
+    {
+      "date": "2026-06-25",
+      "id": "NISAR_L2_PR_GCOV_023_161_A_166_2005_DHDH_A_20260625T095726_20260625T095801_P05023_N_F_J_001",
+      "maturity": "PROVISIONAL",
+      "crid": "P05023",
+      "rgb": "zones/boqueron-sur/rgb/2026-06-25.webp"
+    },
+    {
+      "date": "2026-07-07",
+      "id": "NISAR_L2_PR_GCOV_024_161_A_166_2005_DHDH_A_20260707T095725_20260707T095800_P05023_N_F_J_001",
+      "maturity": "PROVISIONAL",
+      "crid": "P05023",
+      "rgb": "zones/boqueron-sur/rgb/2026-07-07.webp"
+    },
+    {
+      "date": "2026-07-19",
+      "id": "NISAR_L2_PR_GCOV_025_161_A_166_2005_DHDH_A_20260719T095725_20260719T095759_P05023_N_F_J_001",
+      "maturity": "PROVISIONAL",
+      "crid": "P05023",
+      "rgb": "zones/boqueron-sur/rgb/2026-07-19.webp"
+    },
+    {
+      "date": "2026-08-24",
+      "id": "NISAR_L2_PR_GCOV_028_161_A_166_2005_DHDH_A_20260824T095723_20260824T095757_P05023_N_F_J_001",
+      "maturity": "PROVISIONAL",
+      "crid": "P05023",
+      "rgb": "zones/boqueron-sur/rgb/2026-08-24.webp"
+    },
+    {
+      "date": "2026-09-05",
+      "id": "NISAR_L2_PR_GCOV_029_161_A_166_2005_DHDH_A_20260905T095723_20260905T095757_P05023_N_F_J_002",
+      "maturity": "PROVISIONAL",
+      "crid": "P05023",
+      "rgb": "zones/boqueron-sur/rgb/2026-09-05.webp"
+    },
+    {
+      "date": "2026-09-17",
+      "id": "NISAR_L2_PR_GCOV_030_161_A_166_2005_DHDH_A_20260917T095723_20260917T095757_P05023_N_F_J_001",
+      "maturity": "PROVISIONAL",
+      "crid": "P05023",
+      "rgb": "zones/boqueron-sur/rgb/2026-09-17.webp"
+    },
+    {
+      "date": "2026-09-29",
+      "id": "NISAR_L2_PR_GCOV_031_161_A_166_2005_DHDH_A_20260929T095723_20260929T095757_P05023_N_F_J_001",
+      "maturity": "PROVISIONAL",
+      "crid": "P05023",
+      "rgb": "zones/boqueron-sur/rgb/2026-09-29.webp"
+    },
+    {
+      "date": "2026-10-11",
+      "id": "NISAR_L2_PR_GCOV_032_161_A_166_2005_DHDH_A_20261011T095723_20261011T095757_P05023_N_F_J_001",
+      "maturity": "PROVISIONAL",
+      "crid": "P05023",
+      "rgb": "zones/boqueron-sur/rgb/2026-10-11.webp"
+    },
+    {
+      "date": "2026-10-23",
+      "id": "NISAR_L2_PR_GCOV_033_161_A_166_2005_DHDH_A_20261023T095723_20261023T095753_P05036_N_F_J_001",
+      "maturity": "VALIDATED",
+      "crid": "P05036",
+      "rgb": "zones/boqueron-sur/rgb/2026-10-23.webp"
+    }
+  ],
+  "image_coordinates": [
+    [
+      -61.7,
+      -22.4
+    ],
+    [
+      -61.1,
+      -22.4
+    ],
+    [
+      -61.1,
+      -22.8
+    ],
+    [
+      -61.7,
+      -22.8
+    ]
+  ],
+  "detection": {
+    "threshold_db": -3.0,
+    "persistence": 2,
+    "min_area_ha": 5,
+    "n_polygons": 24,
+    "area_ha_total": 1599.9,
+    "n_hexes": 60,
+    "hex_width_m": 1000
+  },
+  "validation": {
+    "agreement_pct": 20.1,
+    "coverage_pct": 81.6,
+    "agreement_pct_24d": 0.0,
+    "coverage_pct_24d": 0.2,
+    "median_lead_days": -133,
+    "polygons_confirmed": 7,
+    "polygons_total": 24,
+    "reference": "OPERA DIST-ALERT-HLS V1"
+  },
+  "provenance": [
+    {
+      "layer": "rgb",
+      "type": "satellite",
+      "source": "NISAR L2 GCOV (NASA/JPL, ASF DAAC)"
+    },
+    {
+      "layer": "polygons",
+      "type": "satellite",
+      "source": "CLEAR change detection on NISAR L2 GCOV (NASA/JPL, ASF DAAC), HV"
+    },
+    {
+      "layer": "forest_mask",
+      "type": "satellite",
+      "source": "ESA WorldCover 2021 v200 (tree cover), CC-BY 4.0"
+    }
+  ],
+  "zone": {
+    "kind": "clearing",
+    "chapter": 1,
+    "name": {
+      "es": "Sur de Boquerón",
+      "en": "Southern Boquerón"
+    },
+    "primary": false
+  }
+}
