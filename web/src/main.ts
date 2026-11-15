@@ -32,6 +32,16 @@ function initChrome() {
   addEventListener("scroll", onScroll, { passive: true });
   onScroll();
 
+  // "F" puts the whole page in full screen (the team presents with the site); "F" again or Esc leaves it.
+  // Not while typing, and not with Ctrl / Cmd / Alt (browser shortcuts).
+  addEventListener("keydown", (e) => {
+    if (e.key.toLowerCase() !== "f" || e.ctrlKey || e.metaKey || e.altKey || e.repeat) return;
+    if ((e.target as HTMLElement | null)?.closest?.("input, textarea, select, [contenteditable]")) return;
+    e.preventDefault();
+    if (document.fullscreenElement) void document.exitFullscreen().catch(() => undefined);
+    else void document.documentElement.requestFullscreen?.().catch(() => undefined);
+  });
+
   // active section in the nav
   const links = new Map<string, HTMLAnchorElement>();
   document.querySelectorAll<HTMLAnchorElement>(".nav a").forEach((a) => links.set(a.hash.slice(1), a));
