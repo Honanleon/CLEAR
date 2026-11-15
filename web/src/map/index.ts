@@ -944,11 +944,13 @@ export async function initMapSection(ds: Dataset): Promise<void> {
     closeZone();
     // the water zone opens its panel (water areas per date) right away
     if (isWater(focus)) renderWaterZone(focus);
-    // before the intro has run, the intro itself flies to the focused zone
-    if (introduced) flyToStudy(1600);
+    // the map moves only on a choice like this one (no automatic flight on the first visit)
+    flyToStudy(1600);
   });
 
-  // ------------------------------------------------------------------ first visit: Paraguay → study area → play
+  // ------------------------------------------------------------------ first visit: stay on Paraguay, hint and play
+  // No automatic zoom: the map stays on the whole country (all zones in view) until the visitor picks a
+  // zone or taps a hexagon; the timeline still plays and a hint says what to do.
   const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   new IntersectionObserver(
     ([entry]) => {
@@ -962,15 +964,12 @@ export async function initMapSection(ds: Dataset): Promise<void> {
       if (introduced) return;
       introduced = true;
       window.setTimeout(() => {
-        flyToStudy(reduced ? 0 : 3200);
-        mapA.map.once("moveend", () => {
-          if (!selected && !coachShown) {
-            coachShown = true;
-            showToast(t("map.coach"), 9000);
-          }
-          if (!reduced && !selected) timeline.play();
-        });
-      }, 1800);
+        if (!selected && !coachShown) {
+          coachShown = true;
+          showToast(t("map.coach"), 9000);
+        }
+        if (!reduced && !selected) timeline.play();
+      }, 1200);
     },
     { threshold: 0.45 },
   ).observe(shell);
