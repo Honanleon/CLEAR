@@ -214,6 +214,11 @@ export async function initMapSection(ds: Dataset): Promise<void> {
       if (s.z) focusZoneById(s.z.id);
       else flyToStudy();
     });
+    // the tag sits on the map: keep its clicks from also reaching the map (that read as a tap just
+    // outside the zone's box and opened the "outside the study area" panel)
+    for (const ev of ["mousedown", "mouseup", "click", "dblclick", "pointerdown", "pointerup", "touchstart", "touchend"]) {
+      tag.addEventListener(ev, (e) => e.stopPropagation());
+    }
     const [x0, , , y1] = boxOf(s);
     new Marker({ element: tag, anchor: "bottom-left", offset: [-2, -6] }).setLngLat([x0, y1]).addTo(mapA.map);
     return { tag, s };
