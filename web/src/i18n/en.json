@@ -391,5 +391,30 @@
     "tooltip": "{ha} ha under water (estimated) · {pct}% of the hexagon",
     "in_hex": "Water in this hexagon",
     "in_hex_note": "{pct}% of the hexagon · estimated"
+  },
+  "mosaic": {
+    "note": "Paraguay in NISAR quick-looks (ASF), one mosaic per month; until May 2026 the east uses its first pass (Jun 2026). Not calibrated: each strip is another pass."
+  },
+  "spot": {
+    "hint_blue": "Drag the bar right: the new paddocks (blue) were forest (yellow-green). Radar-estimated clearing.",
+    "hint_lilac": "Drag the bar right: the new paddocks (lilac) were forest (yellow-green). Radar-estimated clearing."
+  },
+  "fire": {
+    "toggle": "Fire detections (VIIRS)",
+    "toggle_note": "Stripes: days with fire, Nov 2025 – Oct 2026 (from {big} in a big hexagon, {mini} in a small one). NASA FIRMS VIIRS; satellite estimate.",
+    "observed": "Fire detections observed",
+    "days": "{n} days with fire",
+    "outside_title": "Outside the study zones",
+    "outside_hex": "{km} km hexagon, Nov 2025 – Oct 2026 (VIIRS).",
+    "outside_body": "The NISAR radar was not analysed here: we do not know if there was clearing. The fire may be clearing with burning, or grassland or crop burning. Satellite estimate.",
+    "title_nocut": "Fire, no clearing detected",
+    "nocut_note": "VIIRS, Nov 2025 – Oct 2026. The radar saw no clearing here: grassland or crop burning, or a fire that left the forest standing. Estimate.",
+    "cause": "Probable cause",
+    "cause_fire": "With fire",
+    "cause_nofire": "No fire: mechanical clearing",
+    "cause_fire_one": "VIIRS fires on {date}, near the clearing: the fire that opened the forest or the debris burning. Estimate.",
+    "cause_fire_many": "VIIRS fires from {from} to {to} ({n} days), near the clearing: the fire that opened the forest or the debris burning. Estimate.",
+    "cause_nofire_note": "No VIIRS fires near the clearing: probably removed with machines. Estimate.",
+    "cause_nofire_other": "No VIIRS fires near the clearing ({n} fire days on other dates): probably removed with machines. Estimate."
   }
 }

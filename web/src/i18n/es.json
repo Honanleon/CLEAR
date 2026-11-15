@@ -391,5 +391,30 @@
     "tooltip": "{ha} ha con agua (estimado) · {pct} % del hexágono",
     "in_hex": "Agua en este hexágono",
     "in_hex_note": "{pct} % del hexágono · estimado"
+  },
+  "mosaic": {
+    "note": "Paraguay en vistas rápidas de NISAR (ASF), un mosaico por mes; hasta mayo de 2026 el este usa su primera pasada (jun. 2026). Sin calibrar: cada franja es otra pasada."
+  },
+  "spot": {
+    "hint_blue": "Arrastrá la barra a la derecha: los potreros nuevos (azul) eran monte (verde amarillo). Desmonte estimado por radar.",
+    "hint_lilac": "Arrastrá la barra a la derecha: los potreros nuevos (lila) eran monte (verde amarillo). Desmonte estimado por radar."
+  },
+  "fire": {
+    "toggle": "Focos de incendio (VIIRS)",
+    "toggle_note": "Rayas: días con fuego, nov. 2025 – oct. 2026 (desde {big} en el hexágono grande, {mini} en el chico). NASA FIRMS VIIRS; estimado por satélite.",
+    "observed": "Focos de incendio observados",
+    "days": "{n} días con fuego",
+    "outside_title": "Fuera de las zonas de estudio",
+    "outside_hex": "Hexágono de {km} km, nov. 2025 – oct. 2026 (VIIRS).",
+    "outside_body": "Acá no se analizó el radar NISAR: no sabemos si hubo desmonte. El fuego puede ser desmonte con quema o quema de pastizales o cultivos. Estimado por satélite.",
+    "title_nocut": "Fuego, sin desmonte detectado",
+    "nocut_note": "VIIRS, nov. 2025 – oct. 2026. El radar no vio desmonte acá: quema de pastizales o cultivos, o fuego que no tumbó el monte. Estimado.",
+    "cause": "Causa probable",
+    "cause_fire": "Con incendio",
+    "cause_nofire": "Sin incendio: desmonte mecánico",
+    "cause_fire_one": "Focos VIIRS el {date}, cerca del desmonte: el fuego que abrió el monte o la quema de los restos. Estimado.",
+    "cause_fire_many": "Focos VIIRS del {from} al {to} ({n} días), cerca del desmonte: el fuego que abrió el monte o la quema de los restos. Estimado.",
+    "cause_nofire_note": "Sin focos VIIRS cerca del desmonte: monte quitado con máquinas, probablemente. Estimado.",
+    "cause_nofire_other": "Sin focos VIIRS cerca del desmonte ({n} días con fuego en otras fechas): monte quitado con máquinas, probablemente. Estimado."
   }
 }

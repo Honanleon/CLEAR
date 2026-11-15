@@ -64,7 +64,7 @@ export interface RadarMapOptions {
   /** Outline of the small hexagons over the rest of the country inside a box (drawn only where the map looks). */
   miniOutline?: (view: BBox) => GeoJSON;
   /**
-   * TEST SITE: Paraguay-wide NISAR quick-look mosaics (ASF browse images), "before" and "after", drawn under the
+   * Paraguay-wide NISAR quick-look mosaics (ASF browse images), "before" and "after", drawn under the
    * zones' own radar images in the radar view.
    */
   mosaic?: { files: Record<string, string>; coordinates: [[number, number], [number, number], [number, number], [number, number]] };
@@ -655,7 +655,7 @@ export class RadarMap {
   /** Radar view on/off (the simple base map underneath stays). */
   private mosaicWhich: string | null = null;
   private mosaicLoaded = new Set<string>();
-  /** TEST SITE: which country mosaic shows (only in the radar view); each one is loaded the first time. */
+  /** Which country mosaic shows (only in the radar view); each one is loaded the first time. */
   setMosaic(which: string | null): void {
     this.mosaicWhich = which;
     void this.ready.then(() => this.paintMosaic());

@@ -178,7 +178,7 @@ export async function initMapSection(ds: Dataset): Promise<void> {
         })
       : null;
 
-  // TEST SITE: Paraguay-wide NISAR quick-look mosaics (ASF browse images), built offline into data/mosaic/
+  // Paraguay-wide NISAR quick-look mosaics (ASF browse images), built offline into data/mosaic/
   type MosaicStep = { until: string; file: string; dates: string[]; coverage_of_paraguay: number };
   const mosaicMeta = await fetch(ds.url("mosaic/mosaic.json"))
     .then((r) =>
@@ -225,7 +225,7 @@ export async function initMapSection(ds: Dataset): Promise<void> {
   if (import.meta.env.DEV || import.meta.env.MODE === "lab") (window as unknown as { __clear: unknown }).__clear = { mapA, hex };
   await mapA.ready.catch(() => undefined);
 
-  // ------------------------------------------------------------------ TEST SITE: fires (VIIRS), red hatched
+  // ------------------------------------------------------------------ fires (VIIRS), red hatched
   // NASA FIRMS VIIRS detections (GIBS daily images, Nov 2025 - Oct 2026) aggregated offline into the site's own
   // hexagons (data/hazards/fires.json): days with fire per hexagon over the country (map layer) and, inside the
   // zones, the fire dates (hexagon panel: clearing with or without fire around its date). Red like the clearing,
@@ -402,24 +402,6 @@ export async function initMapSection(ds: Dataset): Promise<void> {
   dock.append(timeline.el, compareBar);
   ui.append(modeBar, panel, toast, dock, zone, tip);
   if (lab) ui.append(...lab.overlay);
-  // TEST SITE: the CLEAR assistant next to the map. It answers only when the page runs as a claude.ai artifact
-  // (the viewer's own Claude account), so it is built only into the artifact build (`--mode artifact`) and the
-  // dev server; the normal build (the hosted site, the bundle budget) never includes it.
-  let testChat: ReturnType<typeof import("./test-chat").createTestChat> | null = null;
-  if (import.meta.env.DEV || import.meta.env.MODE === "artifact") void import("./test-chat")
-    .then((m) => {
-      testChat = m.createTestChat({
-        ds,
-        hex,
-        mini,
-        polygonsById: byId,
-        closeZone: () => closeZone(),
-        zones: zoneSets.filter((s) => s.z).map((s) => ({ id: s.z!.id, kind: s.z!.kind, bbox: s.z!.bbox })),
-        fireMin: FIRE_MIN,
-      });
-      ui.append(...testChat.overlay);
-    })
-    .catch(() => undefined);
 
   const isNarrow = () => shell.clientWidth < 760;
   const padding = () =>
@@ -442,23 +424,21 @@ export async function initMapSection(ds: Dataset): Promise<void> {
     mapA.map.fitBounds(PARAGUAY_BBOX, { padding: countryPadding(), duration: 2000, essential: true });
   }
 
-  // TEST SITE: before/after opens each clearing zone on the dates and the spot where the change is easiest to see
+  // before/after opens each clearing zone on the dates and the spot where the change is easiest to see
   // with the eye (found offline in the site's own radar images: forest, yellow-green, turned into new blue
   // paddocks). Water and control zones keep the usual view: their radar change is too faint to see.
-  const CHANGE_SPOTS: Record<string, { before: string; after: string; center: [number, number]; es: string; en: string }> = {
+  const CHANGE_SPOTS: Record<string, { before: string; after: string; center: [number, number]; hint: string }> = {
     "boqueron-norte": {
       before: "2025-11-21",
       after: "2026-09-17",
       center: [-61.1739, -20.7598],
-      es: "Arrastrá la barra a la derecha: los potreros nuevos (azul) eran monte (verde amarillo). Desmonte estimado por radar.",
-      en: "Drag the bar right: the new paddocks (blue) were forest (yellow-green). Radar-estimated clearing.",
+      hint: "spot.hint_blue",
     },
     "boqueron-sur": {
       before: "2026-01-08",
       after: "2026-09-29",
       center: [-61.2487, -22.4904],
-      es: "Arrastrá la barra a la derecha: los potreros nuevos (lila) eran monte (verde amarillo). Desmonte estimado por radar.",
-      en: "Drag the bar right: the new paddocks (lilac) were forest (yellow-green). Radar-estimated clearing.",
+      hint: "spot.hint_lilac",
     },
   };
   /** Before/after on the change spot of the focused zone; false when the zone has none. */
@@ -475,7 +455,7 @@ export async function initMapSection(ds: Dataset): Promise<void> {
     const p = { top: 90, bottom: isNarrow() ? 200 : 160, left: 0, right: 0 };
     const off: [number, number] = [isNarrow() ? 90 : 190, 0];
     mapA.map.flyTo({ center: spot.center, zoom: 12, padding: p, offset: off, duration: 1800, essential: true });
-    showToast(lang() === "es" ? spot.es : spot.en, 9000);
+    showToast(t(spot.hint), 9000);
     return true;
   }
 
@@ -583,26 +563,14 @@ export async function initMapSection(ds: Dataset): Promise<void> {
     if (view === "radar") {
       // over the radar images there are no hexagons: say where they are
       body.append(h("p", "panel-note panel-note-strong", t("map.radar_nohex")));
-      if (mosaicMeta) {
-        // TEST SITE: what the country mosaic is (and is not)
-        const es = lang() === "es";
-        body.append(
-          h(
-            "p",
-            "panel-note test-note",
-            es
-              ? "PRUEBA · Paraguay en vistas rápidas de NISAR (ASF), un mosaico por mes; hasta mayo de 2026 el este usa su primera pasada (jun. 2026). Sin calibrar: cada franja es otra pasada."
-              : "TEST · Paraguay in NISAR quick-looks (ASF), one mosaic per month; until May 2026 the east uses its first pass (Jun 2026). Not calibrated: each strip is another pass.",
-          ),
-        );
-      }
+      // what the country mosaic is (and is not)
+      if (mosaicMeta) body.append(h("p", "panel-note", t("mosaic.note")));
     } else {
       body.append(h("p", "panel-label", t("map.legend_polys")), hexLegend());
       body.append(h("p", "panel-note", t("map.hex_size", { ha: fmt.num(hex.cells[0]?.areaHa ?? 0), mini: fmt.num(mini.cells[0]?.areaHa ?? 0) })));
       body.append(h("p", "panel-note", t("map.hex_nodata")));
-      // TEST SITE: fire layer toggle
+      // fire layer toggle
       {
-        const es = lang() === "es";
         const row = h("label", "fire-row");
         const cb = h("input");
         cb.type = "checkbox";
@@ -611,17 +579,8 @@ export async function initMapSection(ds: Dataset): Promise<void> {
           firesOn = cb.checked;
           void paintFires();
         });
-        row.append(cb, h("i", "fire-swatch"), h("span", "", es ? "Focos de incendio (VIIRS)" : "Fire detections (VIIRS)"));
-        body.append(
-          row,
-          h(
-            "p",
-            "panel-note",
-            es
-              ? `PRUEBA · Rayas: días con fuego, nov. 2025 – oct. 2026 (desde ${FIRE_MIN.big} en el hexágono grande, ${FIRE_MIN.mini} en el chico). NASA FIRMS VIIRS; estimado por satélite.`
-              : `TEST · Stripes: days with fire, Nov 2025 – Oct 2026 (from ${FIRE_MIN.big} in a big hexagon, ${FIRE_MIN.mini} in a small one). NASA FIRMS VIIRS; satellite estimate.`,
-          ),
-        );
+        row.append(cb, h("i", "fire-swatch"), h("span", "", t("fire.toggle")));
+        body.append(row, h("p", "panel-note", t("fire.toggle_note", { big: FIRE_MIN.big, mini: FIRE_MIN.mini })));
       }
       // flooding legend, always on the simple map: the purple hexagons show whatever the zone in focus
       if (waterSet) body.append(h("p", "panel-label", t("water.legend_hex", { zone: waterSet.z ? zoneName(waterSet.z) : "" })), rampLegend(WATER_GRADIENT, WATER_STOPS));
@@ -863,7 +822,7 @@ export async function initMapSection(ds: Dataset): Promise<void> {
       return;
     }
     const cell = gridAt(mapA).locate(lngLat.lng, lngLat.lat);
-    // TEST SITE: a red hatched (fire) hexagon outside the study zones, with no radar clearing
+    // a red hatched (fire) hexagon outside the study zones, with no radar clearing
     if (!zs && (!cell || (cell.cumHa[last] ?? 0) <= 0)) {
       const fd = fireDaysAt(lngLat.lng, lngLat.lat);
       if (fd) {
@@ -973,29 +932,26 @@ export async function initMapSection(ds: Dataset): Promise<void> {
     zone.append(h("p", "fineprint", t("point.note")));
   }
 
-  /** TEST SITE: panel of a fire hexagon outside the study zones. */
+  /** Panel of a fire (hatched) hexagon outside the study zones. */
   function renderFireOutside(lngLat: LngLat, fd: { days: number; mini: boolean }) {
     closeZone();
     zone.hidden = false;
-    const es = lang() === "es";
     if (!marker) marker = new Marker({ element: h("div", "probe-marker") });
     marker.setLngLat(lngLat).addTo(mapA.map);
     const town = nearestTown([lngLat.lng, lngLat.lat]);
     const head = h("div", "zone-head");
     const titles = h("div");
     titles.append(
-      h("h3", "", es ? "Fuera de las zonas de estudio" : "Outside the study zones"),
+      h("h3", "", t("fire.outside_title")),
       h("p", "zone-where", t("zone.where_value", { km: fmt.num(town.km), dir: t(`dir.${town.dir}`), town: town.name })),
     );
     head.append(titles, closeButton());
     const facts = h("div", "facts");
     facts.append(
       fact(
-        es ? "Focos de incendio observados" : "Fire detections observed",
-        es ? `${fmt.num(fd.days)} días con fuego` : `${fmt.num(fd.days)} days with fire`,
-        es
-          ? `Hexágono de ${fd.mini ? 2 : 24} km, nov. 2025 – oct. 2026 (VIIRS).`
-          : `${fd.mini ? 2 : 24} km hexagon, Nov 2025 – Oct 2026 (VIIRS).`,
+        t("fire.observed"),
+        t("fire.days", { n: fmt.num(fd.days) }),
+        t("fire.outside_hex", { km: fd.mini ? 2 : 24 }),
         "fact-fire",
       ),
     );
@@ -1005,9 +961,7 @@ export async function initMapSection(ds: Dataset): Promise<void> {
       h(
         "p",
         "zone-text",
-        es
-          ? "Acá no se analizó el radar NISAR: no sabemos si hubo desmonte. El fuego puede ser desmonte con quema o quema de pastizales o cultivos. Estimado por satélite."
-          : "The NISAR radar was not analysed here: we do not know if there was clearing. The fire may be clearing with burning, or grassland or crop burning. Satellite estimate.",
+        t("fire.outside_body"),
       ),
       button("btn btn-primary btn-sm", t("map.go_study"), () => {
         closeZone();
@@ -1074,9 +1028,7 @@ export async function initMapSection(ds: Dataset): Promise<void> {
           : total > 0
             ? t("hex.title_later")
             : cellFireDays(cell)
-              ? lang() === "es"
-                ? "Fuego, sin desmonte detectado"
-                : "Fire, no clearing detected"
+              ? t("fire.title_nocut")
               : t("hex.title_none"),
       ),
       h("p", "zone-where", where),
@@ -1106,22 +1058,21 @@ export async function initMapSection(ds: Dataset): Promise<void> {
         ),
         fact(t("hex.clearings"), fmt.num(shownPolys.length)),
       );
-      // TEST SITE: clearing with or without fire (VIIRS) around its date
+      // clearing with or without fire (VIIRS) around its date
       const fn = fireNear(cell, firstDate);
       if (fn) {
-        const es = lang() === "es";
         const withFire = fn.near > 0;
         facts.append(
           fact(
-            es ? "Causa probable" : "Probable cause",
-            withFire ? (es ? "Con incendio" : "With fire") : es ? "Sin incendio: desmonte mecánico" : "No fire: mechanical clearing",
+            t("fire.cause"),
+            t(withFire ? "fire.cause_fire" : "fire.cause_nofire"),
             withFire
-              ? es
-                ? `Focos VIIRS ${fn.near === 1 ? `el ${fmt.date(fn.from)}` : `del ${fmt.date(fn.from)} al ${fmt.date(fn.to)} (${fn.near} días)`}, cerca del desmonte: el fuego que abrió el monte o la quema de los restos. Estimado.`
-                : `VIIRS fires ${fn.near === 1 ? `on ${fmt.date(fn.from)}` : `from ${fmt.date(fn.from)} to ${fmt.date(fn.to)} (${fn.near} days)`}, near the clearing: the fire that opened the forest or the debris burning. Estimate.`
-              : es
-                ? `Sin focos VIIRS cerca del desmonte${fn.days ? ` (${fn.days} días con fuego en otras fechas)` : ""}: monte quitado con máquinas, probablemente. Estimado.`
-                : `No VIIRS fires near the clearing${fn.days ? ` (${fn.days} fire days on other dates)` : ""}: probably removed with machines. Estimate.`,
+              ? fn.near === 1
+                ? t("fire.cause_fire_one", { date: fmt.date(fn.from) })
+                : t("fire.cause_fire_many", { from: fmt.date(fn.from), to: fmt.date(fn.to), n: fn.near })
+              : fn.days
+                ? t("fire.cause_nofire_other", { n: fn.days })
+                : t("fire.cause_nofire_note"),
             withFire ? "fact-fire" : "",
           ),
         );
@@ -1133,21 +1084,9 @@ export async function initMapSection(ds: Dataset): Promise<void> {
     } else {
       facts.append(fact(t("zone.status"), t("zone.status_forest")));
     }
-    // TEST SITE: a hatched (fire) hexagon with no radar clearing up to this date
+    // a hatched (fire) hexagon with no radar clearing up to this date
     const fdays = ha > 0 ? 0 : cellFireDays(cell);
-    if (fdays) {
-      const es = lang() === "es";
-      facts.append(
-        fact(
-          es ? "Focos de incendio observados" : "Fire detections observed",
-          es ? `${fmt.num(fdays)} días con fuego` : `${fmt.num(fdays)} days with fire`,
-          es
-            ? "VIIRS, nov. 2025 – oct. 2026. El radar no vio desmonte acá: quema de pastizales o cultivos, o fuego que no tumbó el monte. Estimado."
-            : "VIIRS, Nov 2025 – Oct 2026. The radar saw no clearing here: grassland or crop burning, or a fire that left the forest standing. Estimate.",
-          "fact-fire",
-        ),
-      );
-    }
+    if (fdays) facts.append(fact(t("fire.observed"), t("fire.days", { n: fmt.num(fdays) }), t("fire.nocut_note"), "fact-fire"));
     zone.append(facts);
 
     if (total > 0) {
@@ -1189,10 +1128,6 @@ export async function initMapSection(ds: Dataset): Promise<void> {
     tech.append(techList, h("p", "fineprint", t("zone.estimated")));
     zone.append(tech);
     lab?.decorateHex(zone, cell, now);
-    if (testChat) {
-      const fnc = fireNear(cell, firstDate);
-      testChat.decorateHex(zone, cell, isMini(cell), zs.ds, now, fnc ? { days_with_fire_in_year: fnc.days, days_with_fire_near_clearing: fnc.near, first: fnc.from, last: fnc.to } : null);
-    }
   }
 
   /** HH / HV series of the 500 m cell under `center`, with rain, from that zone's own files. */

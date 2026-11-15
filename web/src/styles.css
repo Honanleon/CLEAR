@@ -3497,28 +3497,7 @@ button {
   }
 }
 
-/* TEST SITE (branch test/nisar-paraguay-mosaic): badge and mosaic note */
-.test-badge {
-  position: fixed;
-  left: 50%;
-  top: 70px;
-  transform: translateX(-50%);
-  z-index: 9999;
-  padding: 3px 10px;
-  border-radius: 999px;
-  background: #ffb547;
-  color: #1a1206;
-  font: 600 11px/1.4 var(--mono);
-  letter-spacing: 0.06em;
-  pointer-events: none;
-}
-.test-note {
-  border-left: 2px solid #ffb547;
-  padding-left: 10px;
-  color: var(--text);
-}
-
-/* TEST SITE: fire layer toggle and the hexagon panel's "with fire" fact */
+/* fire layer toggle (Layers panel) and the hexagon panel's "with fire" fact */
 .fire-row {
   display: flex;
   align-items: center;
