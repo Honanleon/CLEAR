@@ -63,6 +63,11 @@ export interface RadarMapOptions {
   mini: HexGrid;
   /** Outline of the small hexagons over the rest of the country inside a box (drawn only where the map looks). */
   miniOutline?: (view: BBox) => GeoJSON;
+  /**
+   * TEST SITE: Paraguay-wide NISAR quick-look mosaics (ASF browse images), "before" and "after", drawn under the
+   * zones' own radar images in the radar view.
+   */
+  mosaic?: { before: string; after: string; coordinates: [[number, number], [number, number], [number, number], [number, number]] };
   /** Dashed box of every study zone (zones.json); defaults to `bbox`. */
   zoneBoxes?: GeoJSON;
   /**
@@ -283,6 +288,20 @@ export class RadarMap {
     m.addSource("waterhex", { type: "geojson", data: EMPTY as never });
     m.addSource("waterminihex", { type: "geojson", data: EMPTY as never });
 
+    // TEST SITE: country mosaics, below everything the site draws (the zones' scenes go above them)
+    const mo = this.opts.mosaic;
+    if (mo) {
+      for (const which of ["before", "after"] as const) {
+        m.addSource(`mosaic-${which}`, { type: "image", url: mo[which], coordinates: mo.coordinates });
+        m.addLayer({
+          id: `mosaic-${which}`,
+          type: "raster",
+          source: `mosaic-${which}`,
+          layout: { visibility: "none" },
+          paint: { "raster-opacity": this.radarOpacity, "raster-fade-duration": 0, "raster-resampling": "linear" },
+        });
+      }
+    }
     // roads and borders (under the clearings, over the imagery)
     if (!this.opts.offline) this.addBaseLines();
     this.addOverlays();
@@ -648,9 +667,27 @@ export class RadarMap {
   }
 
   /** Radar view on/off (the simple base map underneath stays). */
+  private mosaicWhich: "before" | "after" | null = null;
+  /** TEST SITE: which country mosaic shows (only in the radar view). */
+  setMosaic(which: "before" | "after" | null): void {
+    this.mosaicWhich = which;
+    void this.ready.then(() => this.paintMosaic());
+  }
+
+  private paintMosaic() {
+    for (const w of ["before", "after"] as const) {
+      const id = `mosaic-${w}`;
+      if (!this.map.getLayer(id)) continue;
+      const on = this.radarOn && this.mosaicWhich === w;
+      this.map.setLayoutProperty(id, "visibility", on ? "visible" : "none");
+      this.map.setPaintProperty(id, "raster-opacity", this.radarOpacity);
+    }
+  }
+
   async setRadar(on: boolean, opacity = this.radarOpacity): Promise<void> {
     this.radarOn = on;
     this.radarOpacity = opacity;
+    void this.ready.then(() => this.paintMosaic());
     if (this.date) await Promise.all(this.sets.map((s) => this.showSet(s)));
   }
 
