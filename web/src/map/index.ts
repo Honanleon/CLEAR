@@ -299,6 +299,43 @@ export async function initMapSection(ds: Dataset): Promise<void> {
     mapA.map.fitBounds(PARAGUAY_BBOX, { padding: countryPadding(), duration: 2000, essential: true });
   }
 
+  // TEST SITE: before/after opens each clearing zone on the dates and the spot where the change is easiest to see
+  // with the eye (found offline in the site's own radar images: forest, yellow-green, turned into new blue
+  // paddocks). Water and control zones keep the usual view: their radar change is too faint to see.
+  const CHANGE_SPOTS: Record<string, { before: string; after: string; center: [number, number]; es: string; en: string }> = {
+    "boqueron-norte": {
+      before: "2025-11-21",
+      after: "2026-09-17",
+      center: [-61.1739, -20.7598],
+      es: "Arrastrá la barra hacia la derecha: el bloque de potreros nuevos (azul) era monte (verde amarillo). Desmonte estimado por radar.",
+      en: "Drag the bar to the right: the block of new paddocks (blue) was forest (yellow-green). Clearing estimated by radar.",
+    },
+    "boqueron-sur": {
+      before: "2026-01-08",
+      after: "2026-09-29",
+      center: [-61.2487, -22.4904],
+      es: "Arrastrá la barra hacia la derecha: los potreros nuevos (lila) eran monte (verde amarillo). Desmonte estimado por radar.",
+      en: "Drag the bar to the right: the new paddocks (lilac) were forest (yellow-green). Clearing estimated by radar.",
+    },
+  };
+  /** Before/after on the change spot of the focused zone; false when the zone has none. */
+  function goChangeSpot(): boolean {
+    const spot = CHANGE_SPOTS[focus.z?.id ?? ""];
+    const b = spot ? scenes.findIndex((s) => s.date === spot.before) : -1;
+    const a = spot ? scenes.findIndex((s) => s.date === spot.after) : -1;
+    if (!spot || b < 0 || a <= b) return false;
+    before = b;
+    after = a;
+    showCompare();
+    // the whole spot just right of the swipe line (middle of the map): it shows "after", and dragging the bar
+    // to the right turns it back into "before"
+    const p = { top: 90, bottom: isNarrow() ? 200 : 160, left: 0, right: 0 };
+    const off: [number, number] = [isNarrow() ? 90 : 190, 0];
+    mapA.map.flyTo({ center: spot.center, zoom: 12, padding: p, offset: off, duration: 1800, essential: true });
+    showToast(lang() === "es" ? spot.es : spot.en, 9000);
+    return true;
+  }
+
   let toastTimer = 0;
   function showToast(text: string, ms = 5200) {
     toast.textContent = text;
@@ -583,7 +620,7 @@ export async function initMapSection(ds: Dataset): Promise<void> {
         showToast(t("map.compare_hint"));
       }
       applyLayers();
-      showCompare();
+      if (!goChangeSpot()) showCompare();
     } else {
       swipe?.destroy();
       swipe = null;
@@ -996,7 +1033,7 @@ export async function initMapSection(ds: Dataset): Promise<void> {
     // the water zone opens its panel (water areas per date) right away
     if (isWater(focus)) renderWaterZone(focus);
     // the map moves only on a choice like this one (no automatic flight on the first visit)
-    flyToStudy(1600);
+    if (mode !== "compare" || !goChangeSpot()) flyToStudy(1600);
   });
 
   // ------------------------------------------------------------------ first visit: stay on Paraguay, hint and play
