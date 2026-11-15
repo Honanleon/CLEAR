@@ -367,7 +367,6 @@ export async function initMapSection(ds: Dataset): Promise<void> {
   const zoneTags = zoneSets.map((s) => {
     const tag = button(`zone-tag zone-kind-${s.ds.kind}`, "", () => {
       if (s.z) focusZoneById(s.z.id);
-      else flyToStudy();
     });
     // the tag sits on the map: keep its clicks from also reaching the map (that read as a tap just
     // outside the zone's box and opened the "outside the study area" panel)
@@ -424,38 +423,21 @@ export async function initMapSection(ds: Dataset): Promise<void> {
     mapA.map.fitBounds(PARAGUAY_BBOX, { padding: countryPadding(), duration: 2000, essential: true });
   }
 
-  // before/after opens each clearing zone on the dates and the spot where the change is easiest to see
-  // with the eye (found offline in the site's own radar images: forest, yellow-green, turned into new blue
-  // paddocks). Water and control zones keep the usual view: their radar change is too faint to see.
-  const CHANGE_SPOTS: Record<string, { before: string; after: string; center: [number, number]; hint: string }> = {
-    "boqueron-norte": {
-      before: "2025-11-21",
-      after: "2026-09-17",
-      center: [-61.1739, -20.7598],
-      hint: "spot.hint_blue",
-    },
-    "boqueron-sur": {
-      before: "2026-01-08",
-      after: "2026-09-29",
-      center: [-61.2487, -22.4904],
-      hint: "spot.hint_lilac",
-    },
+  // before/after opens each clearing zone on the date pair where the change is easiest to see with the eye
+  // (found offline in the zones' own radar images); the map does not move, the visitor zooms
+  const CHANGE_DATES: Record<string, [string, string]> = {
+    "boqueron-norte": ["2025-11-21", "2026-09-17"],
+    "boqueron-sur": ["2026-01-08", "2026-09-29"],
   };
-  /** Before/after on the change spot of the focused zone; false when the zone has none. */
+  /** Before/after on the change dates of the focused zone; false when the zone has none. */
   function goChangeSpot(): boolean {
-    const spot = CHANGE_SPOTS[focus.z?.id ?? ""];
-    const b = spot ? scenes.findIndex((s) => s.date === spot.before) : -1;
-    const a = spot ? scenes.findIndex((s) => s.date === spot.after) : -1;
-    if (!spot || b < 0 || a <= b) return false;
+    const pair = CHANGE_DATES[focus.z?.id ?? ""];
+    const b = pair ? scenes.findIndex((s) => s.date === pair[0]) : -1;
+    const a = pair ? scenes.findIndex((s) => s.date === pair[1]) : -1;
+    if (b < 0 || a <= b) return false;
     before = b;
     after = a;
     showCompare();
-    // the whole spot just right of the swipe line (middle of the map): it shows "after", and dragging the bar
-    // to the right turns it back into "before"
-    const p = { top: 90, bottom: isNarrow() ? 200 : 160, left: 0, right: 0 };
-    const off: [number, number] = [isNarrow() ? 90 : 190, 0];
-    mapA.map.flyTo({ center: spot.center, zoom: 12, padding: p, offset: off, duration: 1800, essential: true });
-    showToast(t(spot.hint), 9000);
     return true;
   }
 
@@ -843,15 +825,8 @@ export async function initMapSection(ds: Dataset): Promise<void> {
     zone.hidden = false;
     // tapping a hexagon that only clears later: jump to the last date so the panel shows it all
     if (mode === "timeline" && cell.firstT !== null && cur < cell.firstT) timeline.set(last);
+    // no automatic zoom: the visitor zooms (only the "go to" buttons move the map)
     renderHex(cell, true);
-    const lons = cell.ring.map((p) => p[0]);
-    const lats = cell.ring.map((p) => p[1]);
-    mapA.map.fitBounds([Math.min(...lons), Math.min(...lats), Math.max(...lons), Math.max(...lats)], {
-      padding: padding(),
-      maxZoom: 13.2,
-      duration: 1400,
-      essential: true,
-    });
   }
 
   /**
@@ -1236,8 +1211,8 @@ export async function initMapSection(ds: Dataset): Promise<void> {
     closeZone();
     // the water zone opens its panel (water areas per date) right away
     if (isWater(focus)) renderWaterZone(focus);
-    // the map moves only on a choice like this one (no automatic flight on the first visit)
-    if (mode !== "compare" || !goChangeSpot()) flyToStudy(1600);
+    // no automatic zoom: the map stays; "Ir a la zona de estudio" in the Layers panel flies there
+    if (mode === "compare") goChangeSpot();
   });
 
   // ------------------------------------------------------------------ first visit: stay on Paraguay, hint and play

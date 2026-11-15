@@ -190,7 +190,7 @@
     "chart_demo_limit": "limit",
     "steps_title": "Try it in three steps",
     "step1": "Press play and watch the areas appear, pass after pass.",
-    "step2": "Tap a colored hexagon: the map zooms in and shows how much was cleared and when.",
+    "step2": "Tap a coloured hexagon: it shows how much was cleared and when. To zoom in, use the + button.",
     "step3": "Switch to \"Before / after\" and drag the bar to compare two dates.",
     "stats_title": "Study area summary",
     "stat_total": "hectares cleared (radar estimate)",
@@ -240,8 +240,8 @@
   },
   "trust": {
     "kicker": "Can we trust it?",
-    "title": "We compare it with another satellite",
-    "body": "OPERA DIST-ALERT detects vegetation loss with optical satellites (Landsat and Sentinel-2): a different sensor and a different method. When both agree we gain confidence. When they do not, it can be clouds, smoke or our own error, and we show it anyway.",
+    "title": "We compared it with other satellites",
+    "body": "Two different sensors: OPERA DIST-ALERT sees vegetation loss with optical satellites (Landsat and Sentinel-2), and Sentinel-1 is another radar (C band). When they agree, we gain confidence. The optical one agrees less: clouds, smoke and another method; we show it anyway.",
     "agreement": "agreement",
     "agreement_desc": "of the area we flag also has an optical alert (±24 days)",
     "coverage": "coverage",
@@ -260,7 +260,10 @@
     "disclaimer": "These are radar-estimated results, not checked on the ground.",
     "agreement_desc_any": "of the area we flag also has an optical alert at some point in the period",
     "coverage_desc_any": "of the optical-alert area in forest (≥ 5 ha) is also detected by radar",
-    "window24": "If dates must also match (±24 days): agreement {a}%, coverage {c}%."
+    "window24": "If dates must also match (±24 days): agreement {a}%, coverage {c}%.",
+    "radar": "another radar",
+    "radar_desc": "of the area we mark is also seen as forest loss by Sentinel-1 (C-band radar, ESA), between late 2025 and Oct 2026",
+    "radar_sentence": "In {x} of {n} 1 km hexagons it agrees with Sentinel-1; by chance {c} % would. Compared on OPERA RTC-S1 images from NASA GIBS, not calibrated values."
   },
   "context": {
     "kicker": "Context",
@@ -394,10 +397,6 @@
   },
   "mosaic": {
     "note": "Paraguay in NISAR quick-looks (ASF), one mosaic per month; until May 2026 the east uses its first pass (Jun 2026). Not calibrated: each strip is another pass."
-  },
-  "spot": {
-    "hint_blue": "Drag the bar right: the new paddocks (blue) were forest (yellow-green). Radar-estimated clearing.",
-    "hint_lilac": "Drag the bar right: the new paddocks (lilac) were forest (yellow-green). Radar-estimated clearing."
   },
   "fire": {
     "toggle": "Fire detections (VIIRS)",

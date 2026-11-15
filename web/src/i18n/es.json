@@ -190,7 +190,7 @@
     "chart_demo_limit": "límite",
     "steps_title": "Probalo en tres pasos",
     "step1": "Dale play y mirá cómo aparecen las zonas, pasada a pasada.",
-    "step2": "Tocá un hexágono de color: el mapa se acerca y te muestra cuánto y cuándo se desmontó.",
+    "step2": "Tocá un hexágono de color: te muestra cuánto y cuándo se desmontó. Para acercarte, usá el botón +.",
     "step3": "Pasá a «Antes / después» y arrastrá la barra para comparar dos fechas.",
     "stats_title": "Resumen de la zona de estudio",
     "stat_total": "hectáreas desmontadas (estimado por radar)",
@@ -240,8 +240,8 @@
   },
   "trust": {
     "kicker": "¿Es confiable?",
-    "title": "Lo comparamos con otro satélite",
-    "body": "OPERA DIST-ALERT detecta pérdida de vegetación con satélites ópticos (Landsat y Sentinel-2): otro sensor y otro método. Cuando los dos coinciden, ganamos confianza. Cuando no, puede ser por nubes, humo o un error nuestro, y lo mostramos igual.",
+    "title": "Lo comparamos con otros satélites",
+    "body": "Dos sensores distintos: OPERA DIST-ALERT ve la pérdida de vegetación con satélites ópticos (Landsat y Sentinel-2) y Sentinel-1 es otro radar (banda C). Cuando coinciden, ganamos confianza. El óptico coincide menos: nubes, humo y otro método; lo mostramos igual.",
     "agreement": "acuerdo",
     "agreement_desc": "del área que marcamos también tiene una alerta óptica (±24 días)",
     "coverage": "cobertura",
@@ -260,7 +260,10 @@
     "disclaimer": "Son resultados estimados por radar, no verificados en el terreno.",
     "agreement_desc_any": "del área que marcamos también tiene una alerta óptica en algún momento del período",
     "coverage_desc_any": "del área con alertas ópticas en bosque (≥ 5 ha) también la detecta el radar",
-    "window24": "Si además exigimos que las fechas coincidan (±24 días): acuerdo {a} %, cobertura {c} %."
+    "window24": "Si además exigimos que las fechas coincidan (±24 días): acuerdo {a} %, cobertura {c} %.",
+    "radar": "otro radar",
+    "radar_desc": "del área que marcamos también la ve Sentinel-1 (radar de banda C, ESA) como pérdida de monte, entre fines de 2025 y oct. 2026",
+    "radar_sentence": "En {x} de {n} hexágonos de 1 km coincide con Sentinel-1; al azar coincidiría el {c} %. Comparado con imágenes OPERA RTC-S1 de NASA GIBS, no con valores calibrados."
   },
   "context": {
     "kicker": "Contexto",
@@ -394,10 +397,6 @@
   },
   "mosaic": {
     "note": "Paraguay en vistas rápidas de NISAR (ASF), un mosaico por mes; hasta mayo de 2026 el este usa su primera pasada (jun. 2026). Sin calibrar: cada franja es otra pasada."
-  },
-  "spot": {
-    "hint_blue": "Arrastrá la barra a la derecha: los potreros nuevos (azul) eran monte (verde amarillo). Desmonte estimado por radar.",
-    "hint_lilac": "Arrastrá la barra a la derecha: los potreros nuevos (lila) eran monte (verde amarillo). Desmonte estimado por radar."
   },
   "fire": {
     "toggle": "Focos de incendio (VIIRS)",

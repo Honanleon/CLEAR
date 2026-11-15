@@ -2307,6 +2307,12 @@ button {
   stroke: var(--ratio);
   filter: drop-shadow(0 0 8px rgba(106, 168, 255, 0.6));
 }
+.gauge-c {
+  grid-column: 1 / -1;
+}
+.gauge-c .gauge-arc {
+  stroke: var(--hh);
+}
 .gauges.is-in .gauge-arc {
   stroke-dashoffset: var(--off);
 }

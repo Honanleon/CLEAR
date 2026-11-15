@@ -111,6 +111,8 @@ export function initValidation(ds: Dataset | null): void {
   const casesEl = document.getElementById("cases");
   if (!gauges || !sentence || !casesEl) return;
   let fc: PolygonCollection | null = null;
+  // the other radar (Sentinel-1, C band): data/radar_compare.json, computed offline (METHODS)
+  let radar: { hexagons_total: number; hexagons_match: number; area_pct: number; chance_pct: number } | null = null;
   let counted = false;
 
   function render() {
@@ -125,6 +127,10 @@ export function initValidation(ds: Dataset | null): void {
         ring(v.coverage_pct, t("trust.coverage"), t(v2 ? "trust.coverage_desc_any" : "trust.coverage_desc"), "gauge-b") +
         (v2 && v.agreement_pct_24d != null && v.coverage_pct_24d != null
           ? `<p class="gauge-ref">${t("trust.window24", { a: fmt.num(v.agreement_pct_24d, 1), c: fmt.num(v.coverage_pct_24d, 1) })}</p>`
+          : "") +
+        (radar
+          ? ring(radar.area_pct, t("trust.radar"), t("trust.radar_desc"), "gauge-c") +
+            `<p class="gauge-ref">${t("trust.radar_sentence", { x: radar.hexagons_match, n: radar.hexagons_total, c: fmt.num(radar.chance_pct, 1) })}</p>`
           : "") +
         `<p class="gauge-ref">${t("trust.reference", { ref: v.reference })}${ds?.provenance("validation") ? ` · ${ds.provenance("validation")!.source}` : ""}</p>`;
     gauges!.classList.remove("is-in");
@@ -194,10 +200,11 @@ export function initValidation(ds: Dataset | null): void {
       obs.disconnect();
       counted = true;
       if (!ds) return render();
-      ds.polygons()
-        .then((p) => {
-          fc = p;
-        })
+      const r = fetch(ds.url("radar_compare.json"))
+        .then((x) => (x.ok ? x.json() : null))
+        .then((x) => (radar = x))
+        .catch(() => undefined);
+      Promise.all([ds.polygons().then((p) => (fc = p)), r])
         .catch(() => undefined)
         .finally(render);
     },

@@ -1,0 +1,12 @@
+{
+  "reference": "Sentinel-1 (ESA, C band) · OPERA RTC-S1 via NASA GIBS",
+  "zone": "boqueron-norte",
+  "method": "1 km hexagons of polygons.geojson; S1 clearing = baseline forest (bright VH) whose VH median dropped more than 99 % of the stable forest and ended open, patches >= 5 ha; a hexagon matches when S1 marks >= 25 % of the NISAR hectares (>= 2 ha). Chance level: the same hexagons shifted 5-7 km onto areas without clearing.",
+  "s1_base": ["2025-10-21", "2025-12-20"],
+  "s1_end": ["2026-09-05", "2026-10-23"],
+  "hexagons_total": 49,
+  "hexagons_match": 46,
+  "area_pct": 97.8,
+  "chance_pct": 0.5,
+  "both_clearing_zones": { "hexagons_total": 109, "hexagons_match": 101, "area_pct": 99.3 }
+}
