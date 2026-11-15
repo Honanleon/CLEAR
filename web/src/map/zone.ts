@@ -2,7 +2,7 @@
 //
 // Plain-language facts about a tapped spot: nearest town and direction, size in soccer fields,
 // echo drop as a percentage, and clearings nearby. Pure functions; the panel lives in index.ts.
-// Town coordinates come from OpenStreetMap (Nominatim lookup, 2026-11-14).
+// Town coordinates come from Natural Earth 1:10m populated places (public domain; pipeline/export/basemap.py).
 
 import type { LngLat as XY, PolygonCollection, PolygonGeometry } from "../data";
 import places from "./places.json";
