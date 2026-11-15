@@ -50,7 +50,7 @@ export const HEX_RADIUS_M = 40800;
 export const MINI_HEX_RADIUS_M = 2000;
 
 /** Map zoom from which the mini hexagons replace the big ones (cross-fade ±0.4 around it). */
-export const MINI_ZOOM = 9;
+export const MINI_ZOOM = 8.4;
 
 /**
  * @param country optional outer ring (lon, lat) of the country: hexagons whose centre falls inside it
@@ -217,7 +217,7 @@ function hexRing(cx: number, cy: number, R: number, toLL: (x: number, y: number)
  * rest of the country (centre inside `country`, not overlapping the study area: those have no data).
  * Used to draw the mini hexagons all over Paraguay only where the map is looking.
  */
-export function hexOutlineIn(view: BBox, aoi: BBox, radiusM: number, country: XY[], maxCells = 20_000): GeoJSON {
+export function hexOutlineIn(view: BBox, aoi: BBox, radiusM: number, country: XY[], maxCells = 30_000): GeoJSON {
   const R = radiusM;
   const { toXY, toLL } = projection(aoi);
   const [xmin, ymin] = toXY(aoi[0], aoi[1]);

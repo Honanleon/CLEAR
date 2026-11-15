@@ -483,7 +483,7 @@ export class RadarMap {
     }
     const b = this.map.getBounds();
     const [w, h] = [b.getEast() - b.getWest(), b.getNorth() - b.getSouth()];
-    const view: BBox = [b.getWest() - w * 0.25, b.getSouth() - h * 0.25, b.getEast() + w * 0.25, b.getNorth() + h * 0.25];
+    const view: BBox = [b.getWest() - w * 0.15, b.getSouth() - h * 0.15, b.getEast() + w * 0.15, b.getNorth() + h * 0.15];
     const key = view.map((v) => v.toFixed(3)).join(",");
     if (key === this.miniWorldKey) return;
     this.miniWorldKey = key;
