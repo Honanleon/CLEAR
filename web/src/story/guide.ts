@@ -23,13 +23,8 @@ export function initGuide(ds: Dataset | null): void {
     const total = feats.reduce((s, f) => s + f.properties.area_ha, 0);
     const grid = buildHexGrid(ds.index.aoi.bbox, fc, ds.index.scenes.length, MINI_HEX_RADIUS_M);
     const hexWith = grid.data.features.length;
-    const checked = feats.filter((f) => f.properties.dist_confirmed !== null);
-    const yes = checked.filter((f) => f.properties.dist_confirmed === true).length;
     // polygons.geojson holds 1 km hexagons (contract v2): count clearings from index.json, not features
-    const v = ds.index.validation;
     const nClearings = ds.index.detection.n_polygons ?? feats.length;
-    const nConfirmed = v.polygons_confirmed ?? yes;
-    const nChecked = v.polygons_total ?? checked.length;
 
     stats!.innerHTML = "";
     const card = (value: string, label: string, note?: string, cls = "") => {
@@ -54,7 +49,7 @@ export function initGuide(ds: Dataset | null): void {
       card(fmt.num(total), t("guide.stat_total"), t("guide.fields_total", { n: fmt.num(total / SOCCER_FIELD_HA) }), "gstat-hot"),
       card(fmt.num(nClearings), t("guide.stat_zones")),
       card(`${fmt.num(hexWith)}/${fmt.num(grid.studiedCount)}`, t("guide.stat_largest")),
-      card(nChecked ? `${fmt.num(nConfirmed)}/${fmt.num(nChecked)}` : t("common.pending"), t("guide.stat_confirmed")),
+      // the "X/N confirmed by another satellite" card was taken out on the team's request (15 Nov)
     );
 
     // the colour scale used on the map (hectares cleared per hexagon)

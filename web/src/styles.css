@@ -2822,7 +2822,7 @@ button {
 }
 .guide-stats {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: 12px;
   margin-bottom: 28px;
 }
@@ -2977,6 +2977,10 @@ button {
   }
   .guide-stats {
     grid-template-columns: 1fr 1fr;
+  }
+  /* three cards on two columns: the total takes the whole first row */
+  .guide-stats .gstat-hot {
+    grid-column: 1 / -1;
   }
 }
 

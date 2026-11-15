@@ -196,7 +196,6 @@
     "stat_total": "hectares cleared (radar estimate)",
     "stat_zones": "clearings detected",
     "stat_largest": "hexagons with clearing",
-    "stat_confirmed": "confirmed by another satellite",
     "fields_total": "≈ {n} soccer fields",
     "colors_scale": "hectares cleared per hexagon"
   },

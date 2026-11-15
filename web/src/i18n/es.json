@@ -196,7 +196,6 @@
     "stat_total": "hectáreas desmontadas (estimado por radar)",
     "stat_zones": "desmontes detectados",
     "stat_largest": "hexágonos con desmonte",
-    "stat_confirmed": "confirmados por otro satélite",
     "fields_total": "≈ {n} canchas de fútbol",
     "colors_scale": "hectáreas desmontadas por hexágono"
   },
