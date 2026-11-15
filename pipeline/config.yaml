@@ -99,6 +99,8 @@ detection:
                         # History (2026-11-14): -3 on the median, then -4 on the median. A colour (HLS) check showed that
                         # -4 let through paddocks with regrowth, crops at peak biomass and pivots; their "clearing" was
                         # ploughing, burning or harvest of land already open in Nov 2025. Stricter: -2 on all dates.
+  forest_mask: worldcover # worldcover (ESA WorldCover 2021) | gfc (UMD Global Forest Change 2000-2024, US); gfc not run yet
+  gfc_min_treecover: 30 # % canopy in 2000 for the gfc mask (Global Forest Watch default)
   threshold_db: -3.0 # starting point; the ASF NISAR Cookbook example uses -2 dB
   persistence: 2 # dates below threshold needed within the window; avoids one-date drops (rain, noise)
   persistence_window: 3 # 2 of 3: tolerates one wet date that bounces bare soil back (e.g. 2026-04-26)

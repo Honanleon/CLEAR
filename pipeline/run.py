@@ -12,6 +12,7 @@ import argparse
 import logging
 import sys
 import time
+from collections.abc import Sequence
 from dataclasses import asdict
 from pathlib import Path
 from typing import Any
@@ -20,7 +21,7 @@ import numpy as np
 import yaml
 
 from pipeline.export import rgb_png, to_json
-from pipeline.fetch import nisar, worldcover
+from pipeline.fetch import gfc, nisar, worldcover
 from pipeline.process import detect, normalize, polygons
 from pipeline.process.calibrate import boxcar_mean, to_db
 
@@ -37,6 +38,33 @@ def load_config(path: Path) -> dict[str, Any]:
 def zone_ids(cfg: dict[str, Any]) -> list[str]:
     """Zones in processing order; the first is the primary zone. Falls back to the old single `aoi` key."""
     return list(cfg.get("zones") or [cfg["aoi"]])
+
+
+def forest_mask_for(
+    det: dict[str, Any],
+    cache_dir: Path,
+    suffix: str,
+    bbox: Sequence[float],
+    transform: Any,
+    shape: tuple[int, int],
+    crs: str,
+) -> tuple[np.ndarray, str]:
+    """Forest mask chosen by `detection.forest_mask`: "worldcover" (ESA, default) or "gfc" (UMD, US).
+
+    Returns the mask and its source text for the provenance.
+    """
+    kind = det.get("forest_mask", "worldcover")
+    if kind == "gfc":
+        thr = det.get("gfc_min_treecover", gfc.DEFAULT_MIN_TREECOVER)
+        mask = gfc.cached_forest_mask(
+            cache_dir / f"forest_gfc2024_tc{thr}{suffix}.tif", bbox, transform, shape, crs, thr
+        )
+        return mask, f"{gfc.SOURCE}; canopy >= {thr} %"
+    if kind == "worldcover":
+        return worldcover.cached_forest_mask(
+            cache_dir / f"forest_worldcover2021{suffix}.tif", bbox, transform, shape, crs
+        ), worldcover.SOURCE
+    raise ValueError(f"detection.forest_mask must be 'worldcover' or 'gfc', not {kind!r}")
 
 
 def zone_cfg(cfg: dict[str, Any], aoi_id: str) -> dict[str, Any]:
@@ -184,9 +212,9 @@ def stage_process(cfg: dict[str, Any], ignore_sanity: bool = False) -> bool:
     stack = np.stack(layers)
     del layers
 
-    forest = worldcover.cached_forest_mask(interim / aoi_id / "forest_worldcover2021.tif", bbox, transform, shape, crs)
+    forest, forest_source = forest_mask_for(det, interim / aoi_id, "", bbox, transform, shape, crs)
     forest &= np.all(np.isfinite(stack), axis=0)
-    log.info("forest mask (%s): %.0f%% of the AOI", worldcover.SOURCE, forest.mean() * 100)
+    log.info("forest mask (%s): %.0f%% of the AOI", forest_source, forest.mean() * 100)
 
     medians = normalize.forest_medians(stack, forest)
     log.info(
@@ -246,7 +274,7 @@ def stage_process(cfg: dict[str, Any], ignore_sanity: bool = False) -> bool:
     summary = {
         "dates": dates,
         "forest_median_hv_db": [round(float(m), 3) for m in medians],
-        "forest_mask_source": worldcover.SOURCE,
+        "forest_mask_source": forest_source,
         "forest_pct_of_aoi": round(float(forest.mean() * 100), 1),
         "n_polygons": len(feats),
         "area_ha_total": total_ha,
@@ -411,8 +439,8 @@ def stage_export(cfg: dict[str, Any]) -> bool:
     from pipeline.process import water
 
     gw, gh = rgb_png.grid_4326(bbox, exp["rgb_res_deg"])
-    forest_g = worldcover.cached_forest_mask(
-        interim / aoi_id / "forest_worldcover2021_rgbgrid.tif", bbox, from_bounds(*bbox, gw, gh), (gh, gw), "EPSG:4326"
+    forest_g, _ = forest_mask_for(
+        cfg["detection"], interim / aoi_id, "_rgbgrid", bbox, from_bounds(*bbox, gw, gh), (gh, gw), "EPSG:4326"
     )
     kept = list(channels)
     levels = [float(np.nanmedian(channels[d]["hv_db"][forest_g])) if forest_g.any() else float("nan") for d in kept]
