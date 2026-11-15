@@ -3,7 +3,7 @@
 
 CLEAR is an interactive story map that shows where and when forest is being cleared in Paraguay's Chaco (northern Boquerón), using NISAR L-band radar images taken every 12 days between November 2025 and October 2026. The signal is a sustained drop in the HV channel: when the forest is cut, the volume scattering from the canopy is lost.
 
-Results are **radar-estimated land-cover change, dated ±12 days**. They do not say anything about the legality of any clearing.
+Results are **radar-estimated land-cover change, dated to the radar pass (±12 days, longer after a missing pass)**. They do not say anything about the legality of any clearing.
 
 > Work in progress during the hackathon (Nov 14–15, 2026).
 

@@ -1,7 +1,7 @@
 # Parts of this file were generated with AI assistance (Claude Code). See docs/AI_USAGE.md
 """Per-date normalization: subtract the median HV (dB) of the forest pixels of the AOI.
 
-Over five months almost all forest stays unchanged, so the forest median tracks rain
+Over the series (up to about 11 months) almost all forest stays unchanged, so the forest median tracks rain
 and calibration differences (e.g. PROVISIONAL vs VALIDATED) rather than clearing.
 """
 

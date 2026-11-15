@@ -75,6 +75,8 @@ nisar:
   crid_maturity:
     P05023: PROVISIONAL # NISAR_L2_GCOV_PROVISIONAL_V1
     P05036: VALIDATED # NISAR_L2_GCOV_V1
+    X05009: BETA # NISAR_L2_GCOV_BETA_V1 (not calibrated)
+    X05010: BETA # NISAR_L2_GCOV_BETA_V1 (not calibrated)
   # expected_dates: per zone (aois.<id>.expected_dates), used only to warn
 
 paths:

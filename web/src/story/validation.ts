@@ -3,7 +3,7 @@
 // "Can we trust the radar?": the two validation numbers as animated rings, the
 // "X of N cases" sentence and three close-ups (radar before / after) cropped from the scene PNGs.
 
-import { type Dataset, featureBBox, type PolygonCollection, type PolygonFeature } from "../data";
+import { type Dataset, daysBetween, featureBBox, type PolygonCollection, type PolygonFeature, REPEAT_DAYS } from "../data";
 import { fmt, onLang, t } from "../i18n";
 import type { FocusDetail } from "../map";
 
@@ -114,6 +114,15 @@ export function initValidation(ds: Dataset | null): void {
   let counted = false;
 
   function render() {
+    // the water zone has no detection: nothing to compare with optical alerts
+    if (ds?.kind === "water") {
+      gauges!.innerHTML = `<div class="pending"><b>${t("trust.na_water")}</b><p>${t("trust.na_water_desc")}</p></div>`;
+      gauges!.classList.add("is-in");
+      sentence!.textContent = "";
+      casesEl!.innerHTML = "";
+      casesEl!.previousElementSibling?.setAttribute("hidden", "");
+      return;
+    }
     const v = ds?.index.validation;
     const pending = !v || (v.agreement_pct === null && v.coverage_pct === null);
     // schema v2: spatial (any-date) headline numbers plus the ±24-day ones. median_lead_days is not shown:
@@ -168,7 +177,10 @@ export function initValidation(ds: Dataset | null): void {
       const caps = card.querySelectorAll("figcaption");
       caps[0]!.textContent = t("trust.case_before", { date: fmt.date(ds.index.scenes[b]?.date ?? "") });
       caps[1]!.textContent = t("trust.case_after", { date: fmt.date(ds.index.scenes[a]?.date ?? "") });
-      card.querySelector(".case-date")!.textContent = t("trust.case_date", { date: fmt.date(p.first_date, true) });
+      card.querySelector(".case-date")!.textContent =
+        p.prev_date && daysBetween(p.prev_date, p.first_date) > REPEAT_DAYS
+          ? t("trust.case_date_between", { prev: fmt.date(p.prev_date), date: fmt.date(p.first_date, true) })
+          : t("trust.case_date", { date: fmt.date(p.first_date, true) });
       card.querySelector(".case-meta")!.textContent = t("trust.case_meta", { ha: fmt.num(p.area_ha, 1), db: fmt.signed(p.mean_drop_db) });
       card.querySelector(".dist")!.textContent = t(`chart.dist_${dist === null ? "null" : dist}`);
       const btn = card.querySelector("button")!;

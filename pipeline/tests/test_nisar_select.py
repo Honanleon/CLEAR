@@ -70,6 +70,20 @@ def test_newer_crid_wins_over_higher_version():
     assert [(g.crid, g.version) for g in picked] == [("P05036", 1)]
 
 
+def test_calibrated_product_wins_over_newer_beta_crid():
+    # a BETA reprocessing with a higher CRID number must not replace a calibrated product
+    picked = pick_one_per_date(
+        parse_granule_name(n)
+        for n in [name("20261023", crid="X06000", version=2), name("20261023", crid="P05036", version=1)]
+    )
+    assert [g.crid for g in picked] == ["P05036"]
+
+
+def test_beta_kept_when_it_is_the_only_product():
+    picked = pick_one_per_date([parse_granule_name(name("20251227", crid="X05010"))])
+    assert [g.crid for g in picked] == ["X05010"]
+
+
 def test_one_per_date_sorted_by_date():
     names = [name("20260913"), name("20260601"), name("20260905", version=2), name("20260905", version=1)]
     picked = pick_one_per_date(parse_granule_name(n) for n in names)

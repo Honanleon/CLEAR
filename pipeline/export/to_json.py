@@ -1,5 +1,5 @@
 # Parts of this file were generated with AI assistance (Claude Code). See docs/AI_USAGE.md
-"""Build web/public/data/index.json following docs/DATA_CONTRACT.md (schema_version 1)."""
+"""Build web/public/data/index.json following docs/DATA_CONTRACT.md (schema_version: see SCHEMA_VERSION)."""
 
 from __future__ import annotations
 

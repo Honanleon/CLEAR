@@ -3,7 +3,7 @@
 // Timeline with play: one tick per NISAR scene placed at its real date (so the instrument gap
 // shows), a bar per tick with the hectares first detected in that pass, and the running totals.
 
-import { INSTRUMENT_GAP, type Scene } from "../data";
+import { daysBetween, INSTRUMENT_GAP, REPEAT_DAYS, type Scene } from "../data";
 import { fmt, locale, onLang, t } from "../i18n";
 
 const STEP_MS = 1100;
@@ -155,6 +155,9 @@ export class Timeline {
     const s = scenes[this.i];
     if (!s) return;
     this.el.querySelector(".tl-date")!.textContent = fmt.date(s.date, true);
+    const prev = scenes[this.i - 1];
+    this.el.querySelector(".tl-pm")!.textContent =
+      prev && daysBetween(prev.date, s.date) > REPEAT_DAYS ? t("map.date_since", { date: fmt.date(prev.date) }) : t("map.date_pm");
     const badge = this.el.querySelector<HTMLElement>(".tl-maturity")!;
     badge.textContent = t(`prov.${s.maturity}`);
     badge.dataset.maturity = s.maturity;

@@ -69,7 +69,7 @@ class Scene:
     cycle: int
     crid: str
     version: int
-    maturity: str  # PROVISIONAL | VALIDATED | UNKNOWN
+    maturity: str  # PROVISIONAL | VALIDATED | BETA | UNKNOWN
 
 
 def parse_granule_name(name: str) -> GranuleName:
@@ -99,21 +99,27 @@ def matches_frame(g: GranuleName, track: int, direction: str, frame: int) -> boo
     return g.track == track and g.direction == direction[0].upper() and g.frame == frame
 
 
+def _rank(g: GranuleName) -> tuple[bool, int, int]:
+    """Selection order: not BETA (X CRIDs are NISAR_L2_GCOV_BETA_V1, not calibrated), CRID number, version."""
+    return (not g.crid.startswith("X"), g.crid_number, g.version)
+
+
 def pick_one_per_date(granules: Iterable[GranuleName]) -> list[GranuleName]:
-    """Keep one granule per date: newest CRID, then highest version suffix.
+    """Keep one granule per date: a calibrated product (CRID P...) over a BETA one (X...),
+    then the newest CRID, then the highest version suffix.
 
     Returns granules sorted by date.
     """
     best: dict[date, GranuleName] = {}
     for g in granules:
         current = best.get(g.date)
-        if current is None or (g.crid_number, g.version) > (current.crid_number, current.version):
+        if current is None or _rank(g) > _rank(current):
             best[g.date] = g
     return [best[d] for d in sorted(best)]
 
 
 def maturity_for(crid: str, crid_maturity: Mapping[str, str]) -> str:
-    """PROVISIONAL / VALIDATED from the CRID; UNKNOWN (with a warning) otherwise."""
+    """PROVISIONAL / VALIDATED / BETA from the CRID; UNKNOWN (with a warning) otherwise."""
     m = crid_maturity.get(crid)
     if m is None:
         log.warning("unknown CRID %s: maturity set to UNKNOWN; add it to config nisar.crid_maturity", crid)
