@@ -17,8 +17,18 @@ const SQRT3 = Math.sqrt(3);
 const HOLD_MS = 2600;
 
 type RGB = [number, number, number];
-const FOREST_DARK: RGB = [24, 44, 36];
-const FOREST_LIGHT: RGB = [70, 98, 72];
+const FOREST_DARK: RGB = [74, 128, 86];
+const FOREST_LIGHT: RGB = [128, 180, 118];
+/** Sky blue of the hexagons the radar sweep is reading right now. */
+const SCAN: RGB = [110, 200, 255];
+/** Share of the hexagons just behind the sweep line that light up. */
+const SCAN_SHARE = 0.28;
+
+/** Stable pseudo-random 0..1 per hexagon and pass (which cells light up as the sweep passes). */
+const hash = (n: number) => {
+  const v = Math.sin(n * 12.9898) * 43758.5453;
+  return v - Math.floor(v);
+};
 const PASTURE_DARK: RGB = [150, 118, 82];
 const PASTURE_LIGHT: RGB = [205, 170, 120];
 const FLASH: RGB = [255, 106, 52];
@@ -150,7 +160,13 @@ export function initHero(canvas: HTMLCanvasElement): Hero {
       const fresh = acquired ? Math.max(0, 1 - (cy - lineY) / (H * 0.35)) : 0;
       for (let x = 0; x < cols; x++) {
         const cx = (x + (y % 2 ? 0.5 : 0)) * SQRT3 * r;
-        const [cr, cg, cb] = color(y * cols + x, statePass, fresh);
+        let rgb = color(y * cols + x, statePass, fresh);
+        // some hexagons just behind the sweep line light up in sky blue, then fade as the line moves on
+        const behind = cy - lineY;
+        if (sweep > 0 && sweep < 1 && behind >= 0 && behind < H * 0.2 && hash(y * cols + x + pass * 7919) < SCAN_SHARE) {
+          rgb = mix(rgb, SCAN, Math.min(1, 1.15 * (1 - behind / (H * 0.2))));
+        }
+        const [cr, cg, cb] = rgb;
         ctx!.fillStyle = `rgb(${cr | 0},${cg | 0},${cb | 0})`;
         ctx!.beginPath();
         for (let k = 0; k < 6; k++) {
