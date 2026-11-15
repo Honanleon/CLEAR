@@ -214,6 +214,16 @@ export class RadarMap {
       this.map.once("load", () => {
         this.addLayers();
         this.updateMiniWorld();
+        // also while moving (throttled): the mini hexagons outside the study zones must appear together
+        // with the ones inside, as soon as the zoom reaches them (e.g. during the intro flight)
+        let pending = 0;
+        this.map.on("move", () => {
+          if (pending) return;
+          pending = window.setTimeout(() => {
+            pending = 0;
+            this.updateMiniWorld();
+          }, 120);
+        });
         this.map.on("moveend", () => this.updateMiniWorld());
         resolve();
       });
@@ -320,7 +330,7 @@ export class RadarMap {
       paint: {
         "line-color": "#7b8190",
         "line-opacity": ["interpolate", ["linear"], ["zoom"], 5, ["case", studied, 0.55, 0.3], 11, ["case", studied, 0.45, 0.25]] as never,
-        "line-width": ["interpolate", ["linear"], ["zoom"], 5, 0.5, 10, 1] as never,
+        "line-width": ["interpolate", ["linear"], ["zoom"], 5, 0.5, 10, 1, 12, 1.6] as never,
       },
     });
     // big hexagons fill: fades out as the mini hexagons fade in
@@ -393,7 +403,12 @@ export class RadarMap {
       type: "line",
       source: "hexdata",
       filter: [">", ["get", "a0"], 0],
-      paint: { "line-color": this.hexColor(0), "line-width": ["interpolate", ["linear"], ["zoom"], z0, 1.8, z1, 3] as never },
+      // red frame only while the big hexagons are shown; zoomed in, the grey grid outline stays
+      paint: {
+        "line-color": this.hexColor(0),
+        "line-width": 1.8,
+        "line-opacity": ["interpolate", ["linear"], ["zoom"], z0, 1, z1, 0] as never,
+      },
     });
     for (const [prefix, src] of [["hex", "hexgrid"], ["mini", "minigrid"]] as const) {
       m.addLayer({
@@ -579,23 +594,28 @@ export class RadarMap {
     await Promise.all(this.sets.map((s) => this.showSet(s)));
   }
 
-  private miniWorldKey = "";
-  /** Mini hexagons all over Paraguay would be ~39,000 cells: only the ones around the view are drawn. */
+  /** Box the mini hexagons outside the zones were last computed for (null: none drawn). */
+  private miniWorldBox: BBox | null = null;
+  /**
+   * Mini hexagons all over Paraguay would be ~39,000 cells: only the ones around the view are drawn,
+   * recomputed only when the view leaves the box computed last (zooming in stays inside it).
+   */
   private updateMiniWorld() {
     const fn = this.opts.miniOutline;
     const src = this.map.getSource("miniworld") as GeoJSONSource | undefined;
     if (!fn || !src) return;
     if (this.map.getZoom() < MINI_ZOOM - 0.4) {
-      if (this.miniWorldKey) src.setData(EMPTY as never);
-      this.miniWorldKey = "";
+      if (this.miniWorldBox) src.setData(EMPTY as never);
+      this.miniWorldBox = null;
       return;
     }
     const b = this.map.getBounds();
-    const [w, h] = [b.getEast() - b.getWest(), b.getNorth() - b.getSouth()];
-    const view: BBox = [b.getWest() - w * 0.15, b.getSouth() - h * 0.15, b.getEast() + w * 0.15, b.getNorth() + h * 0.15];
-    const key = view.map((v) => v.toFixed(3)).join(",");
-    if (key === this.miniWorldKey) return;
-    this.miniWorldKey = key;
+    const cur: BBox = [b.getWest(), b.getSouth(), b.getEast(), b.getNorth()];
+    const last = this.miniWorldBox;
+    if (last && cur[0] >= last[0] && cur[1] >= last[1] && cur[2] <= last[2] && cur[3] <= last[3]) return;
+    const [w, h] = [cur[2] - cur[0], cur[3] - cur[1]];
+    const view: BBox = [cur[0] - w * 0.15, cur[1] - h * 0.15, cur[2] + w * 0.15, cur[3] + h * 0.15];
+    this.miniWorldBox = view;
     src.setData(fn(view) as never);
   }
 
