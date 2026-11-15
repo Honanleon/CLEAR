@@ -1,9 +1,8 @@
 // Parts of this file were generated with AI assistance (Claude Code). See docs/AI_USAGE.md
 //
-// Cover animation: an illustrative, procedurally generated landscape of hexagons (like the map).
-// A red sweep line (one NISAR pass) runs south to north every cycle; patches of forest flash
-// red as they are cleared and stay dark red, and a river floods in purple: the alarm colours
-// of the map (red clearing, purple flooding). It is not data: the HUD says so.
+// Cover animation: an illustrative, procedurally generated landscape of "radar pixels".
+// A sweep line (one NISAR pass) runs south to north every cycle; patches of forest turn
+// into fresh clearings (hot) and then pasture (violet). It is not data: the HUD says so.
 
 import { fmt, onLang } from "../i18n";
 
@@ -12,20 +11,18 @@ const DEFAULT_DATES = [
   "2026-09-05", "2026-09-17", "2026-09-29", "2026-10-11", "2026-10-23",
 ];
 const PASS_MS = 2300;
+/** Draw the cover ground as a honeycomb of hexagons (like the map) instead of square pixels. */
+const HEX_COVER = true;
 const SQRT3 = Math.sqrt(3);
 const HOLD_MS = 2600;
 
 type RGB = [number, number, number];
-// alarm palette: forest in neutral greys (no colour, so only the changes carry colour), cleared land that
-// stays blood red, a white-hot red flash on detection, flood water in purple (the map's meanings)
-const FOREST_DARK: RGB = [22, 24, 28];
-const FOREST_LIGHT: RGB = [48, 51, 58];
-const PASTURE_DARK: RGB = [104, 10, 18];
-const PASTURE_LIGHT: RGB = [168, 20, 30];
-const FLASH: RGB = [255, 150, 130];
-const FRESH: RGB = [255, 26, 26];
-const FLOOD_DARK: RGB = [84, 0, 170];
-const FLOOD_LIGHT: RGB = [150, 50, 255];
+const FOREST_DARK: RGB = [24, 44, 36];
+const FOREST_LIGHT: RGB = [70, 98, 72];
+const PASTURE_DARK: RGB = [150, 118, 82];
+const PASTURE_LIGHT: RGB = [205, 170, 120];
+const FLASH: RGB = [255, 106, 52];
+const FRESH: RGB = [255, 70, 120];
 
 function rng(seed: number): () => number {
   return () => {
@@ -42,7 +39,6 @@ interface Landscape {
   cols: number;
   rows: number;
   clearAt: Int8Array; // -1 forest, 0 pasture already, k >= 1 cleared at pass k
-  floodAt: Int8Array; // -1 dry, k >= 1 flooded from pass k (a river overflowing, lower part)
   tone: Float32Array; // 0..1 texture
   dropByPass: number[]; // illustrative ΔHV shown in the HUD
 }
@@ -110,18 +106,7 @@ function buildLandscape(cols: number, rows: number, passes: number): Landscape {
     paint(x0, y0, w, h, pass, w > 5 ? 4 : 99);
     dropByPass[pass] = -(5 + r() * 3);
   }
-  // a river across the lower part that overflows a little more at each pass (illustrative flooding)
-  const floodAt = new Int8Array(cols * rows).fill(-1);
-  const base = rows * 0.38; // the near rows are enlarged by the perspective: keep the river mid-way and narrow
-  for (let x = 0; x < cols; x++) {
-    const yr = base + Math.sin(x / 5.5) * rows * 0.025 + Math.sin(x / 2.3 + 1) * rows * 0.008;
-    for (let y = 0; y < rows; y++) {
-      const d = Math.abs(y - yr) - r() * 1.2;
-      if (d < 0.6) floodAt[y * cols + x] = 1;
-      else if (d < 1.4) floodAt[y * cols + x] = Math.min(passes - 1, 3 + Math.floor((d - 0.6) * 6));
-    }
-  }
-  return { cols, rows, clearAt, floodAt, tone, dropByPass };
+  return { cols, rows, clearAt, tone, dropByPass };
 }
 
 export interface Hero {
@@ -133,12 +118,14 @@ export function initHero(canvas: HTMLCanvasElement): Hero {
   const hudPass = document.getElementById("hud-pass");
   const hudDate = document.getElementById("hud-date");
   const hudSignal = document.getElementById("hud-signal");
-  const hudAlert = document.getElementById("hud-alert");
-  if (!ctx) return { setDates() {} };
+  const off = document.createElement("canvas");
+  const octx = off.getContext("2d");
+  if (!ctx || !octx) return { setDates() {} };
 
   const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   let dates = DEFAULT_DATES;
   let land: Landscape | null = null;
+  let image: ImageData | null = null;
   let start = performance.now();
   let running = false;
   let visible = true;
@@ -146,7 +133,7 @@ export function initHero(canvas: HTMLCanvasElement): Hero {
   let lastPass = -1;
   let hexR = 10;
 
-  /** One filled hexagon per landscape cell, a hairline gap between them. */
+  /** Honeycomb version of draw(): one filled hexagon per landscape cell, a hairline gap between them. */
   function drawHex(pass: number, sweep: number) {
     if (!land) return;
     const { cols, rows } = land;
@@ -156,7 +143,6 @@ export function initHero(canvas: HTMLCanvasElement): Hero {
     const inner = r * 0.9;
     const lineY = sweep * H;
     ctx!.clearRect(0, 0, W, H);
-    const hot: [number, number, string][] = [];
     for (let y = 0; y < rows; y++) {
       const cy = r + y * 1.5 * r;
       const acquired = cy >= lineY;
@@ -164,11 +150,8 @@ export function initHero(canvas: HTMLCanvasElement): Hero {
       const fresh = acquired ? Math.max(0, 1 - (cy - lineY) / (H * 0.35)) : 0;
       for (let x = 0; x < cols; x++) {
         const cx = (x + (y % 2 ? 0.5 : 0)) * SQRT3 * r;
-        const i = y * cols + x;
-        const [cr, cg, cb] = color(i, statePass, fresh);
+        const [cr, cg, cb] = color(y * cols + x, statePass, fresh);
         ctx!.fillStyle = `rgb(${cr | 0},${cg | 0},${cb | 0})`;
-        // just-detected clearings glow (drawn again on top, below)
-        if ((land.clearAt[i] ?? -1) === statePass && statePass > 0) hot.push([cx, cy, ctx!.fillStyle as string]);
         ctx!.beginPath();
         for (let k = 0; k < 6; k++) {
           const a = ((60 * k - 30) * Math.PI) / 180;
@@ -180,34 +163,15 @@ export function initHero(canvas: HTMLCanvasElement): Hero {
         ctx!.closePath();
         ctx!.fill();
       }
-    }
-    if (hot.length) {
-      ctx!.save();
-      ctx!.shadowColor = "rgba(255, 30, 30, 0.95)";
-      ctx!.shadowBlur = r * 1.4;
-      for (const [cx, cy, fill] of hot) {
-        ctx!.fillStyle = fill;
-        ctx!.beginPath();
-        for (let k = 0; k < 6; k++) {
-          const a = ((60 * k - 30) * Math.PI) / 180;
-          const px = cx + inner * Math.cos(a);
-          const py = cy + inner * Math.sin(a);
-          if (k) ctx!.lineTo(px, py);
-          else ctx!.moveTo(px, py);
-        }
-        ctx!.closePath();
-        ctx!.fill();
-      }
-      ctx!.restore();
     }
     if (sweep > 0 && sweep < 1) {
       const band = H * 0.22;
       const grad = ctx!.createLinearGradient(0, lineY, 0, lineY + band);
-      grad.addColorStop(0, "rgba(255,40,40,0.38)");
-      grad.addColorStop(1, "rgba(255,40,40,0)");
+      grad.addColorStop(0, "rgba(150,210,255,0.35)");
+      grad.addColorStop(1, "rgba(150,210,255,0)");
       ctx!.fillStyle = grad;
       ctx!.fillRect(0, lineY, W, band);
-      ctx!.fillStyle = "rgba(255,110,110,0.95)";
+      ctx!.fillStyle = "rgba(225,240,255,0.9)";
       ctx!.fillRect(0, lineY - 1.5, W, 3);
     }
   }
@@ -219,10 +183,18 @@ export function initHero(canvas: HTMLCanvasElement): Hero {
     if (!w || !h) return;
     canvas.width = Math.round(w * dpr);
     canvas.height = Math.round(h * dpr);
-    const cols = w < 700 ? 26 : 46;
-    hexR = canvas.width / ((cols - 0.5) * SQRT3);
-    const rows = Math.ceil(canvas.height / (1.5 * hexR)) + 1;
+    let cols = w < 700 ? 72 : 128;
+    let rows = Math.max(24, Math.round((cols * h) / w));
+    if (HEX_COVER) {
+      cols = w < 700 ? 26 : 46;
+      hexR = canvas.width / ((cols - 0.5) * SQRT3);
+      rows = Math.ceil(canvas.height / (1.5 * hexR)) + 1;
+    }
     land = buildLandscape(cols, rows, dates.length);
+    off.width = cols;
+    off.height = rows;
+    image = octx!.createImageData(cols, rows);
+    canvas.parentElement?.style.setProperty("--cell", `${w / cols}px`);
     lastPass = -1;
     if (reduced) draw(dates.length - 1, 0);
   }
@@ -231,8 +203,6 @@ export function initHero(canvas: HTMLCanvasElement): Hero {
     const l = land!;
     const c = l.clearAt[i] ?? -1;
     const tone = l.tone[i] ?? 0.5;
-    const f = l.floodAt[i] ?? -1;
-    if (f > 0 && statePass >= f) return statePass === f ? mix(FLOOD_LIGHT, [200, 140, 255], fresh * 0.6) : mix(FLOOD_DARK, FLOOD_LIGHT, tone);
     if (c === -1 || (c > 0 && statePass < c)) return mix(FOREST_DARK, FOREST_LIGHT, tone);
     if (c > 0 && statePass === c) return mix(FRESH, FLASH, fresh);
     if (c > 0 && statePass === c + 1) return mix(PASTURE_LIGHT, FRESH, 0.45 * tone);
@@ -241,7 +211,44 @@ export function initHero(canvas: HTMLCanvasElement): Hero {
 
   /** pass: current pass index; sweep: 1 = line at the bottom (start), 0 = at the top (done). */
   function draw(pass: number, sweep: number) {
-    drawHex(pass, sweep);
+    if (HEX_COVER) return drawHex(pass, sweep);
+    if (!land || !image) return;
+    const { cols, rows } = land;
+    const data = image.data;
+    const lineRow = sweep * rows;
+    for (let y = 0; y < rows; y++) {
+      const acquired = y >= lineRow;
+      const statePass = acquired ? pass : pass - 1;
+      // flash right behind the sweep line, cooling down as the line moves on
+      const fresh = acquired ? Math.max(0, 1 - (y - lineRow) / (rows * 0.35)) : 0;
+      for (let x = 0; x < cols; x++) {
+        const i = y * cols + x;
+        const [r, g, b] = color(i, statePass, fresh);
+        const o = i * 4;
+        data[o] = r;
+        data[o + 1] = g;
+        data[o + 2] = b;
+        data[o + 3] = 255;
+      }
+    }
+    octx!.putImageData(image, 0, 0);
+    const W = canvas.width;
+    const H = canvas.height;
+    ctx!.imageSmoothingEnabled = false;
+    ctx!.clearRect(0, 0, W, H);
+    ctx!.drawImage(off, 0, 0, W, H);
+
+    if (sweep > 0 && sweep < 1) {
+      const y = sweep * H;
+      const band = H * 0.22;
+      const grad = ctx!.createLinearGradient(0, y, 0, y + band);
+      grad.addColorStop(0, "rgba(150,210,255,0.45)");
+      grad.addColorStop(1, "rgba(150,210,255,0)");
+      ctx!.fillStyle = grad;
+      ctx!.fillRect(0, y, W, band);
+      ctx!.fillStyle = "rgba(225,240,255,0.95)";
+      ctx!.fillRect(0, y - 1.5, W, 3);
+    }
   }
 
   function hud(pass: number) {
@@ -254,7 +261,6 @@ export function initHero(canvas: HTMLCanvasElement): Hero {
       hudSignal.textContent = drop < 0 ? `${fmt.signed(drop)} dB` : `${fmt.signed(0.2)} dB`;
       hudSignal.classList.toggle("is-alert", drop < 0);
     }
-    if (hudAlert) hudAlert.hidden = !((land.dropByPass[pass] ?? 0) < 0);
   }
 
   function frame(now: number) {
