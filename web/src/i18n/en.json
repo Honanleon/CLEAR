@@ -81,7 +81,7 @@
   "map": {
     "kicker": "The map",
     "title": "Where and when forest was cleared",
-    "body": "This is Paraguay on a simple map, with our study zones in dashed boxes. We divided them into hexagons: the red ones had radar-detected clearing. The stronger the red, the more hectares were cleared inside. Pick a zone, press play or tap a hexagon.",
+    "body": "This is Paraguay on a simple map, with our study zones in dashed boxes, divided into hexagons. Red: radar-detected clearing. Purple: flood water in Ñeembucú, also estimated by radar. The stronger the colour, the more hectares. Pick a zone, press play or tap a hexagon.",
     "ethics": "We show radar-estimated changes in land cover, not whether they are legal. We use no cadastre and no owner names.",
     "mode_timeline": "Timeline",
     "mode_compare": "Before / after",
@@ -330,10 +330,10 @@
   "zones": {
     "label": "Study zone",
     "kind_clearing": "Clearing",
-    "kind_water": "Water",
-    "kind_control": "Control",
-    "note_water": "Water zone (chapter 2): open water and flooded vegetation estimated by radar at each date, the radar signal and rain. No clearing detection.",
-    "note_control": "Control zone (chapter 3): forest that should not change. Few or no detections are expected."
+    "kind_water": "Flooding",
+    "kind_control": "Control: stable forest",
+    "note_water": "Flooding zone (chapter 2): open water and flooded vegetation estimated by radar at each date, in purple hexagons. No clearing detection.",
+    "note_control": "Control zone (chapter 3): protected forest that should not change. It is not a disaster: it checks that the method raises no false alarms. Anything red here is a detection to review."
   },
   "point": {
     "title": "Radar signal at this point",
@@ -343,18 +343,21 @@
   },
   "water": {
     "title": "Water in {zone}",
-    "subtitle": "Water estimated by NISAR radar at each date",
+    "subtitle": "Water estimated by NISAR radar at each date, in purple hexagons",
     "open": "Open water",
     "flooded": "Flooded vegetation",
     "estimated": "estimated",
     "layer": "Water classes",
     "chart_title": "Hectares under water per date (estimated)",
-    "chart_help": "Blue: open water. Green: flooded vegetation. The vertical line marks the timeline's date.",
+    "chart_help": "Violet: open water. Fuchsia: flooded vegetation. The vertical line marks the timeline's date.",
     "axis": "thousand ha",
     "reading": "{date}: open water {open} ha · flooded vegetation {veg} ha (estimated)",
     "rice": "The October open-water peak is flooded rice fields, not a natural flood.",
     "tap": "Tap a point in the zone to see the radar signal and the rain there.",
     "none": "No water data for this zone yet.",
-    "legend_title": "{zone} water layer"
+    "legend_hex": "Hectares under water in each hexagon · flooding in {zone} (estimated)",
+    "tooltip": "{ha} ha under water (estimated) · {pct}% of the hexagon",
+    "in_hex": "Water in this hexagon",
+    "in_hex_note": "{pct}% of the hexagon · estimated"
   }
 }

@@ -17,6 +17,8 @@ import {
   daysBetween,
   HEX_GRADIENT,
   HEX_STOPS,
+  WATER_GRADIENT,
+  WATER_STOPS,
   INSTRUMENT_GAP,
   median,
   type PolygonCollection,
@@ -29,6 +31,7 @@ import { Timeline } from "../timeline/timeline";
 import { buildHexGrid, HEX_RADIUS_M, type HexCell, type HexGrid, hexOutlineIn, MINI_HEX_RADIUS_M, MINI_ZOOM } from "./hexgrid";
 import paraguay from "./paraguay.json";
 import { type ImageSet, PARAGUAY_BBOX, RadarMap } from "./radar-map";
+import { aggregateWater, type WaterCells, waterGeoJSON, waterHa, waterSteps } from "./waterhex";
 import { center, nearestTown, SOCCER_FIELD_HA } from "./zone";
 import { focusedZone, focusZoneById, onZoneFocus, zoneName } from "../story/zones";
 
@@ -104,9 +107,8 @@ export async function initMapSection(ds: Dataset): Promise<void> {
   const setOf = (z: ZoneInfo | null): ZoneSet => zoneSets.find((s) => s.z !== null && s.z.id === z?.id) ?? primarySet;
   /** The zone the map flies to (zone picker, tags, ?zona=). */
   let focus = setOf(focusedZone());
-  // hexagons only where there is detection (not over the water zone)
-  const studyBoxes = zoneSets.filter((s) => !isWater(s)).map(boxOf);
-  if (!studyBoxes.length) studyBoxes.push(boxOf(primarySet));
+  // hexagons with data over every zone: clearing (red) and flooding (purple, the water zone)
+  const studyBoxes = zoneSets.map(boxOf);
 
   // all clearings in one collection; the primary zone first, so its ids match the other chapters'
   const dates = scenes.map((s) => s.date);
@@ -144,12 +146,16 @@ export async function initMapSection(ds: Dataset): Promise<void> {
       return { type: "Feature", properties: { id: s.z?.id ?? "", kind: s.ds.kind }, geometry: { type: "Polygon", coordinates: [[[x0, y0], [x1, y0], [x1, y1], [x0, y1], [x0, y0]]] } };
     }),
   };
-  // radar images of every zone, shown in the "NISAR radar" view only (the simple map stays grey and white),
-  // and the water classes of the water zone (blue open water, green flooded vegetation) always, over the radar
-  const imageSets: ImageSet[] = [
-    ...zoneSets.map((s): ImageSet => ({ key: s.z?.id ?? "main", ds: s.ds, always: false })),
-    ...zoneSets.filter(isWater).map((s): ImageSet => ({ key: `${s.z?.id ?? "main"}-water`, ds: s.ds, always: true, layer: "water" })),
-  ];
+  // radar images of every zone, shown in the "NISAR radar" view only (the simple map stays grey and white)
+  const imageSets: ImageSet[] = zoneSets.map((s): ImageSet => ({ key: s.z?.id ?? "main", ds: s.ds, always: false }));
+  // flooding in hexagons: hectares under water per hexagon and date, counted from the water-classes images
+  const waterSet = zoneSets.find(isWater) ?? null;
+  let water: { big: WaterCells; mini: WaterCells; steps: number[]; geo: { big: ReturnType<typeof waterGeoJSON>; mini: ReturnType<typeof waterGeoJSON> } } | null = null;
+  /** Hectares under water in a hexagon at timeline step t (open water and flooded vegetation). */
+  const waterAt = (cell: HexCell, t: number) => {
+    if (!water) return { open: 0, flooded: 0 };
+    return waterHa(isMini(cell) ? water.mini : water.big, cell.id, water.steps[t] ?? -1);
+  };
   const waterProv = zoneSets.find(isWater)?.ds.provenance("water");
 
   // TEST build only (vite --mode lab): AI assistant, expert mode, offline basemap. Never in the official build.
@@ -191,9 +197,20 @@ export async function initMapSection(ds: Dataset): Promise<void> {
   status.hidden = true;
   ui.hidden = false;
 
+  if (waterSet) {
+    void aggregateWater(waterSet.ds, [hex, mini]).then(([big, mn]) => {
+      if (!big || !mn) return;
+      const steps = waterSteps(big, dates);
+      water = { big, mini: mn, steps, geo: { big: waterGeoJSON(big, hex, steps), mini: waterGeoJSON(mn, mini, steps) } };
+      mapA.setWaterHex(water.geo.big, water.geo.mini);
+      mapB?.setWaterHex(water.geo.big, water.geo.mini);
+      waterRedraw?.();
+    });
+  }
+
   // a tag on the top-left corner of each zone's box; tapping it flies there (no page reload)
   const zoneTags = zoneSets.map((s) => {
-    const tag = button("zone-tag", "", () => {
+    const tag = button(`zone-tag zone-kind-${s.ds.kind}`, "", () => {
       if (s.z) focusZoneById(s.z.id);
       else flyToStudy();
     });
@@ -274,14 +291,18 @@ export async function initMapSection(ds: Dataset): Promise<void> {
     return wrap;
   }
 
-  function hexLegend(): HTMLElement {
+  function rampLegend(gradient: string, stops: [number, string][]): HTMLElement {
     const wrap = h("div", "hex-legend");
     const ramp = h("div", "ramp");
-    ramp.style.background = HEX_GRADIENT;
+    ramp.style.background = gradient;
     const labels = h("div", "ramp-labels");
-    HEX_STOPS.forEach(([v], i) => labels.append(h("span", "", i === HEX_STOPS.length - 1 ? `${fmt.num(v)}+` : fmt.num(v))));
+    stops.forEach(([v], i) => labels.append(h("span", "", i === stops.length - 1 ? `${fmt.num(v)}+` : fmt.num(v))));
     wrap.append(ramp, labels);
     return wrap;
+  }
+
+  function hexLegend(): HTMLElement {
+    return rampLegend(HEX_GRADIENT, HEX_STOPS);
   }
 
   function renderPanel() {
@@ -314,7 +335,6 @@ export async function initMapSection(ds: Dataset): Promise<void> {
       }
       body.append(list);
       if (focus.z && focus.z.kind !== "clearing") body.append(h("p", "panel-note", t(`zones.note_${focus.z.kind}`)));
-      if (isWater(focus)) body.append(h("p", "panel-label", t("water.legend_title", { zone: focus.z ? zoneName(focus.z) : "" })), waterLegend());
     }
     body.append(h("p", "panel-label", t("map.view")));
     const seg = h("div", "seg seg-block");
@@ -328,6 +348,8 @@ export async function initMapSection(ds: Dataset): Promise<void> {
     body.append(h("p", "panel-label", t("map.legend_polys")), hexLegend());
     body.append(h("p", "panel-note", t("map.hex_size", { ha: fmt.num(hex.cells[0]?.areaHa ?? 0), mini: fmt.num(mini.cells[0]?.areaHa ?? 0) })));
     body.append(h("p", "panel-note", t("map.hex_nodata")));
+    // flooding legend, always: the purple hexagons are on the map whatever the zone in focus
+    if (waterSet) body.append(h("p", "panel-label", t("water.legend_hex", { zone: waterSet.z ? zoneName(waterSet.z) : "" })), rampLegend(WATER_GRADIENT, WATER_STOPS));
 
     const zoomedOut = mapA.map.getZoom() < 8.5;
     // the offline test map only has imagery around the study area: no "all of Paraguay" view there
@@ -473,6 +495,7 @@ export async function initMapSection(ds: Dataset): Promise<void> {
       if (!mapB) {
         mapB = new RadarMap({ container: containerB, ...mapOpts, bbox: boxOf(focus), controls: false, start: "study" });
         mapB.map.on("click", (e) => focusZone(e.lngLat));
+        if (water) mapB.setWaterHex(water.geo.big, water.geo.mini);
         mapB.setPulse(true);
       }
       mapB.map.resize();
@@ -507,11 +530,16 @@ export async function initMapSection(ds: Dataset): Promise<void> {
     const ha = cell ? (cell.cumHa[from === mapB ? after : upTo()] ?? 0) : 0;
     const wz = cell ? null : zoneAt(e.lngLat.lng, e.lngLat.lat);
     from.map.getCanvas().style.cursor = cell || (wz && isWater(wz)) ? "pointer" : "";
-    if (!cell || ha <= 0) {
+    const wet = cell && ha <= 0 ? waterAt(cell, from === mapB ? after : upTo()) : null;
+    const wha = wet ? wet.open + wet.flooded : 0;
+    if (!cell || (ha <= 0 && wha <= 0)) {
       tip.hidden = true;
       return;
     }
-    tip.textContent = t("hex.tooltip", { ha: fmt.num(ha, ha < 10 ? 1 : 0), pct: fmt.num((ha / cell.areaHa) * 100) });
+    tip.textContent =
+      ha > 0
+        ? t("hex.tooltip", { ha: fmt.num(ha, ha < 10 ? 1 : 0), pct: fmt.num((ha / cell.areaHa) * 100) })
+        : t("water.tooltip", { ha: fmt.num(wha), pct: fmt.num((wha / cell.areaHa) * 100) });
     tip.hidden = false;
     const r = shell.getBoundingClientRect();
     const c = from.map.getContainer().getBoundingClientRect();
@@ -556,6 +584,12 @@ export async function initMapSection(ds: Dataset): Promise<void> {
       renderOutside();
       return;
     }
+    // an edge hexagon of the water zone (tapped just outside its box) is a flooding hexagon too
+    const wc = water ? (isMini(cell) ? water.mini : water.big) : null;
+    if (waterSet && wc && (wc.open.has(cell.id) || wc.flooded.has(cell.id)) && (cell.cumHa[last] ?? 0) <= 0) {
+      renderWaterZone(waterSet, lngLat);
+      return;
+    }
     zone.hidden = false;
     // tapping a hexagon that only clears later: jump to the last date so the panel shows it all
     if (mode === "timeline" && cell.firstT !== null && cur < cell.firstT) timeline.set(last);
@@ -587,12 +621,30 @@ export async function initMapSection(ds: Dataset): Promise<void> {
     const titles = h("div");
     titles.append(h("h3", "", t("water.title", { zone: name })), h("p", "zone-where", t("water.subtitle")));
     head.append(titles, closeButton());
-    zone.append(head, waterLegend());
+    zone.append(head);
+    // the tapped hexagon: hectares under water at the timeline's date
+    const cell = lngLat ? gridAt(mapA).locate(lngLat.lng, lngLat.lat) : null;
+    const facts = h("div", "facts");
+    const paintFacts = () => {
+      facts.innerHTML = "";
+      if (!cell) return;
+      mapA.select(cell.id, isMini(cell));
+      mapB?.select(cell.id, isMini(cell));
+      const { open, flooded } = waterAt(cell, upTo());
+      const tot = open + flooded;
+      facts.append(
+        fact(t("water.in_hex"), `${fmt.num(tot)} ha`, t("water.in_hex_note", { pct: fmt.num((tot / cell.areaHa) * 100) }), tot > 0 ? "fact-water" : ""),
+        fact(t("water.open"), `${fmt.num(open)} ha`, t("water.estimated")),
+        fact(t("water.flooded"), `${fmt.num(flooded)} ha`, t("water.estimated")),
+      );
+    };
+    paintFacts();
+    zone.append(facts);
 
     const sec = h("section", "zone-chart");
     const reading = h("p", "probe-reading", t("chart.loading"));
     const host = h("div", "probe-chart");
-    sec.append(h("h4", "", t("water.chart_title")), h("p", "zone-help", t("water.chart_help")), reading, host, h("p", "water-note", t("water.rice")));
+    sec.append(h("h4", "", t("water.chart_title")), waterLegend(), h("p", "zone-help", t("water.chart_help")), reading, host, h("p", "water-note", t("water.rice")));
     zone.append(sec);
     void zs.ds.waterSeries().then((w) => {
       if (!w || !host.isConnected) {
@@ -601,7 +653,9 @@ export async function initMapSection(ds: Dataset): Promise<void> {
       }
       const draw = () => renderWater(host, reading, w, scenes[upTo()]?.date ?? "");
       waterRedraw = () => {
-        if (host.isConnected) draw();
+        if (!host.isConnected) return;
+        draw();
+        paintFacts();
       };
       draw();
       new ResizeObserver(() => waterRedraw?.()).observe(host);

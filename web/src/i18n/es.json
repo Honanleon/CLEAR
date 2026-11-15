@@ -81,7 +81,7 @@
   "map": {
     "kicker": "El mapa",
     "title": "Dónde y cuándo se desmontó",
-    "body": "Este es el Paraguay en un mapa simple, con nuestras zonas de estudio en recuadros punteados. Las dividimos en hexágonos: los rojos son los que tuvieron desmonte detectado por radar. Cuanto más fuerte el rojo, más hectáreas se desmontaron adentro. Elegí una zona, dale play o tocá un hexágono.",
+    "body": "Este es el Paraguay en un mapa simple, con nuestras zonas de estudio en recuadros punteados, divididas en hexágonos. Rojo: desmonte detectado por radar. Violeta: agua de la inundación en Ñeembucú, también estimada por radar. Cuanto más fuerte el color, más hectáreas. Elegí una zona, dale play o tocá un hexágono.",
     "ethics": "Mostramos cambios en la cobertura del suelo estimados por radar, no si son legales o no. No usamos catastro ni nombres de propietarios.",
     "mode_timeline": "Línea de tiempo",
     "mode_compare": "Antes / después",
@@ -330,10 +330,10 @@
   "zones": {
     "label": "Zona de estudio",
     "kind_clearing": "Desmonte",
-    "kind_water": "Agua",
-    "kind_control": "Control",
-    "note_water": "Zona de agua (capítulo 2): agua abierta y vegetación inundada estimadas por radar en cada fecha, la señal del radar y la lluvia. No hay detección de desmonte.",
-    "note_control": "Zona de control (capítulo 3): bosque que no debería cambiar. Se esperan pocas detecciones o ninguna."
+    "kind_water": "Inundación",
+    "kind_control": "Control: bosque estable",
+    "note_water": "Zona de inundación (capítulo 2): agua abierta y vegetación inundada estimadas por radar en cada fecha, en hexágonos violeta. No hay detección de desmonte.",
+    "note_control": "Zona de control (capítulo 3): bosque protegido que no debería cambiar. No es un desastre: sirve para comprobar que el método no da falsas alarmas. Si aparece algo en rojo acá, es una detección para revisar."
   },
   "point": {
     "title": "Señal del radar en este punto",
@@ -343,18 +343,21 @@
   },
   "water": {
     "title": "Agua en {zone}",
-    "subtitle": "Agua estimada por radar NISAR en cada fecha",
+    "subtitle": "Agua estimada por radar NISAR en cada fecha, en hexágonos violeta",
     "open": "Agua abierta",
     "flooded": "Vegetación inundada",
     "estimated": "estimado",
     "layer": "Clases de agua",
     "chart_title": "Hectáreas con agua por fecha (estimado)",
-    "chart_help": "Azul: agua abierta. Verde: vegetación inundada. La línea vertical marca la fecha de la línea de tiempo.",
+    "chart_help": "Violeta: agua abierta. Fucsia: vegetación inundada. La línea vertical marca la fecha de la línea de tiempo.",
     "axis": "miles de ha",
     "reading": "{date}: agua abierta {open} ha · vegetación inundada {veg} ha (estimado)",
     "rice": "El pico de agua abierta de octubre son arrozales inundados, no una inundación natural.",
     "tap": "Tocá un punto de la zona para ver la señal del radar y la lluvia ahí.",
     "none": "Todavía no hay datos de agua para esta zona.",
-    "legend_title": "Capa de agua de {zone}"
+    "legend_hex": "Hectáreas con agua en cada hexágono · inundación en {zone} (estimado)",
+    "tooltip": "{ha} ha con agua (estimado) · {pct} % del hexágono",
+    "in_hex": "Agua en este hexágono",
+    "in_hex_note": "{pct} % del hexágono · estimado"
   }
 }

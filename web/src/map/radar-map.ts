@@ -17,7 +17,7 @@ import {
 } from "maplibre-gl";
 import workerUrl from "maplibre-gl/dist/maplibre-gl-worker.mjs?url";
 import "maplibre-gl/dist/maplibre-gl.css";
-import { type BBox, type Dataset, HEX_STOPS, type PolygonCollection, stepEnd } from "../data";
+import { type BBox, type Dataset, HEX_STOPS, type PolygonCollection, stepEnd, WATER_STOPS } from "../data";
 import { type GeoJSON, type HexGrid, MINI_ZOOM } from "./hexgrid";
 import paraguay from "./paraguay.json";
 import { type Lang, lang, t } from "../i18n";
@@ -120,8 +120,6 @@ export interface ImageSet {
   key: string;
   ds: Dataset;
   always: boolean;
-  /** "rgb" (radar scene, default) or "water" (water classes of a water zone, drawn over the radar). */
-  layer?: "rgb" | "water";
 }
 
 interface SceneSet extends ImageSet {
@@ -192,6 +190,19 @@ export class RadarMap {
     return ["interpolate", ["linear"], ["coalesce", ["get", `a${t}`], 0], ...HEX_STOPS.flat()] as unknown as string;
   }
 
+  /** Purple of a flooding hexagon by the hectares under water at timeline step t. */
+  private waterColor(t: number): string {
+    return ["interpolate", ["linear"], ["coalesce", ["get", `w${t}`], 0], ...WATER_STOPS.flat()] as unknown as string;
+  }
+
+  /** Flooding hexagons (water zone), computed after load from the water-classes images. */
+  setWaterHex(big: GeoJSON, mini: GeoJSON): void {
+    void this.ready.then(() => {
+      (this.map.getSource("waterhex") as GeoJSONSource | undefined)?.setData(big as never);
+      (this.map.getSource("waterminihex") as GeoJSONSource | undefined)?.setData(mini as never);
+    });
+  }
+
   private addLayers() {
     const m = this.map;
     const [x0, y0, x1, y1] = this.opts.bbox;
@@ -209,6 +220,8 @@ export class RadarMap {
     m.addSource("minigrid", { type: "geojson", data: this.opts.mini.outline as never });
     m.addSource("minidata", { type: "geojson", data: this.opts.mini.data as never });
     m.addSource("miniworld", { type: "geojson", data: EMPTY as never });
+    m.addSource("waterhex", { type: "geojson", data: EMPTY as never });
+    m.addSource("waterminihex", { type: "geojson", data: EMPTY as never });
 
     // roads and borders (under the clearings, over the imagery)
     if (!this.opts.offline) this.addOsmLines();
@@ -310,6 +323,30 @@ export class RadarMap {
       minzoom: z0,
       filter: [">", ["get", "a0"], 0],
       paint: { "line-color": this.hexColor(0), "line-width": 1.4, "line-opacity": ["interpolate", ["linear"], ["zoom"], z0, 0, z1, 1] as never },
+    });
+    // flooding hexagons (water zone), purple; big ones fade out as the mini ones fade in, like clearing
+    m.addLayer({
+      id: "water-fill",
+      type: "fill",
+      source: "waterhex",
+      filter: [">", ["get", "w0"], 0],
+      paint: { "fill-color": this.waterColor(0), "fill-opacity": ["interpolate", ["linear"], ["zoom"], 5, 0.9, z0, 0.9, z1, 0] as never },
+    });
+    m.addLayer({
+      id: "water-mini-fill",
+      type: "fill",
+      source: "waterminihex",
+      minzoom: z0,
+      filter: [">", ["get", "w0"], 0],
+      paint: { "fill-color": this.waterColor(0), "fill-opacity": ["interpolate", ["linear"], ["zoom"], z0, 0, z1, 0.9, 13, 0.9, 15, 0.75] as never },
+    });
+    m.addLayer({
+      id: "water-mini-line",
+      type: "line",
+      source: "waterminihex",
+      minzoom: z0,
+      filter: [">", ["get", "w0"], 0],
+      paint: { "line-color": this.waterColor(0), "line-width": 1.4, "line-opacity": ["interpolate", ["linear"], ["zoom"], z0, 0, z1, 1] as never },
     });
     // big hexagon outline stays on top as a frame around its mini hexagons
     m.addLayer({
@@ -448,18 +485,18 @@ export class RadarMap {
     return s.always && this.map.getLayer("mini-grid") ? "mini-grid" : this.overlayStart();
   }
 
-  private urlOf(s: SceneSet, j: number): string {
-    return s.layer === "water" ? s.ds.waterUrl(j) : s.ds.sceneUrl(j);
+  private urlOf(s: SceneSet, j: number): Promise<string> {
+    return Promise.resolve(s.ds.sceneUrl(j));
   }
 
   private sceneLayer(s: SceneSet, j: number): string {
     return `scene-${s.key}-${j}`;
   }
 
-  private ensureScene(s: SceneSet, j: number) {
+  private ensureScene(s: SceneSet, j: number, url: string) {
     if (s.present.has(j)) return;
     const id = this.sceneLayer(s, j);
-    this.map.addSource(id, { type: "image", url: this.urlOf(s, j), coordinates: s.ds.index.image_coordinates });
+    this.map.addSource(id, { type: "image", url, coordinates: s.ds.index.image_coordinates });
     this.map.addLayer(
       {
         id,
@@ -511,21 +548,23 @@ export class RadarMap {
       if (req === s.request) this.trimScenes(s, -1);
       return;
     }
+    let url: string;
     try {
-      await preload(this.urlOf(s, j));
+      url = await this.urlOf(s, j);
+      await preload(url);
     } catch {
       return;
     }
     await this.ready;
     if (req !== s.request) return;
-    this.ensureScene(s, j);
+    this.ensureScene(s, j, url);
     this.map.moveLayer(this.sceneLayer(s, j), this.beforeOf(s));
     this.map.setPaintProperty(this.sceneLayer(s, j), "raster-opacity", this.radarOpacity);
     window.setTimeout(() => {
       if (req === s.request) this.trimScenes(s, j);
     }, FADE_MS);
     const scenes = s.ds.index.scenes;
-    for (const k of [j + 1, j - 1]) if (scenes[k]) void preload(this.urlOf(s, k)).catch(() => undefined);
+    for (const k of [j + 1, j - 1]) if (scenes[k]) void this.urlOf(s, k).then(preload).catch(() => undefined);
   }
 
   /** Remembers the date of scene `i` (timeline); each zone's images follow it when they are on. */
@@ -561,6 +600,11 @@ export class RadarMap {
     await this.ready;
     const a = (k: number) => ["coalesce", ["get", `a${Math.max(0, k)}`], 0];
     const shown = [">", a(upTo), 0] as never;
+    const w = ["coalesce", ["get", `w${Math.max(0, upTo)}`], 0];
+    for (const id of ["water-fill", "water-mini-fill", "water-mini-line"]) {
+      this.map.setFilter(id, [">", w, 0] as never);
+      this.map.setPaintProperty(id, id.endsWith("line") ? "line-color" : "fill-color", this.waterColor(upTo));
+    }
     for (const p of ["hex", "mini"]) {
       this.map.setFilter(`${p}-fill`, shown);
       this.map.setFilter(`${p}-line`, shown);

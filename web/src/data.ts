@@ -320,3 +320,17 @@ export const HEX_STOPS: [number, string][] = [
 ];
 
 export const HEX_GRADIENT = `linear-gradient(90deg, ${HEX_STOPS.map(([, c]) => c).join(", ")})`;
+
+/**
+ * Flooding (chapter 2) in strong purples: hectares under water (open water + flooded vegetation) in
+ * each hexagon, as clearing is red. One strong colour per kind of change, so the map reads at a glance.
+ */
+export const WATER_STOPS: [number, string][] = [
+  [1, "#c77dff"],
+  [50, "#a64dff"],
+  [200, "#8800ff"],
+  [500, "#6600cc"],
+  [1000, "#44008f"],
+];
+
+export const WATER_GRADIENT = `linear-gradient(90deg, ${WATER_STOPS.map(([, c]) => c).join(", ")})`;

@@ -1105,11 +1105,14 @@ button {
   margin-right: 6px;
   vertical-align: 1px;
 }
+/* one strong colour per kind of change (as the hexagons: HEX_STOPS red, WATER_STOPS purple); the
+   control zone is not a hazard: neutral grey */
 .zone-kind-clearing::before {
   background: #e60000;
 }
-/* only clearing zones get a coloured (red) dot: blue / green would read as the water classes */
-.zone-kind-water::before,
+.zone-kind-water::before {
+  background: #7c00ff;
+}
 .zone-kind-control::before {
   background: #9ca3af;
 }
@@ -1133,10 +1136,10 @@ button {
   vertical-align: -2px;
 }
 .water-legend .wl-open::before {
-  background: rgb(30, 110, 255);
+  background: #7c00ff;
 }
 .water-legend .wl-veg::before {
-  background: rgb(0, 200, 120);
+  background: #d600ff;
 }
 .water-legend .wl-est {
   font-family: var(--mono);
@@ -1152,12 +1155,12 @@ button {
   stroke-linecap: round;
 }
 .water-chart .water-open {
-  stroke: rgb(30, 110, 255);
-  fill: rgb(30, 110, 255);
+  stroke: #7c00ff;
+  fill: #7c00ff;
 }
 .water-chart .water-veg {
-  stroke: rgb(0, 200, 120);
-  fill: rgb(0, 200, 120);
+  stroke: #d600ff;
+  fill: #d600ff;
 }
 .water-chart path.water-open,
 .water-chart path.water-veg {
@@ -1170,6 +1173,9 @@ button {
 .water-chart .water-now {
   stroke: rgba(255, 255, 255, 0.55);
   stroke-dasharray: 3 3;
+}
+.fact-water .fact-value {
+  color: #b45cff;
 }
 .water-note {
   font-size: 13px;

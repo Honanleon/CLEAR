@@ -93,7 +93,9 @@ export function buildHexGrid(aoi: Areas, polygons: PolygonCollection, nScenes: n
   const center = (q: number, r: number): XY => [R * SQRT3 * (q + r / 2), R * 1.5 * r];
 
   const cells: HexCell[] = [];
-  const byKey = new Map<string, HexCell>();
+  // numeric axial key (no string per lookup: the water layer looks up hundreds of thousands of pixels)
+  const byKey = new Map<number, HexCell>();
+  const key = (q: number, r: number) => q * 1_000_003 + r;
   const areaHa = ((3 * SQRT3) / 2) * R * R * 1e-4;
   const rMin = Math.floor(ey0 / (1.5 * R)) - 1;
   const rMax = Math.ceil(ey1 / (1.5 * R)) + 1;
@@ -118,7 +120,7 @@ export function buildHexGrid(aoi: Areas, polygons: PolygonCollection, nScenes: n
         firstT: null,
       };
       cells.push(cell);
-      byKey.set(`${q},${r}`, cell);
+      byKey.set(key(q, r), cell);
     }
   }
 
@@ -135,7 +137,7 @@ export function buildHexGrid(aoi: Areas, polygons: PolygonCollection, nScenes: n
     const ds = Math.abs(s - fs);
     if (dq > dr && dq > ds) q = -r - s;
     else if (dr > ds) r = -q - s;
-    return byKey.get(`${q},${r}`) ?? null;
+    return byKey.get(key(q, r)) ?? null;
   };
 
   // share each polygon's area among the cells it covers
