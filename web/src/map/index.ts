@@ -143,8 +143,8 @@ export async function initMapSection(ds: Dataset): Promise<void> {
       return { type: "Feature", properties: { id: s.z?.id ?? "", kind: s.ds.kind }, geometry: { type: "Polygon", coordinates: [[[x0, y0], [x1, y0], [x1, y1], [x0, y1], [x0, y0]]] } };
     }),
   };
-  // radar images of every zone; the water zone's are always on (they are its content)
-  const imageSets: ImageSet[] = zoneSets.map((s) => ({ key: s.z?.id ?? "main", ds: s.ds, always: isWater(s) }));
+  // radar images of every zone, shown in the "NISAR radar" view only (the simple map stays grey and white)
+  const imageSets: ImageSet[] = zoneSets.map((s) => ({ key: s.z?.id ?? "main", ds: s.ds, always: false }));
 
   // TEST build only (vite --mode lab): AI assistant, expert mode, offline basemap. Never in the official build.
   const lab =
