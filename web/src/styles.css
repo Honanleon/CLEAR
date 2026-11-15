@@ -3538,3 +3538,7 @@ button {
 .fact-fire strong {
   color: #ff4d4d;
 }
+/* TEST SITE: the assistant's box inside the hexagon panel */
+.test-chat-hex {
+  margin-block: 14px;
+}

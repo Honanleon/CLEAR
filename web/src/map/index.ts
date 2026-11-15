@@ -321,6 +321,18 @@ export async function initMapSection(ds: Dataset): Promise<void> {
       if (mm.getLayer(id)) mm.setLayoutProperty(id, "visibility", on ? "visible" : "none");
     }
   }
+  let fireDays: { big: Map<string, number>; mini: Map<string, number> } | null = null;
+  /** Fire days of the drawn (hatched) hexagon under lon/lat at the zoom on screen, or null. */
+  const fireDaysAt = (lon: number, lat: number): { days: number; mini: boolean } | null => {
+    if (!fires || !firesOn) return null;
+    fireDays ??= {
+      big: new Map(fires.big.map(([q, r, v]) => [`${q},${r}`, v])),
+      mini: new Map(fires.mini.map(([q, r, v]) => [`${q},${r}`, v])),
+    };
+    const isMiniLevel = mapA.map.getZoom() >= MINI_ZOOM;
+    const days = (isMiniLevel ? fireDays.mini : fireDays.big).get(fireKey(lon, lat, isMiniLevel ? MINI_HEX_RADIUS_M : HEX_RADIUS_M)) ?? 0;
+    return days >= (isMiniLevel ? FIRE_MIN.mini : FIRE_MIN.big) ? { days, mini: isMiniLevel } : null;
+  };
   /** Fire facts of a hexagon around a clearing date: days with fire, and the ones from 36 days before to 60 after. */
   const fireNear = (cell: HexCell, isoDate: string) => {
     if (!fires) return null;
@@ -386,6 +398,31 @@ export async function initMapSection(ds: Dataset): Promise<void> {
   dock.append(timeline.el, compareBar);
   ui.append(modeBar, panel, toast, dock, zone, tip);
   if (lab) ui.append(...lab.overlay);
+  // TEST SITE: the CLEAR assistant next to the map (answers when the page runs as a claude.ai artifact)
+  let testChat: ReturnType<typeof import("./test-chat").createTestChat> | null = null;
+  void import("./test-chat")
+    .then((m) => {
+      testChat = m.createTestChat({
+        ds,
+        hex,
+        mini,
+        polygonsById: byId,
+        closeZone: () => closeZone(),
+        extra: () => ({
+          note: "TEST version of the site. Besides the radar clearing it shows fire detections; answer about them only with these rules.",
+          zones: zoneSets.filter((s) => s.z).map((s) => ({ id: s.z!.id, kind: s.z!.kind, bbox: s.z!.bbox })),
+          fire_layer: {
+            source: "NASA FIRMS VIIRS S-NPP 375 m thermal anomalies (daily, Nov 2025 - Oct 2026) via NASA GIBS images; satellite-detected, not checked on the ground; the drawn extent of each fire is inflated",
+            shown_as: `red hatched hexagons, only the quarter with the most fire days (>= ${FIRE_MIN.big} days in a 24 km hexagon, >= ${FIRE_MIN.mini} in a 2 km one)`,
+            outside_study_zones: "fire hexagons outside the study zones: fire was observed, but the radar was not analysed there, so CLEAR does not know if there was clearing; the fire may be clearing with burning, or agricultural / grassland burning",
+          },
+          probable_cause_rule:
+            "in a hexagon with radar-estimated clearing: 'with fire' if VIIRS detected fire from 36 days before to 60 days after the first detection date (it may be the fire that opened the forest or the burning of the debris piles after mechanical clearing); otherwise 'no fire: mechanical clearing' (an inference: no fire was detected)",
+        }),
+      });
+      ui.append(...testChat.overlay);
+    })
+    .catch(() => undefined);
 
   const isNarrow = () => shell.clientWidth < 760;
   const padding = () =>
@@ -829,6 +866,14 @@ export async function initMapSection(ds: Dataset): Promise<void> {
       return;
     }
     const cell = gridAt(mapA).locate(lngLat.lng, lngLat.lat);
+    // TEST SITE: a red hatched (fire) hexagon outside the study zones, with no radar clearing
+    if (!zs && (!cell || (cell.cumHa[last] ?? 0) <= 0)) {
+      const fd = fireDaysAt(lngLat.lng, lngLat.lat);
+      if (fd) {
+        renderFireOutside(lngLat, fd);
+        return;
+      }
+    }
     if (!cell) {
       renderOutside();
       return;
@@ -929,6 +974,49 @@ export async function initMapSection(ds: Dataset): Promise<void> {
       zone.append(h("p", "zone-help", t("water.tap")));
     }
     zone.append(h("p", "fineprint", t("point.note")));
+  }
+
+  /** TEST SITE: panel of a fire hexagon outside the study zones. */
+  function renderFireOutside(lngLat: LngLat, fd: { days: number; mini: boolean }) {
+    closeZone();
+    zone.hidden = false;
+    const es = lang() === "es";
+    if (!marker) marker = new Marker({ element: h("div", "probe-marker") });
+    marker.setLngLat(lngLat).addTo(mapA.map);
+    const town = nearestTown([lngLat.lng, lngLat.lat]);
+    const head = h("div", "zone-head");
+    const titles = h("div");
+    titles.append(
+      h("h3", "", es ? "Fuera de las zonas de estudio" : "Outside the study zones"),
+      h("p", "zone-where", t("zone.where_value", { km: fmt.num(town.km), dir: t(`dir.${town.dir}`), town: town.name })),
+    );
+    head.append(titles, closeButton());
+    const facts = h("div", "facts");
+    facts.append(
+      fact(
+        es ? "Focos de incendio observados" : "Fire detections observed",
+        es ? `${fmt.num(fd.days)} días con fuego` : `${fmt.num(fd.days)} days with fire`,
+        es
+          ? `En este hexágono ${fd.mini ? "chico (2 km)" : "grande (24 km)"}, nov. 2025 – oct. 2026, satélite VIIRS (NASA FIRMS).`
+          : `In this ${fd.mini ? "small (2 km)" : "big (24 km)"} hexagon, Nov 2025 – Oct 2026, VIIRS satellite (NASA FIRMS).`,
+        "fact-fire",
+      ),
+    );
+    zone.append(
+      head,
+      facts,
+      h(
+        "p",
+        "zone-text",
+        es
+          ? "Esta no es una zona de estudio: acá no se analizó el radar NISAR, así que no sabemos si hubo desmonte. El fuego puede ser un desmonte con quema o la quema de pastizales o cultivos. Estimado por satélite, no verificado en el terreno."
+          : "This is not a study zone: the NISAR radar was not analysed here, so we do not know whether there was clearing. The fire may be clearing with burning, or grassland or crop burning. Satellite estimate, not checked on the ground.",
+      ),
+      button("btn btn-primary btn-sm", t("map.go_study"), () => {
+        closeZone();
+        flyToStudy();
+      }),
+    );
   }
 
   function renderOutside() {
@@ -1077,6 +1165,10 @@ export async function initMapSection(ds: Dataset): Promise<void> {
     tech.append(techList, h("p", "fineprint", t("zone.estimated")));
     zone.append(tech);
     lab?.decorateHex(zone, cell, now);
+    if (testChat) {
+      const fnc = fireNear(cell, firstDate);
+      testChat.decorateHex(zone, cell, isMini(cell), zs.ds, now, fnc ? { days_with_fire_in_year: fnc.days, days_with_fire_near_clearing: fnc.near, first: fnc.from, last: fnc.to } : null);
+    }
   }
 
   /** HH / HV series of the 500 m cell under `center`, with rain, from that zone's own files. */
