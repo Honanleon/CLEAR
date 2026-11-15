@@ -639,16 +639,13 @@ button {
   stroke-width: 6;
   stroke-linecap: round;
 }
-.radar-figure .branch {
-  stroke: #6d4c33;
-  stroke-width: 3;
-  stroke-linecap: round;
-  fill: none;
-}
 .radar-figure .crown {
-  fill: rgba(56, 170, 104, 0.32);
-  stroke: rgba(110, 230, 150, 0.55);
+  fill: rgba(56, 170, 104, 0.3);
+  stroke: rgba(110, 230, 150, 0.6);
   stroke-width: 1.5;
+}
+.radar-figure .ground {
+  fill: #2a1f16;
 }
 .radar-figure .grass path {
   stroke: #7a9a4a;
@@ -685,31 +682,31 @@ button {
 }
 .radar-figure .ray-away {
   stroke: #eef5ff;
-  opacity: 0.25;
+  opacity: 0.22;
 }
-.radar-figure .ray-out {
-  stroke: var(--ret-color);
-  animation-direction: reverse;
-  filter: drop-shadow(0 0 6px var(--ret-color));
-  transition:
-    opacity 0.5s,
-    stroke 0.5s;
-}
-.radar-figure .returns-forest .ray-out {
-  opacity: var(--ret-forest, 0.8);
-  stroke-width: calc(1.4px + var(--ret-forest, 0.8) * 3px);
-}
-.radar-figure .returns-pasture .ray-out {
-  opacity: var(--ret-pasture, 0.2);
-  stroke-width: calc(1.4px + var(--ret-pasture, 0.2) * 3px);
-}
-.radar-figure .bounce {
+/* echoes going back to the satellite: brightness = strength of the return in the chosen channel */
+.radar-figure .echo path {
   fill: none;
   stroke: var(--ret-color);
-  stroke-width: 1.6;
-  stroke-dasharray: 3 5;
-  animation: flow 0.8s linear infinite;
-  opacity: 0.8;
+  stroke-width: 3.5;
+  stroke-linecap: round;
+  filter: drop-shadow(0 0 6px var(--ret-color));
+  animation: echo 1.8s ease-out infinite;
+}
+.radar-figure .echo path:nth-child(2) {
+  animation-delay: 0.3s;
+}
+.radar-figure .echo path:nth-child(3) {
+  animation-delay: 0.6s;
+}
+.radar-figure .echo {
+  transition: opacity 0.5s;
+}
+.radar-figure .echo-forest {
+  opacity: var(--ret-forest, 0.8);
+}
+.radar-figure .echo-pasture {
+  opacity: var(--ret-pasture, 0.2);
 }
 .radar-figure .hit {
   fill: var(--ret-color);
@@ -723,7 +720,7 @@ button {
 }
 .radar-figure .fig-label {
   font-family: var(--mono);
-  font-size: 13px;
+  font-size: 15px;
   fill: var(--muted);
 }
 .radar-figure .fig-recv {
@@ -732,9 +729,20 @@ button {
 }
 .radar-figure .fig-title {
   font-family: var(--font);
-  font-size: 15px;
+  font-size: 19px;
   font-weight: 600;
   fill: var(--text);
+}
+@keyframes echo {
+  0% {
+    opacity: 0.15;
+  }
+  40% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.15;
+  }
 }
 @keyframes flow {
   to {
@@ -748,7 +756,7 @@ button {
 }
 @media (prefers-reduced-motion: reduce) {
   .radar-figure .ray,
-  .radar-figure .bounce,
+  .radar-figure .echo path,
   .radar-figure .hit,
   .brand-mark path,
   .hero-title-word,
