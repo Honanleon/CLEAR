@@ -402,6 +402,23 @@ export async function initMapSection(ds: Dataset): Promise<void> {
   dock.append(timeline.el, compareBar);
   ui.append(modeBar, panel, toast, dock, zone, tip);
   if (lab) ui.append(...lab.overlay);
+  // CLEAR assistant next to the map (claude.ai `sample`: it answers only when the page runs as a claude.ai artifact)
+  let testChat: ReturnType<typeof import("./test-chat").createTestChat> | null = null;
+  if (!lab)
+    void import("./test-chat")
+      .then((m) => {
+        testChat = m.createTestChat({
+          ds,
+          hex,
+          mini,
+          polygonsById: byId,
+          closeZone: () => closeZone(),
+          zones: zoneSets.filter((s) => s.z).map((s) => ({ id: s.z!.id, kind: s.z!.kind, bbox: s.z!.bbox })),
+          fireMin: FIRE_MIN,
+        });
+        ui.append(...testChat.overlay);
+      })
+      .catch(() => undefined);
 
   const isNarrow = () => shell.clientWidth < 760;
   const padding = () =>
@@ -1128,6 +1145,10 @@ export async function initMapSection(ds: Dataset): Promise<void> {
     tech.append(techList, h("p", "fineprint", t("zone.estimated")));
     zone.append(tech);
     lab?.decorateHex(zone, cell, now);
+    if (testChat) {
+      const fnc = fireNear(cell, firstDate);
+      testChat.decorateHex(zone, cell, isMini(cell), zs.ds, now, fnc ? { days_with_fire_in_year: fnc.days, days_with_fire_near_clearing: fnc.near, first: fnc.from, last: fnc.to } : null);
+    }
   }
 
   /** HH / HV series of the 500 m cell under `center`, with rain, from that zone's own files. */
