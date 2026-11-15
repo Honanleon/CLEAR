@@ -73,7 +73,7 @@ NISAR L2 GCOV, frequency A (20 MHz, ~20 m), HH and HV, γ⁰ linear with radiome
 |---|---|---|
 | `speckle_window` | 5 | 100 m at 20 m pixels |
 | `baseline_dates` | 3 | 2025-11-21, 12-03, 12-15 |
-| `min_baseline_db` | -4.0 | Forest-like at baseline; dry Chaco forest starts near −3 dB, old pasture near −4.6 dB |
+| `min_baseline_db` | -2.0 | Forest-like on **every** baseline date (normalized HV); replaces the −4 dB baseline-median condition (see step 4) |
 | `threshold_db` | -3.0 | Chosen once (tuning log); the ASF Cookbook example uses −2 dB |
 | `persistence` / `persistence_window` | 2 of 3 | Avoids one-date drops (rain, noise) and tolerates one wet-date bounce |
 | `min_area_ha` | 5 | Matches the DIST-ALERT comparison filter |
