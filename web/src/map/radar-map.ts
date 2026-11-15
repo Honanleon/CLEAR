@@ -9,6 +9,7 @@
 import {
   AttributionControl,
   FullscreenControl,
+  type GeoJSONSource,
   Map as MLMap,
   NavigationControl,
   setWorkerUrl,
@@ -17,7 +18,7 @@ import {
 import workerUrl from "maplibre-gl/dist/maplibre-gl-worker.mjs?url";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { type BBox, type Dataset, HEX_STOPS, type PolygonCollection } from "../data";
-import { type HexGrid, MINI_ZOOM } from "./hexgrid";
+import { type GeoJSON, type HexGrid, MINI_ZOOM } from "./hexgrid";
 import { type Lang, lang, t } from "../i18n";
 
 setWorkerUrl(workerUrl);
@@ -42,6 +43,8 @@ export interface RadarMapOptions {
   hex: HexGrid;
   /** Small hexagons over the study area, shown from MINI_ZOOM. */
   mini: HexGrid;
+  /** Outline of the small hexagons over the rest of the country inside a box (drawn only where the map looks). */
+  miniOutline?: (view: BBox) => GeoJSON;
   bbox: BBox;
   controls: boolean;
   start: "country" | "study";
@@ -95,6 +98,8 @@ function style(offline?: RadarMapOptions["offline"]): StyleSpecification {
   };
 }
 
+const EMPTY: GeoJSON = { type: "FeatureCollection", features: [] };
+
 export class RadarMap {
   readonly map: MLMap;
   readonly ready: Promise<void>;
@@ -144,6 +149,8 @@ export class RadarMap {
     this.ready = new Promise((resolve) => {
       this.map.once("load", () => {
         this.addLayers();
+        this.updateMiniWorld();
+        this.map.on("moveend", () => this.updateMiniWorld());
         resolve();
       });
     });
@@ -170,6 +177,7 @@ export class RadarMap {
     m.addSource("hexdata", { type: "geojson", data: this.opts.hex.data as never });
     m.addSource("minigrid", { type: "geojson", data: this.opts.mini.outline as never });
     m.addSource("minidata", { type: "geojson", data: this.opts.mini.data as never });
+    m.addSource("miniworld", { type: "geojson", data: EMPTY as never });
 
     // roads and borders (under the clearings, over the imagery)
     if (!this.opts.offline) this.addOsmLines();
@@ -239,6 +247,14 @@ export class RadarMap {
       source: "hexdata",
       filter: [">", ["get", "a0"], 0],
       paint: { "fill-color": this.hexColor(0), "fill-opacity": ["interpolate", ["linear"], ["zoom"], 5, 0.88, z0, 0.85, z1, 0] as never },
+    });
+    // mini hexagons over the rest of the country (no data), recomputed for the area on screen
+    m.addLayer({
+      id: "mini-world",
+      type: "line",
+      source: "miniworld",
+      minzoom: z0,
+      paint: { "line-color": "#ffffff", "line-opacity": ["interpolate", ["linear"], ["zoom"], z0, 0, z1, 0.14, 12, 0.2] as never, "line-width": 0.8 },
     });
     // mini hexagons inside the study area, shown when zoomed in
     m.addLayer({
@@ -452,6 +468,26 @@ export class RadarMap {
       }
     }, FADE_MS);
     for (const k of [i + 1, i - 1]) if (scenes[k]) void preload(this.opts.ds.sceneUrl(k)).catch(() => undefined);
+  }
+
+  private miniWorldKey = "";
+  /** Mini hexagons all over Paraguay would be ~39,000 cells: only the ones around the view are drawn. */
+  private updateMiniWorld() {
+    const fn = this.opts.miniOutline;
+    const src = this.map.getSource("miniworld") as GeoJSONSource | undefined;
+    if (!fn || !src) return;
+    if (this.map.getZoom() < MINI_ZOOM - 0.4) {
+      if (this.miniWorldKey) src.setData(EMPTY as never);
+      this.miniWorldKey = "";
+      return;
+    }
+    const b = this.map.getBounds();
+    const [w, h] = [b.getEast() - b.getWest(), b.getNorth() - b.getSouth()];
+    const view: BBox = [b.getWest() - w * 0.25, b.getSouth() - h * 0.25, b.getEast() + w * 0.25, b.getNorth() + h * 0.25];
+    const key = view.map((v) => v.toFixed(3)).join(",");
+    if (key === this.miniWorldKey) return;
+    this.miniWorldKey = key;
+    src.setData(fn(view) as never);
   }
 
   /** Hexagons coloured by the hectares cleared up to scene `upTo`; cells that grew after `newAfter` pulse. */

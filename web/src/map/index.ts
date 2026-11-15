@@ -9,10 +9,10 @@ import { LngLat, Marker } from "maplibre-gl";
 import { renderBars } from "../charts/bars";
 import { renderSeries } from "../charts/series";
 import { Swipe } from "../compare/swipe";
-import { BASELINE_DATES, type Dataset, HEX_GRADIENT, HEX_STOPS, INSTRUMENT_GAP, median, type PolygonCollection } from "../data";
+import { BASELINE_DATES, type BBox, type Dataset, HEX_GRADIENT, HEX_STOPS, INSTRUMENT_GAP, median, type PolygonCollection } from "../data";
 import { fmt, lang, onLang, t } from "../i18n";
 import { Timeline } from "../timeline/timeline";
-import { buildHexGrid, HEX_RADIUS_M, type HexCell, type HexGrid, MINI_HEX_RADIUS_M, MINI_ZOOM } from "./hexgrid";
+import { buildHexGrid, HEX_RADIUS_M, type HexCell, type HexGrid, hexOutlineIn, MINI_HEX_RADIUS_M, MINI_ZOOM } from "./hexgrid";
 import paraguay from "./paraguay.json";
 import { PARAGUAY_BBOX, RadarMap } from "./radar-map";
 import { center, nearestTown, SOCCER_FIELD_HA } from "./zone";
@@ -68,6 +68,8 @@ export async function initMapSection(ds: Dataset): Promise<void> {
   const mini = buildHexGrid(aoi, polygons, scenes.length, MINI_HEX_RADIUS_M);
   const isMini = (cell: HexCell) => mini.cells[cell.id] === cell;
   const gridAt = (m: RadarMap): HexGrid => (m.map.getZoom() >= MINI_ZOOM ? mini : hex);
+  // the same mini grid over the rest of Paraguay (no data), drawn only around the area on screen
+  const miniOutline = (view: BBox) => hexOutlineIn(view, aoi, MINI_HEX_RADIUS_M, paraguay as [number, number][]);
   const newArea = scenes.map(() => 0);
   for (const f of polygons.features) {
     const k = f.properties.t ?? 0;
@@ -94,7 +96,7 @@ export async function initMapSection(ds: Dataset): Promise<void> {
         })
       : null;
 
-  const mapA = new RadarMap({ container: containerA, ds, polygons, hex, mini, bbox: aoi, controls: true, start: "country", offline: lab?.offline });
+  const mapA = new RadarMap({ container: containerA, ds, polygons, hex, mini, miniOutline, bbox: aoi, controls: true, start: "country", offline: lab?.offline });
   let mapB: RadarMap | null = null;
   let swipe: Swipe | null = null;
   let mode: Mode = "timeline";
@@ -352,7 +354,7 @@ export async function initMapSection(ds: Dataset): Promise<void> {
       containerB.hidden = false;
       swipeEl.hidden = false;
       if (!mapB) {
-        mapB = new RadarMap({ container: containerB, ds, polygons, hex, mini, bbox: aoi, controls: false, start: "study", offline: lab?.offline });
+        mapB = new RadarMap({ container: containerB, ds, polygons, hex, mini, miniOutline, bbox: aoi, controls: false, start: "study", offline: lab?.offline });
         mapB.map.on("click", (e) => focusZone(e.lngLat));
         mapB.setPulse(true);
       }

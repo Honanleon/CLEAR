@@ -39,7 +39,7 @@ export interface HexGrid {
   locate(lon: number, lat: number): HexCell | null;
 }
 
-type GeoJSON = { type: "FeatureCollection"; features: unknown[] };
+export type GeoJSON = { type: "FeatureCollection"; features: unknown[] };
 
 const SQRT3 = Math.sqrt(3);
 
@@ -58,12 +58,7 @@ export const MINI_ZOOM = 9;
  */
 export function buildHexGrid(aoi: BBox, polygons: PolygonCollection, nScenes: number, radiusM = HEX_RADIUS_M, country?: XY[]): HexGrid {
   const R = radiusM;
-  const lon0 = (aoi[0] + aoi[2]) / 2;
-  const lat0 = (aoi[1] + aoi[3]) / 2;
-  const kx = 111_320 * Math.cos((lat0 * Math.PI) / 180);
-  const ky = 110_574;
-  const toXY = (lon: number, lat: number): XY => [(lon - lon0) * kx, (lat - lat0) * ky];
-  const toLL = (x: number, y: number): XY => [lon0 + x / kx, lat0 + y / ky];
+  const { toXY, toLL } = projection(aoi);
 
   const [xmin, ymin] = toXY(aoi[0], aoi[1]);
   const [xmax, ymax] = toXY(aoi[2], aoi[3]);
@@ -91,11 +86,7 @@ export function buildHexGrid(aoi: BBox, polygons: PolygonCollection, nScenes: nu
       // every hexagon that overlaps the study area (centre within one radius of it) has data
       const studied = !(cx < xmin - R || cx > xmax + R || cy < ymin - R || cy > ymax + R);
       if (!studied && !(countryXY && insideRings(cx, cy, [countryXY]))) continue;
-      const ring: XY[] = [];
-      for (let i = 0; i <= 6; i++) {
-        const a = ((60 * (i % 6) - 30) * Math.PI) / 180;
-        ring.push(toLL(cx + R * Math.cos(a), cy + R * Math.sin(a)));
-      }
+      const ring = hexRing(cx, cy, R, toLL);
       const cell: HexCell = {
         id: cells.length,
         studied,
@@ -198,6 +189,69 @@ export function buildHexGrid(aoi: BBox, polygons: PolygonCollection, nScenes: nu
       return cell?.studied ? cell : null;
     },
   };
+}
+
+/** Local equirectangular projection centred on the study area, in metres; every grid of the site uses it, so grids line up. */
+function projection(aoi: BBox) {
+  const lon0 = (aoi[0] + aoi[2]) / 2;
+  const lat0 = (aoi[1] + aoi[3]) / 2;
+  const kx = 111_320 * Math.cos((lat0 * Math.PI) / 180);
+  const ky = 110_574;
+  return {
+    toXY: (lon: number, lat: number): XY => [(lon - lon0) * kx, (lat - lat0) * ky],
+    toLL: (x: number, y: number): XY => [lon0 + x / kx, lat0 + y / ky],
+  };
+}
+
+function hexRing(cx: number, cy: number, R: number, toLL: (x: number, y: number) => XY): XY[] {
+  const ring: XY[] = [];
+  for (let i = 0; i <= 6; i++) {
+    const a = ((60 * (i % 6) - 30) * Math.PI) / 180;
+    ring.push(toLL(cx + R * Math.cos(a), cy + R * Math.sin(a)));
+  }
+  return ring;
+}
+
+/**
+ * Outline of the hexagons of the same grid as buildHexGrid(aoi, …, radiusM) inside `view`, for the
+ * rest of the country (centre inside `country`, not overlapping the study area: those have no data).
+ * Used to draw the mini hexagons all over Paraguay only where the map is looking.
+ */
+export function hexOutlineIn(view: BBox, aoi: BBox, radiusM: number, country: XY[], maxCells = 20_000): GeoJSON {
+  const R = radiusM;
+  const { toXY, toLL } = projection(aoi);
+  const [xmin, ymin] = toXY(aoi[0], aoi[1]);
+  const [xmax, ymax] = toXY(aoi[2], aoi[3]);
+  const countryXY = country.map(([lon, lat]) => toXY(lon, lat));
+  let [cx0, cy0, cx1, cy1] = [Infinity, Infinity, -Infinity, -Infinity];
+  for (const [x, y] of countryXY) {
+    cx0 = Math.min(cx0, x);
+    cy0 = Math.min(cy0, y);
+    cx1 = Math.max(cx1, x);
+    cy1 = Math.max(cy1, y);
+  }
+  // the part of the view that can hold country hexagons
+  const [vx0, vy0] = toXY(view[0], view[1]);
+  const [vx1, vy1] = toXY(view[2], view[3]);
+  const [x0, y0, x1, y1] = [Math.max(vx0, cx0), Math.max(vy0, cy0), Math.min(vx1, cx1), Math.min(vy1, cy1)];
+  const features: unknown[] = [];
+  if (x0 >= x1 || y0 >= y1) return { type: "FeatureCollection", features };
+  if (((x1 - x0) * (y1 - y0)) / (((3 * SQRT3) / 2) * R * R) > maxCells) return { type: "FeatureCollection", features };
+  const rMin = Math.floor(y0 / (1.5 * R)) - 1;
+  const rMax = Math.ceil(y1 / (1.5 * R)) + 1;
+  for (let r = rMin; r <= rMax; r++) {
+    const qMin = Math.floor(x0 / (R * SQRT3) - r / 2) - 1;
+    const qMax = Math.ceil(x1 / (R * SQRT3) - r / 2) + 1;
+    for (let q = qMin; q <= qMax; q++) {
+      const cx = R * SQRT3 * (q + r / 2);
+      const cy = R * 1.5 * r;
+      if (cx < x0 - R || cx > x1 + R || cy < y0 - R || cy > y1 + R) continue;
+      const studied = !(cx < xmin - R || cx > xmax + R || cy < ymin - R || cy > ymax + R);
+      if (studied || !insideRings(cx, cy, [countryXY])) continue;
+      features.push({ type: "Feature", properties: {}, geometry: { type: "Polygon", coordinates: [hexRing(cx, cy, R, toLL)] } });
+    }
+  }
+  return { type: "FeatureCollection", features };
 }
 
 function ringsOf(geom: PolygonGeometry): XY[][] {

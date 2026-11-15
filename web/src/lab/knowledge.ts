@@ -50,7 +50,7 @@ speckle_window 5 (100 m); baseline_dates 3; min_baseline_db −2.0 dB on every b
 ## Results (this data release)
 - 31 clearings, 596 ha in total, detected between February and September 2026 (mostly March–May). This is a lower bound: many new paddocks in the HLS images are larger than the radar polygon. They are published as 49 hexagons of 1 km; exact clearing shapes are not published.
 - Visual review with HLS true colour (Sentinel-2, 2025-11-19 vs 2026-11-04), done by the team, one panel per clearing: in about 25 of 31 clearings, continuous forest in November 2025 has become new paddock blocks by November 2026. About 5 are at the edge of existing paddocks and may be management. This review is the team's interpretation of optical images, not field data.
-- All the clearing (596.2 ha) falls in a single hexagon, the one that holds the whole study area; when zoomed in, the map splits it into mini hexagons of 2 km radius (about 1,040 ha each; 21 of them contain clearing, the busiest about 190 ha); the pipeline publishes clearing only as 1 km hexagons, never exact shapes.
+- All the clearing (596.2 ha) falls in a single hexagon, the one that holds the whole study area; when zoomed in, the whole country splits into mini hexagons of 2 km radius (about 1,040 ha each; only the ones over the study area have data; 21 of them contain clearing, the busiest about 190 ha); the pipeline publishes clearing only as 1 km hexagons, never exact shapes.
 
 ## Validation (headline numbers, data contract v2)
 - Optical alert = VEG-DIST-STATUS 6 or 8 (confirmed ≥ 50 % vegetation loss), first-disturbance date between the first radar date and the last radar date + 24 days, inside the forest mask, patches ≥ 5 ha. 185 ha of optical alerts in forest in the area.
