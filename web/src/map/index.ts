@@ -179,15 +179,35 @@ export async function initMapSection(ds: Dataset): Promise<void> {
       : null;
 
   // TEST SITE: Paraguay-wide NISAR quick-look mosaics (ASF browse images), built offline into data/mosaic/
-  type MosaicSide = { dates: string[]; coverage_of_paraguay: number; products: unknown[] };
+  type MosaicStep = { until: string; file: string; dates: string[]; coverage_of_paraguay: number };
   const mosaicMeta = await fetch(ds.url("mosaic/mosaic.json"))
-    .then((r) => (r.ok ? (r.json() as Promise<{ coordinates: [[number, number], [number, number], [number, number], [number, number]]; before: MosaicSide; after: MosaicSide }>) : null))
+    .then((r) =>
+      r.ok ? (r.json() as Promise<{ coordinates: [[number, number], [number, number], [number, number], [number, number]]; timeline?: MosaicStep[] }>) : null,
+    )
     .catch(() => null);
+  const mosaicSteps = mosaicMeta?.timeline ?? [];
   const mosaic = mosaicMeta
-    ? { before: ds.url("mosaic/before.webp"), after: ds.url("mosaic/after.webp"), coordinates: mosaicMeta.coordinates }
+    ? {
+        files: Object.fromEntries([
+          ["before", ds.url("mosaic/before.webp")],
+          ["after", ds.url("mosaic/after.webp")],
+          ...mosaicSteps.map((m) => [m.until, ds.url(`mosaic/${m.file}`)]),
+        ]) as Record<string, string>,
+        coordinates: mosaicMeta.coordinates,
+      }
     : undefined;
-  // The "before" mosaic mixes dates (Nov 2025 - Jan 2026 in the west and centre, Jun - Jul 2026 in the east, where
-  // NISAR first passed in June), so it is shown only in before / after, never as one timeline date.
+  /**
+   * Timeline: the country as NISAR last saw it up to that date: the mosaic of the latest month-end at or before
+   * it (each pixel = the latest pass up to then). Before the first month-end, none.
+   */
+  const mosaicAt = (iso: string | undefined): string | null => {
+    if (!iso) return null;
+    let k: string | null = null;
+    for (const m of mosaicSteps) if (m.until.slice(0, 7) <= iso.slice(0, 7)) k = m.until;
+    return k;
+  };
+  // Before / after: the "before" mosaic mixes dates (Nov 2025 - Jan 2026 in the west and centre, Jun - Jul 2026 in
+  // the east, where NISAR first passed in June); the timeline uses the month-by-month mosaics instead.
   const mapOpts = { ds, polygons, hex, mini, miniOutline, zoneBoxes, imageSets, mosaic, offline: lab?.offline };
   const mapA = new RadarMap({ container: containerA, ...mapOpts, bbox: boxOf(focus), controls: true, start: "country" });
   let mapB: RadarMap | null = null;
@@ -391,8 +411,8 @@ export async function initMapSection(ds: Dataset): Promise<void> {
             "p",
             "panel-note test-note",
             es
-              ? "PRUEBA · En «Antes / después», todo el Paraguay con vistas rápidas de NISAR (ASF). Antes: nov. 2025 – ene. 2026 en el oeste y el centro; jun. – jul. 2026 en el este (NISAR pasó ahí por primera vez en junio). Después: 10 – 31 oct. 2026. Colores de ASF, sin calibrar; cada franja es otra pasada."
-              : "TEST · In «Before / after», all of Paraguay in NISAR quick-looks (ASF). Before: Nov 2025 – Jan 2026 in the west and centre; Jun – Jul 2026 in the east (NISAR's first pass there was in June). After: 10 – 31 Oct 2026. ASF colours, not calibrated; each strip is another pass.",
+              ? "PRUEBA · Todo el Paraguay con vistas rápidas de NISAR (ASF). En la línea de tiempo, el país tal como NISAR lo vio por última vez hasta esa fecha (un mosaico por mes; el este recién aparece en junio de 2026, cuando NISAR pasó por primera vez). En «Antes / después»: antes nov. 2025 – ene. 2026 (oeste y centro) y jun. – jul. 2026 (este); después 10 – 31 oct. 2026. Colores de ASF, sin calibrar; cada franja es otra pasada."
+              : "TEST · All of Paraguay in NISAR quick-looks (ASF). On the timeline, the country as NISAR last saw it up to that date (one mosaic per month; the east only appears in June 2026, NISAR's first pass there). In «Before / after»: before Nov 2025 – Jan 2026 (west and centre) and Jun – Jul 2026 (east); after 10 – 31 Oct 2026. ASF colours, not calibrated; each strip is another pass.",
           ),
         );
       }
@@ -516,7 +536,7 @@ export async function initMapSection(ds: Dataset): Promise<void> {
   // ------------------------------------------------------------------ modes
   function showTimeline(i: number) {
     cur = i;
-    mapA.setMosaic(null);
+    mapA.setMosaic(mosaicAt(scenes[i]?.date));
     void mapA.showScene(i);
     void mapA.setTime(i);
     renderPanel();

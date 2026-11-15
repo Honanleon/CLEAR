@@ -5,6 +5,7 @@
 # search API: "after" = latest 2026-09-15..10-31 per track/frame) and the downloaded
 # browse PNGs in before/ and after/. Usage: python browse_mosaic_test.py <out_dir>
 # "before" = earliest pass of each track/frame up to 2026-07-15 (NISAR imaged eastern Paraguay only from June 2026).
+# "monthly" (timeline) = for each month-end, the latest pass of each track/frame up to that day.
 # Each browse is georeferenced by matching the 4 corners of its data swath (extreme non-black pixels)
 # to the 4 corners of the product footprint from the ASF search (affine fit; products with a residual
 # over 0.02 deg are skipped). Output: lon/lat grid over Paraguay, clipped to the country, RGBA WebP.
@@ -50,13 +51,13 @@ def fit(arr, ring):
     return cl, ct, res, nz
 
 
-def build(kind, latest_on_top):
-    items = sorted(sel[kind], key=lambda x: x["date"], reverse=not latest_on_top)
+def build(kind, latest_on_top, items=None, name=None):
+    items = sorted(items if items is not None else sel[kind], key=lambda x: x["date"], reverse=not latest_on_top)
     rgb = np.zeros((H, W, 3), np.uint8)
     have = np.zeros((H, W), bool)
     used, skipped = [], []
     for it in items:
-        path = os.path.join(HERE, kind, it["id"] + ".png")
+        path = next((os.path.join(HERE, d, it["id"] + ".png") for d in ("after", "before", "monthly") if os.path.exists(os.path.join(HERE, d, it["id"] + ".png"))), "")
         if not os.path.exists(path) or os.path.getsize(path) < 1000:
             skipped.append((it["id"], "missing"))
             continue
@@ -97,7 +98,7 @@ def build(kind, latest_on_top):
     alpha = (have & inside_py).astype(np.uint8) * 255
     img = Image.fromarray(np.dstack([rgb, alpha]), "RGBA")
     os.makedirs(OUT, exist_ok=True)
-    img.save(os.path.join(OUT, f"{kind}.webp"), "WEBP", quality=80, method=6)
+    img.save(os.path.join(OUT, f"{name or kind}.webp"), "WEBP", quality=80, method=6)
     cov = float((have & inside_py).sum() / inside_py.sum())
     return {"products": used, "skipped": skipped, "coverage_of_paraguay": round(cov, 3)}
 
@@ -108,7 +109,15 @@ meta = {
     "source": "NISAR L2 GCOV browse images (ASF DAAC quick-looks, NASA/JPL), mosaicked; not calibrated",
     "after": build("after", latest_on_top=True),
     "before": build("before", latest_on_top=False),
+    "timeline": [],
 }
+# timeline: for each month-end, the latest pass of every frame up to that day (carry-forward state)
+for cutoff, items in sorted(sel.get("monthly", {}).items()):
+    name = "m_" + cutoff[:7]
+    r = build("monthly", latest_on_top=True, items=items, name=name)
+    ds = [p["date"] for p in r["products"]]
+    meta["timeline"].append({"until": cutoff, "file": name + ".webp", "dates": [min(ds), max(ds)] if ds else [], "coverage_of_paraguay": r["coverage_of_paraguay"], "frames": len(r["products"]), "skipped": len(r["skipped"])})
+    print(name, "frames", len(r["products"]), "skipped", len(r["skipped"]), "coverage", r["coverage_of_paraguay"])
 for k in ("before", "after"):
     m = meta[k]
     ds = [p["date"] for p in m["products"]]

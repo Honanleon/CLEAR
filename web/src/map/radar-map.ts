@@ -67,7 +67,7 @@ export interface RadarMapOptions {
    * TEST SITE: Paraguay-wide NISAR quick-look mosaics (ASF browse images), "before" and "after", drawn under the
    * zones' own radar images in the radar view.
    */
-  mosaic?: { before: string; after: string; coordinates: [[number, number], [number, number], [number, number], [number, number]] };
+  mosaic?: { files: Record<string, string>; coordinates: [[number, number], [number, number], [number, number], [number, number]] };
   /** Dashed box of every study zone (zones.json); defaults to `bbox`. */
   zoneBoxes?: GeoJSON;
   /**
@@ -288,20 +288,6 @@ export class RadarMap {
     m.addSource("waterhex", { type: "geojson", data: EMPTY as never });
     m.addSource("waterminihex", { type: "geojson", data: EMPTY as never });
 
-    // TEST SITE: country mosaics, below everything the site draws (the zones' scenes go above them)
-    const mo = this.opts.mosaic;
-    if (mo) {
-      for (const which of ["before", "after"] as const) {
-        m.addSource(`mosaic-${which}`, { type: "image", url: mo[which], coordinates: mo.coordinates });
-        m.addLayer({
-          id: `mosaic-${which}`,
-          type: "raster",
-          source: `mosaic-${which}`,
-          layout: { visibility: "none" },
-          paint: { "raster-opacity": this.radarOpacity, "raster-fade-duration": 0, "raster-resampling": "linear" },
-        });
-      }
-    }
     // roads and borders (under the clearings, over the imagery)
     if (!this.opts.offline) this.addBaseLines();
     this.addOverlays();
@@ -667,19 +653,36 @@ export class RadarMap {
   }
 
   /** Radar view on/off (the simple base map underneath stays). */
-  private mosaicWhich: "before" | "after" | null = null;
-  /** TEST SITE: which country mosaic shows (only in the radar view). */
-  setMosaic(which: "before" | "after" | null): void {
+  private mosaicWhich: string | null = null;
+  private mosaicLoaded = new Set<string>();
+  /** TEST SITE: which country mosaic shows (only in the radar view); each one is loaded the first time. */
+  setMosaic(which: string | null): void {
     this.mosaicWhich = which;
     void this.ready.then(() => this.paintMosaic());
   }
 
   private paintMosaic() {
-    for (const w of ["before", "after"] as const) {
-      const id = `mosaic-${w}`;
-      if (!this.map.getLayer(id)) continue;
-      const on = this.radarOn && this.mosaicWhich === w;
-      this.map.setLayoutProperty(id, "visibility", on ? "visible" : "none");
+    const mo = this.opts.mosaic;
+    if (!mo) return;
+    const want = this.radarOn ? this.mosaicWhich : null;
+    if (want && mo.files[want] && !this.mosaicLoaded.has(want)) {
+      // below everything the site draws (the zones' own scenes go above it)
+      const below = this.map.getLayer("roads") ? "roads" : this.overlayStart();
+      this.map.addSource(`mosaic-${want}`, { type: "image", url: mo.files[want], coordinates: mo.coordinates });
+      this.map.addLayer(
+        {
+          id: `mosaic-${want}`,
+          type: "raster",
+          source: `mosaic-${want}`,
+          paint: { "raster-opacity": this.radarOpacity, "raster-fade-duration": 0, "raster-resampling": "linear" },
+        },
+        below,
+      );
+      this.mosaicLoaded.add(want);
+    }
+    for (const k of this.mosaicLoaded) {
+      const id = `mosaic-${k}`;
+      this.map.setLayoutProperty(id, "visibility", k === want ? "visible" : "none");
       this.map.setPaintProperty(id, "raster-opacity", this.radarOpacity);
     }
   }
