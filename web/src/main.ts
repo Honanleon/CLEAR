@@ -8,6 +8,7 @@ import "@fontsource-variable/jetbrains-mono/wght.css";
 import "./styles.css";
 import { type Dataset, loadDataset } from "./data";
 import { fmt, initI18n, lang, onLang, setLang } from "./i18n";
+import { initContext } from "./story/context";
 import { initGuide } from "./story/guide";
 import { initHero } from "./story/hero";
 import { initRadar } from "./story/radar";
@@ -112,6 +113,7 @@ async function boot() {
   initZones(ds);
   initValidation(ds);
   initGuide(ds);
+  initContext();
   lazyMap(ds);
 }
 

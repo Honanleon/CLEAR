@@ -70,10 +70,60 @@ def firms_counts(folder: Path, bbox: list[float]) -> dict:
     }
 
 
+USDA_SERIES = {  # (file, commodity, attribute) -> key in context.json
+    ("psd_oilseeds.csv", "Oilseed, Soybean", "Area Harvested"): "soy_area_kha",
+    ("psd_livestock.csv", "Meat, Beef and Veal", "Exports"): "beef_exports_kt",
+}
+
+
+def usda_series(folder: Path, first: int = 2000, last: int = 2024) -> dict[str, dict[str, float]]:
+    """Paraguay series from the USDA FAS PSD Online CSV downloads (psd_oilseeds.csv, psd_livestock.csv)."""
+    out: dict[str, dict[str, float]] = {}
+    for (name, commodity, attribute), key in USDA_SERIES.items():
+        (path,) = folder.rglob(name)
+        with open(path, encoding="utf-8-sig") as fh:
+            for r in csv.DictReader(fh):
+                if (r["Country_Name"], r["Commodity_Description"], r["Attribute_Description"]) != (
+                    "Paraguay",
+                    commodity,
+                    attribute,
+                ):
+                    continue
+                year = int(r["Market_Year"])
+                if first <= year <= last:
+                    out.setdefault(key, {})[str(year)] = float(r["Value"])
+    return {k: dict(sorted(v.items())) for k, v in out.items()}
+
+
+def web_context(stats: dict, national: dict) -> dict:
+    """Compact file for the web (web/public/data/context.json): yearly series only."""
+    zones = {}
+    for zone, s in stats.items():
+        z = {}
+        if "gfc" in s:
+            z["loss_ha"] = {y: v for y, v in s["gfc"]["loss_ha_by_year"].items()}
+            z["forest_2000_ha"] = s["gfc"]["forest_2000_ha"]
+        if "firms_modis" in s:
+            z["fires"] = s["firms_modis"]["by_year"]
+        zones[zone] = z
+    return {
+        "generated": "see docs/CONTEXT.md",
+        "zones": zones,
+        "national": national,
+        "sources": {
+            "loss_ha": "UMD Global Forest Change 2000-2024 v1.12 (Hansen et al. 2013), canopy >= 30 %",
+            "fires": "NASA FIRMS, MODIS C6.1 active fires (vegetation, confidence >= 30)",
+            "national": "USDA FAS PSD Online (Paraguay)",
+        },
+    }
+
+
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--config", type=Path, default=Path("pipeline/config.yaml"))
     ap.add_argument("--firms", type=Path, help="folder with the FIRMS MODIS yearly CSVs of Paraguay")
+    ap.add_argument("--usda", type=Path, help="folder with the unzipped USDA PSD CSVs (oilseeds, livestock)")
+    ap.add_argument("--web", type=Path, help="also write the compact web file here (web/public/data/context.json)")
     args = ap.parse_args()
     cfg = yaml.safe_load(args.config.read_text(encoding="utf-8"))
     out = {}
@@ -84,7 +134,11 @@ def main() -> None:
             out[zone]["gfc"] = gfc_loss_by_year(bbox)
         if args.firms:
             out[zone]["firms_modis"] = firms_counts(args.firms, bbox)
-    print(json.dumps(out, indent=1))
+    national = usda_series(args.usda) if args.usda else {}
+    print(json.dumps({"zones": out, "national": national}, indent=1))
+    if args.web:
+        text = json.dumps(web_context(out, national), ensure_ascii=False, separators=(",", ":"))
+        args.web.write_text(text, encoding="utf-8")
 
 
 if __name__ == "__main__":

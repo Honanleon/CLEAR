@@ -2,6 +2,8 @@
 
 # Context of the study zones
 
+Shown on the site in the section "What happened before the radar" (`web/src/story/context.ts`, data in `web/public/data/context.json`, written by `python -m pipeline.context_stats --firms <folder> --usda <folder> --web web/public/data/context.json`). Colours as on the map: clearing red, fire orange, flooding purple; soybean yellow, beef brown.
+
 Numbers that put the radar results in context: forest loss, fires, floods and agriculture around the study zones. They come from US sources and are **not part of the detection**. Forest loss and fires are computed by us over each zone's box with `python -m pipeline.context_stats --firms <folder>` (2026-11-15); the rest are published figures.
 
 ## Forest loss per zone (UMD Global Forest Change 2000–2024 v1.12)
