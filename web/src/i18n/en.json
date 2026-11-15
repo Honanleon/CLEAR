@@ -28,7 +28,8 @@
     "hud_date": "date",
     "hud_signal": "signal",
     "hud_note": "Illustrative animation · not data",
-    "scroll": "Scroll"
+    "scroll": "Scroll",
+    "hud_alert": "⚠ Clearing detected"
   },
   "chapter": {
     "kicker": "Chapter 1",

@@ -28,7 +28,8 @@
     "hud_date": "fecha",
     "hud_signal": "señal",
     "hud_note": "Animación ilustrativa · no son datos",
-    "scroll": "Bajá"
+    "scroll": "Bajá",
+    "hud_alert": "⚠ Desmonte detectado"
   },
   "chapter": {
     "kicker": "Capítulo 1",

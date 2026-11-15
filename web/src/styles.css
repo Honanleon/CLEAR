@@ -342,8 +342,10 @@ button {
   align-items: center;
   overflow: hidden;
   isolation: isolate;
+  /* alarm: a deep red glow over the horizon instead of a calm blue sky */
   background:
-    radial-gradient(120% 70% at 50% 0%, #0f1d33 0%, transparent 60%),
+    radial-gradient(120% 70% at 50% 0%, #2a080c 0%, transparent 60%),
+    radial-gradient(90% 50% at 50% 100%, rgba(150, 0, 20, 0.35) 0%, transparent 70%),
     var(--bg);
 }
 .hero-stage {
@@ -362,15 +364,6 @@ button {
   display: block;
   width: 100%;
   height: 100%;
-}
-.hero-grid {
-  position: absolute;
-  inset: 0;
-  background-image:
-    linear-gradient(to right, rgba(0, 0, 0, 0.35) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(0, 0, 0, 0.35) 1px, transparent 1px);
-  background-size: var(--cell, 12px) var(--cell, 12px);
-  pointer-events: none;
 }
 .hero-vignette {
   position: absolute;
@@ -395,13 +388,13 @@ button {
   font-size: clamp(88px, 22vw, 300px);
   font-weight: 700;
   letter-spacing: -0.06em;
-  background: linear-gradient(100deg, #ffffff 0%, #bfe3ff 35%, var(--hv) 55%, #eaf4ff 70%, #ffffff 100%);
+  background: linear-gradient(100deg, #ffffff 0%, #ffd2d2 35%, #ff2a2a 55%, #ffe3e3 70%, #ffffff 100%);
   background-size: 250% 100%;
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
   animation: sheen 7s linear infinite;
-  filter: drop-shadow(0 0 40px rgba(76, 184, 255, 0.25));
+  filter: drop-shadow(0 0 44px rgba(255, 30, 30, 0.35));
 }
 @keyframes sheen {
   to {
@@ -497,6 +490,36 @@ button {
 .hud-row b.is-alert {
   color: var(--alert);
   text-shadow: 0 0 12px rgba(255, 90, 60, 0.7);
+}
+.hud-alert {
+  margin: -2px 0 8px;
+  padding: 5px 9px;
+  border-radius: 6px;
+  background: rgba(230, 0, 0, 0.18);
+  border: 1px solid rgba(255, 60, 60, 0.7);
+  color: #ff6b6b;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  animation: hud-blink 1s steps(2, start) infinite;
+}
+@keyframes hud-blink {
+  50% {
+    opacity: 0.35;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hud-alert {
+    animation: none;
+  }
+}
+/* the cover's call to action in alarm red */
+.hero .btn-primary {
+  background: #e60000;
+  color: #ffffff;
+}
+.hero .btn-primary:hover {
+  box-shadow: 0 10px 40px -8px rgba(255, 30, 30, 0.75);
 }
 .hud small {
   display: block;
