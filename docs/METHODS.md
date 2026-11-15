@@ -98,6 +98,8 @@ Done in the browser (`web/src/map/hexgrid.ts`), so the data contract does not ch
 - The hexagon panel shows hectares and % of the hexagon, first detection date, how many of its clearings overlap an OPERA DIST-ALERT alert, and the hectares detected at each pass. The pipeline's 1 km hexagons stay available as an option.
 - Hexagons make small clearings visible at the scale of the whole study area; they summarize, they do not add detections.
 
+**Several zones (contract v3).** The web reads `zones.json` and shows a zone picker in the map chapter. Choosing a zone reloads the page with `?zona=<id>`, so the map, the guide and the validation all read that zone's folder (`path`); scene images stay relative to `data/`. The water zone (Ñeembucú) has no detection: no hexagons, the map opens on the radar images, tapping shows the HH / HV series of the 500 m cell and the rain, and the validation chapter says it does not apply. The control zone (Mbaracayú) runs like a clearing zone. When the radar pass before a detection is more than 12 days back (`prev_date`), the date is shown as a window ("between <prev_date> and <first_date>") instead of "±12 days".
+
 ## Sanity checks
 
 - The forest HV median changes by more than 2 dB between two dates → check the product version, calibration or rain before going on.

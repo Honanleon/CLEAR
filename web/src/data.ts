@@ -51,7 +51,31 @@ export interface IndexData {
     polygons_total?: number | null;
   };
   provenance: Provenance[];
+  /** schema v3: which kind of zone this index describes. */
+  zone?: { kind: ZoneKind; chapter: number; name: { es: string; en: string }; primary: boolean };
 }
+
+/** schema v3 (zones.json): clearing detection, water (chapter 2: images, series and rain only) or control. */
+export type ZoneKind = "clearing" | "water" | "control";
+
+export interface ZoneInfo {
+  id: string;
+  name: { es: string; en: string };
+  kind: ZoneKind;
+  chapter: number;
+  primary: boolean;
+  /** Folder of the zone's files relative to data/ ("" for the primary zone). */
+  path: string;
+  bbox: BBox;
+  n_scenes: number;
+  first_date: string;
+  last_date: string;
+  n_polygons: number | null;
+  area_ha_total: number | null;
+}
+
+/** URL parameter that selects the zone (?zona=<id>). */
+export const ZONE_PARAM = "zona";
 
 export interface PolygonProps {
   id: string;
@@ -121,16 +145,26 @@ export class Dataset {
     readonly index: IndexData,
     readonly base: string,
     readonly synthetic: boolean,
+    /** The zone shown (null when there is no zones.json: one zone at the root). */
+    readonly zone: ZoneInfo | null = null,
+    /** Every zone listed in zones.json, in its order. */
+    readonly zones: ZoneInfo[] = [],
   ) {}
 
+  /** URL of a file relative to data/ (scene images: `scenes[].rgb` is always relative to data/). */
   url(path: string): string {
     return new URL(path, this.base).href;
   }
 
+  get kind(): ZoneKind {
+    return this.zone?.kind ?? this.index.zone?.kind ?? "clearing";
+  }
+
+  /** Fetches a file of the current zone (its folder is `path` in zones.json). */
   private json<T>(path: string): Promise<T> {
     let p = this.cache.get(path);
     if (!p) {
-      p = fetchJson<T>(this.url(path));
+      p = fetchJson<T>(this.url(`${this.zone?.path ?? ""}${path}`));
       p.catch(() => this.cache.delete(path));
       this.cache.set(path, p);
     }
@@ -139,6 +173,8 @@ export class Dataset {
 
   /** Polygons with `t` (scene index of first_date) added, sorted by date. */
   async polygons(): Promise<PolygonCollection> {
+    // the water zone has no detection and no polygons.geojson
+    if (this.kind === "water") return { type: "FeatureCollection", features: [] };
     const fc = await this.json<PolygonCollection>("polygons.geojson");
     const dates = this.index.scenes.map((s) => s.date);
     fc.features.forEach((f, i) => {
@@ -174,16 +210,20 @@ export async function loadDataset(): Promise<Dataset | null> {
   if (!forceFixtures) candidates.push([new URL("data/", document.baseURI).href, false]);
   if (import.meta.env.DEV) candidates.push([new URL("/fixtures/data/", location.origin).href, true]);
 
+  const wanted = new URLSearchParams(location.search).get(ZONE_PARAM);
   for (const [base, fromFixtures] of candidates) {
     try {
-      const index = await fetchJson<IndexData>(`${base}index.json`);
+      // schema v3: zones.json lists the zones; without it there is one zone at the root
+      const zones = (await fetchJson<{ zones: ZoneInfo[] }>(`${base}zones.json`).catch(() => null))?.zones ?? [];
+      const zone = zones.find((z) => z.id === wanted) ?? zones.find((z) => z.primary) ?? zones[0] ?? null;
+      const index = await fetchJson<IndexData>(`${base}${zone?.path ?? ""}index.json`);
       if (!Array.isArray(index.scenes) || index.scenes.length === 0) continue;
       if (index.schema_version > SUPPORTED_SCHEMA) {
         console.warn(`CLEAR: index.json schema_version ${index.schema_version}, web expects ${SUPPORTED_SCHEMA}`);
       }
       // Defensive: also flag fixtures that were copied into public/data by mistake.
       const synthetic = fromFixtures || index.scenes.some((s) => s.id.includes("SYNTHETIC"));
-      return new Dataset(index, base, synthetic);
+      return new Dataset(index, base, synthetic, zone, zones);
     } catch {
       /* not there (or the dev server answered with HTML): try the next source */
     }

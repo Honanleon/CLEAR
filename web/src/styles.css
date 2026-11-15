@@ -1037,6 +1037,93 @@ button {
 .map-intro {
   padding-bottom: 36px;
 }
+/* study-zone picker (zones.json, schema v3) */
+.zone-picker {
+  margin: 4px 0 22px;
+}
+.zone-picker-label {
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--dim);
+  margin: 0 0 10px;
+}
+.zone-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.zone-pill {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  min-width: 0;
+  padding: 10px 16px;
+  border-radius: 14px;
+  border: 1px solid var(--line-2);
+  background: var(--bg-3);
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+.zone-pill:hover {
+  border-color: var(--muted);
+}
+.zone-pill[aria-pressed="true"] {
+  background: #ffffff;
+  border-color: #ffffff;
+  color: #0a0d12;
+  cursor: default;
+}
+.zone-pill:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.zone-name {
+  font-size: 16px;
+  font-weight: 600;
+}
+.zone-kind {
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+.zone-pill[aria-pressed="true"] .zone-kind {
+  color: #4b5563;
+}
+.zone-kind-clearing::before,
+.zone-kind-water::before,
+.zone-kind-control::before {
+  content: "";
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 6px;
+  vertical-align: 1px;
+}
+.zone-kind-clearing::before {
+  background: #e60000;
+}
+.zone-kind-water::before {
+  background: var(--hv);
+}
+.zone-kind-control::before {
+  background: var(--ok);
+}
+.zone-note {
+  font-size: 14px;
+  color: var(--muted);
+  margin: 12px 0 0;
+  max-width: 70ch;
+}
+/* water zone: no clearing totals on the timeline */
+body[data-zone-kind="water"] .tl-stats {
+  display: none;
+}
 .ethics {
   display: inline-flex;
   gap: 10px;

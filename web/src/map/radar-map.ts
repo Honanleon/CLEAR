@@ -43,6 +43,8 @@ export interface RadarMapOptions {
   mini: HexGrid;
   /** Outline of the small hexagons over the rest of the country inside a box (drawn only where the map looks). */
   miniOutline?: (view: BBox) => GeoJSON;
+  /** false for the water zone: no detection, so no hexagon grid at all. */
+  hexagons?: boolean;
   bbox: BBox;
   controls: boolean;
   start: "country" | "study";
@@ -190,6 +192,9 @@ export class RadarMap {
     // roads and borders (under the clearings, over the imagery)
     if (!this.opts.offline) this.addOsmLines();
     this.addOverlays();
+    if (this.opts.hexagons === false) {
+      for (const id of ["hex-nodata", "hex-grid", "mini-world", "mini-grid", "hex-hover", "mini-hover", "hex-selected", "mini-selected"]) this.map.setLayoutProperty(id, "visibility", "none");
+    }
     if (!this.opts.offline) this.addLabels();
   }
 

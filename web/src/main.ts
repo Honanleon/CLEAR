@@ -12,6 +12,7 @@ import { initGuide } from "./story/guide";
 import { initHero } from "./story/hero";
 import { initRadar } from "./story/radar";
 import { initValidation } from "./story/validation";
+import { initZones } from "./story/zones";
 
 // TEST build only (vite --mode lab): test styles and controls, loaded before the page is drawn.
 if (import.meta.env.MODE === "lab") await import("./lab/boot");
@@ -108,6 +109,7 @@ async function boot() {
     paint();
     onLang(paint);
   }
+  initZones(ds);
   initValidation(ds);
   initGuide(ds);
   lazyMap(ds);

@@ -11,6 +11,8 @@ export interface SeriesInput {
   hh: (number | null)[];
   rain: { dates: string[]; mm: number[] } | null;
   baseline: number | null;
+  /** i18n key of the hover reading ("chart.reading" by default; the water zone uses plain HV / HH names). */
+  readingKey?: string;
   thresholdDb: number;
   detectedIndex: number | null;
   gap: [string, string];
@@ -148,7 +150,7 @@ export function renderSeries(host: HTMLElement, reading: HTMLElement, input: Ser
     guide.setAttribute("x2", String(xx));
     guide.setAttribute("visibility", "visible");
     const v = (a: (number | null)[]) => (a[k] == null ? "—" : `${fmt.num(a[k] as number, 1)} dB`);
-    reading.textContent = t("chart.reading", { date: fmt.date(iso, true), hv: v(input.hv), hh: v(input.hh) });
+    reading.textContent = t(input.readingKey ?? "chart.reading", { date: fmt.date(iso, true), hv: v(input.hv), hh: v(input.hh) });
   };
   const nearest = (clientX: number) => {
     const r = svg.getBoundingClientRect();

@@ -69,10 +69,12 @@ export async function initMapSection(ds: Dataset): Promise<void> {
     const prev = scenes[k - 1];
     const cur = scenes[k];
     return prev && cur && daysBetween(prev.date, cur.date) > REPEAT_DAYS
-      ? t("zone.when_between", { prev: fmt.date(prev.date) })
+      ? t("zone.when_between", { prev: fmt.date(prev.date), date: fmt.date(cur.date) })
       : t("zone.when_note");
   };
   const aoi = index.aoi.bbox;
+  /** Water zone (chapter 2): radar images, time series and rain only; no detection, no hexagons. */
+  const water = ds.kind === "water";
 
   let polygons: PolygonCollection;
   try {
@@ -115,11 +117,12 @@ export async function initMapSection(ds: Dataset): Promise<void> {
         })
       : null;
 
-  const mapA = new RadarMap({ container: containerA, ds, polygons, hex, mini, miniOutline, bbox: aoi, controls: true, start: "country", offline: lab?.offline });
+  const mapA = new RadarMap({ container: containerA, ds, polygons, hex, mini, miniOutline: water ? undefined : miniOutline, hexagons: !water, bbox: aoi, controls: true, start: "country", offline: lab?.offline });
   let mapB: RadarMap | null = null;
   let swipe: Swipe | null = null;
   let mode: Mode = "timeline";
-  let view: View = "satellite";
+  // the water zone has no hexagons: it opens on the radar images
+  let view: View = water ? "radar" : "satellite";
   let cur = 0;
   let before = Math.min(BASELINE_DATES - 1, last);
   let after = last;
@@ -229,9 +232,13 @@ export async function initMapSection(ds: Dataset): Promise<void> {
     }
     body.append(seg);
 
-    body.append(h("p", "panel-label", t("map.legend_polys")), hexLegend());
-    body.append(h("p", "panel-note", t("map.hex_size", { ha: fmt.num(hex.cells[0]?.areaHa ?? 0), mini: fmt.num(mini.cells[0]?.areaHa ?? 0) })));
-    body.append(h("p", "panel-note", t("map.hex_nodata")));
+    if (water) {
+      body.append(h("p", "panel-note", t("map.water_panel")));
+    } else {
+      body.append(h("p", "panel-label", t("map.legend_polys")), hexLegend());
+      body.append(h("p", "panel-note", t("map.hex_size", { ha: fmt.num(hex.cells[0]?.areaHa ?? 0), mini: fmt.num(mini.cells[0]?.areaHa ?? 0) })));
+      body.append(h("p", "panel-note", t("map.hex_nodata")));
+    }
 
     const zoomedOut = mapA.map.getZoom() < 8.5;
     // the offline test map only has imagery around the study area: no "all of Paraguay" view there
@@ -372,7 +379,7 @@ export async function initMapSection(ds: Dataset): Promise<void> {
       containerB.hidden = false;
       swipeEl.hidden = false;
       if (!mapB) {
-        mapB = new RadarMap({ container: containerB, ds, polygons, hex, mini, miniOutline, bbox: aoi, controls: false, start: "study", offline: lab?.offline });
+        mapB = new RadarMap({ container: containerB, ds, polygons, hex, mini, miniOutline: water ? undefined : miniOutline, hexagons: !water, bbox: aoi, controls: false, start: "study", offline: lab?.offline });
         mapB.map.on("click", (e) => focusZone(e.lngLat));
         mapB.setPulse(true);
       }
@@ -446,6 +453,10 @@ export async function initMapSection(ds: Dataset): Promise<void> {
     timeline.pause();
     toast.hidden = true;
     coachShown = true;
+    if (water) {
+      renderPoint(lngLat);
+      return;
+    }
     const cell = gridAt(mapA).locate(lngLat.lng, lngLat.lat);
     if (!cell) {
       renderOutside();
@@ -463,6 +474,34 @@ export async function initMapSection(ds: Dataset): Promise<void> {
       duration: 1400,
       essential: true,
     });
+  }
+
+  /** Water zone: the radar signal and the rain at the tapped point (no hexagons). */
+  function renderPoint(lngLat: LngLat) {
+    const [x0, y0, x1, y1] = aoi;
+    if (lngLat.lng < x0 || lngLat.lng > x1 || lngLat.lat < y0 || lngLat.lat > y1) {
+      renderOutside();
+      return;
+    }
+    closeZone();
+    zone.hidden = false;
+    if (!marker) marker = new Marker({ element: h("div", "probe-marker") });
+    marker.setLngLat(lngLat).addTo(mapA.map);
+    const head = h("div", "zone-head");
+    head.append(h("h3", "", t("point.title")), closeButton());
+    const reading = h("p", "probe-reading", t("chart.loading"));
+    const chart = h("div", "probe-chart");
+    const legend = h("div", "probe-legend");
+    zone.append(
+      head,
+      h("p", "zone-text", t("point.where", { lat: fmt.num(lngLat.lat, 4), lon: fmt.num(lngLat.lng, 4) })),
+      h("p", "zone-help", t("point.help")),
+      reading,
+      chart,
+      legend,
+      h("p", "fineprint", t("point.note")),
+    );
+    void drawSignal([lngLat.lng, lngLat.lat], null, reading, chart, legend, true);
   }
 
   function renderOutside() {
@@ -561,7 +600,7 @@ export async function initMapSection(ds: Dataset): Promise<void> {
     signal.addEventListener("toggle", () => {
       if (signal.open && !drawn) {
         drawn = true;
-        void drawSignal(cell, reading, chart, legend, animate);
+        void drawSignal(cell.center, cell.firstT, reading, chart, legend, animate);
       }
     });
 
@@ -578,10 +617,17 @@ export async function initMapSection(ds: Dataset): Promise<void> {
     lab?.decorateHex(zone, cell, now);
   }
 
-  async function drawSignal(cell: HexCell, reading: HTMLElement, chart: HTMLElement, legend: HTMLElement, animate: boolean) {
+  async function drawSignal(
+    center: [number, number],
+    firstT: number | null,
+    reading: HTMLElement,
+    chart: HTMLElement,
+    legend: HTMLElement,
+    animate: boolean,
+  ) {
     try {
       const [grid, rain] = await Promise.all([ds.grid(), ds.rain()]);
-      const [lon, lat] = cell.center;
+      const [lon, lat] = center;
       const col = Math.floor((lon - grid.origin[0]) / grid.cell_deg[0]);
       const row = Math.floor((lat - grid.origin[1]) / grid.cell_deg[1]);
       const k = row * grid.nx + col;
@@ -594,15 +640,21 @@ export async function initMapSection(ds: Dataset): Promise<void> {
         legend.remove();
         return;
       }
-      const items: [string, string][] = [
-        ["lg-hv", "chart.hv"],
-        ["lg-thr", "chart.threshold"],
-        ["lg-hh", "chart.hh"],
-      ];
+      // the clearing threshold means nothing in the water zone
+      const items: [string, string][] = water
+        ? [
+            ["lg-hv", "chart.hv_plain"],
+            ["lg-hh", "chart.hh_plain"],
+          ]
+        : [
+            ["lg-hv", "chart.hv"],
+            ["lg-thr", "chart.threshold"],
+            ["lg-hh", "chart.hh"],
+          ];
       if (rain) items.push(["lg-rain", "chart.rain"]);
       for (const [cls, key] of items) legend.append(h("span", `lg ${cls}`, t(key, { db: fmt.signed(index.detection.threshold_db, 0) })));
-      const baseline = median(hv.slice(0, BASELINE_DATES).filter((v): v is number => v !== null));
-      const firstDate = cell.firstT !== null ? scenes[cell.firstT]?.date : undefined;
+      const baseline = water ? null : median(hv.slice(0, BASELINE_DATES).filter((v): v is number => v !== null));
+      const firstDate = firstT !== null ? scenes[firstT]?.date : undefined;
       const detectedIndex = firstDate ? grid.dates.indexOf(firstDate) : -1;
       if (!animate) chart.classList.add("no-anim");
       const draw = () =>
@@ -612,6 +664,7 @@ export async function initMapSection(ds: Dataset): Promise<void> {
           hh,
           rain,
           baseline,
+          readingKey: water ? "chart.reading_plain" : undefined,
           thresholdDb: index.detection.threshold_db,
           detectedIndex: detectedIndex >= 0 ? detectedIndex : null,
           gap: INSTRUMENT_GAP,
@@ -674,7 +727,7 @@ export async function initMapSection(ds: Dataset): Promise<void> {
         mapA.map.once("moveend", () => {
           if (!selected && !coachShown) {
             coachShown = true;
-            showToast(t("map.coach"), 9000);
+            showToast(t(water ? "map.coach_water" : "map.coach"), 9000);
           }
           if (!reduced && !selected) timeline.play();
         });
@@ -697,7 +750,8 @@ export async function initMapSection(ds: Dataset): Promise<void> {
   renderModes();
   timeline.set(0, false);
   showTimeline(0);
-  if (layers.outlines) applyLayers();
+  // the water zone opens on the radar images, so the radar layer must be switched on now
+  if (layers.outlines || view === "radar") applyLayers();
 }
 
 export function showMapUnavailable(key: "map.no_data" | "map.error"): void {

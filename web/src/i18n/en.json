@@ -129,19 +129,24 @@
     "help": "How do I read the map?",
     "more": "More options",
     "hex_size": "Each big hexagon covers about {ha} ha. Zoom in and it splits into small hexagons of about {mini} ha.",
-    "hex_nodata": "Outside the dashed box, empty hexagons have no radar data yet: that does not mean there is no clearing."
+    "hex_nodata": "Outside the dashed box, empty hexagons have no radar data yet: that does not mean there is no clearing.",
+    "title_water": "Water as the radar sees it",
+    "body_water": "Ñeembucú, in southern Paraguay, floods often. Here we do not look for clearing: we show the NISAR radar image of each date, where open water looks very dark. Press play or tap the map to see the radar signal and the rain at that point.",
+    "body_control": "Mbaracayú is protected Atlantic Forest: it is our control zone. We run the same detection as in the Chaco and expect to find little or nothing. If the radar flagged a lot of clearing here, the method would be failing.",
+    "water_panel": "Water zone: radar images, the signal over time and rain only. No detection, no hexagons.",
+    "coach_water": "👆 Tap the map to see the radar signal and the rain at that point"
   },
   "zone": {
     "title_cleared": "Cleared area",
     "title_forest": "No clearing detected here",
     "title_outside": "Outside the study area",
-    "outside_body": "This hexagon has no radar data yet. We analyze a 60 × 45 km area north of Mariscal Estigarribia: tap a hexagon inside the dashed box.",
+    "outside_body": "Outside the dashed box there is no radar data yet. Tap inside the box.",
     "area": "Size",
     "area_value": "{ha} ha",
     "fields": "≈ {n} soccer fields",
     "when": "When",
     "when_note": "±12 days",
-    "when_between": "between {prev} and this date",
+    "when_between": "between {prev} and {date}",
     "confirm": "Did another satellite see it?",
     "confirm_true": "Yes, it matches",
     "confirm_false": "No",
@@ -232,7 +237,10 @@
     "reading": "{date}: forest {hv} · ground {hh}",
     "dist_true": "Matches an optical alert (OPERA DIST-ALERT)",
     "dist_false": "No optical alert in the same window",
-    "dist_null": "Optical alert: not checked"
+    "dist_null": "Optical alert: not checked",
+    "hv_plain": "HV signal",
+    "hh_plain": "HH signal",
+    "reading_plain": "{date}: HV {hv} · HH {hh}"
   },
   "trust": {
     "kicker": "Can we trust it?",
@@ -256,7 +264,9 @@
     "disclaimer": "These are radar-estimated results, not checked on the ground.",
     "agreement_desc_any": "of the area we flag also has an optical alert at some point in the period",
     "coverage_desc_any": "of the optical-alert area in forest (≥ 5 ha) is also detected by radar",
-    "window24": "If dates must also match (±24 days): agreement {a}%, coverage {c}%."
+    "window24": "If dates must also match (±24 days): agreement {a}%, coverage {c}%.",
+    "na_water": "Not applicable in the water zone",
+    "na_water_desc": "We do not detect clearing here, so there is nothing to compare with optical alerts. Pick a clearing zone to see the validation."
   },
   "next": {
     "kicker": "What's next",
@@ -323,5 +333,19 @@
     "id": "Hexagon #{id} · {ha} ha",
     "center": "Center: {lat}, {lon}",
     "polys": "Clearings: {ids}"
+  },
+  "zones": {
+    "label": "Study zone",
+    "kind_clearing": "Clearing",
+    "kind_water": "Water",
+    "kind_control": "Control",
+    "note_water": "Water zone (chapter 2): for now only radar images, the signal over time and rain. No detection.",
+    "note_control": "Control zone (chapter 3): forest that should not change. Few or no detections are expected."
+  },
+  "point": {
+    "title": "Radar signal at this point",
+    "where": "Lat. {lat}, lon. {lon}",
+    "help": "HH and HV in dB at each radar pass (500 m cell), with daily rain below. Open water pulls both signals down sharply.",
+    "note": "Radar-estimated, not checked on the ground."
   }
 }
