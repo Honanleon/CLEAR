@@ -333,7 +333,7 @@
     "kind_water": "Flooding",
     "kind_control": "Control: stable forest",
     "note_water": "Flooding zone (chapter 2): open water and flooded vegetation estimated by radar at each date, in purple hexagons. No clearing detection.",
-    "note_control": "Control zone (chapter 3): protected forest that should not change. It is not a disaster: it checks that the method raises no false alarms. Anything red here is a detection to review."
+    "note_control": "Control zone (chapter 3): the Mbaracayú Reserve and its surroundings, under the zero-deforestation law. It is not a disaster: it checks that the method raises no false alarms in protected forest. The box also holds cropland and earlier forest loss, so anything red here is a detection to review."
   },
   "point": {
     "title": "Radar signal at this point",
