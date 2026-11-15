@@ -294,7 +294,7 @@
     "credit_mapbiomas": "ESA WorldCover 2021 v200 (tree cover, provisional forest mask), CC BY 4.0.",
     "credit_power": "NASA POWER (NASA LaRC): daily PRECTOTCORR rainfall.",
     "credit_basemap": "Outline of Paraguay: Natural Earth (public domain).",
-    "credit_labels": "Base map (water, roads, borders and names): OpenFreeMap, © OpenMapTiles, data © OpenStreetMap contributors (ODbL).",
+    "credit_labels": "Base map (countries, departments, rivers, lakes, roads and town names): Natural Earth 1:10m, public domain (NACIS, USA).",
     "credit_software": "Built with MapLibre GL JS, Vite and TypeScript. Typefaces Space Grotesk and JetBrains Mono (SIL OFL 1.1).",
     "credit_ai": "Parts of the code were written with AI assistance (Claude Code), detailed in docs/AI_USAGE.md.",
     "repo": "Open source (Apache-2.0)",

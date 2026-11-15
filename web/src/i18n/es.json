@@ -294,7 +294,7 @@
     "credit_mapbiomas": "ESA WorldCover 2021 v200 (cobertura arbórea, máscara de bosque provisoria), CC BY 4.0.",
     "credit_power": "NASA POWER (NASA LaRC): lluvia diaria PRECTOTCORR.",
     "credit_basemap": "Contorno del Paraguay: Natural Earth (dominio público).",
-    "credit_labels": "Mapa base (agua, rutas, límites y nombres): OpenFreeMap, © OpenMapTiles, datos de © colaboradores de OpenStreetMap (ODbL).",
+    "credit_labels": "Mapa base (países, departamentos, ríos, lagunas, rutas y nombres de localidades): Natural Earth 1:10m, dominio público (NACIS, EE. UU.).",
     "credit_software": "Hecho con MapLibre GL JS, Vite y TypeScript. Tipografías Space Grotesk y JetBrains Mono (SIL OFL 1.1).",
     "credit_ai": "Parte del código se escribió con ayuda de IA (Claude Code), detallado en docs/AI_USAGE.md.",
     "repo": "Código abierto (Apache-2.0)",

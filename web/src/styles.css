@@ -3192,3 +3192,35 @@ button {
   color: #d5dbe3;
   font-size: 16px;
 }
+
+/* Base-map names (Natural Earth, public/basemap/labels.json), drawn as HTML in the site's font */
+.map-label {
+  font-family: var(--font);
+  color: #1f2937;
+  font-size: 12px;
+  line-height: 1;
+  white-space: nowrap;
+  pointer-events: none;
+  user-select: none;
+  text-shadow:
+    0 0 2px rgba(255, 255, 255, 0.95),
+    0 0 4px rgba(255, 255, 255, 0.9);
+}
+.map-label[hidden] {
+  display: none;
+}
+.map-label-country {
+  font-size: 15px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+}
+.map-label-department {
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+}
+.map-label-town.is-city {
+  font-weight: 700;
+  font-size: 13px;
+}

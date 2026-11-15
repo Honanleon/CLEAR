@@ -401,7 +401,7 @@ export async function initMapSection(ds: Dataset): Promise<void> {
     const fm = ds.provenance("forest_mask");
     if (fm) prov.append(provRow(t("prov.layer_mask"), fm.type, fm.source));
     if (waterProv) prov.append(provRow(t("water.layer"), waterProv.type, waterProv.source, t("water.estimated")));
-    prov.append(provRow(t("prov.layer_basemap"), "measured", "OpenStreetMap / OpenFreeMap"));
+    prov.append(provRow(t("prov.layer_basemap"), "modeled", "Natural Earth 1:10m (public domain)"));
     more.append(prov, h("p", "fineprint", t("map.ethics")));
     body.append(more);
     panel.append(head, body);

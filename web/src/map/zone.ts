@@ -29,9 +29,12 @@ export function direction(from: XY, to: XY): Dir {
   return (["n", "ne", "e", "se", "s", "sw", "w", "nw"] as const)[Math.round(deg / 45) % 8] as Dir;
 }
 
+/** Reference towns: Natural Earth populated places of Paraguay (pipeline/export/basemap.py). */
+const TOWNS = (places as { name: string; lonlat: number[] }[]).map((p) => ({ name: p.name, lonlat: [p.lonlat[0], p.lonlat[1]] as XY }));
+
 export function nearestTown(pt: XY): { name: string; km: number; dir: Dir } {
   let best = { name: "", km: Infinity, dir: "n" as Dir };
-  for (const p of places as { name: string; lonlat: XY }[]) {
+  for (const p of TOWNS) {
     const km = distanceKm(p.lonlat, pt);
     if (km < best.km) best = { name: p.name, km, dir: direction(p.lonlat, pt) };
   }

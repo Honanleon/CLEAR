@@ -1,7 +1,7 @@
 // Parts of this file were generated with AI assistance (Claude Code). See docs/AI_USAGE.md
 //
-// One MapLibre map of Paraguay: a simple grey-and-white base map (water, roads, borders, names from
-// OpenStreetMap), Paraguay divided into hexagons coloured red by hectares cleared up to a date
+// One MapLibre map of Paraguay: a simple grey-and-white base map (water, rivers, roads, borders and names
+// from Natural Earth, public domain, served with the site: no tile server), Paraguay divided into hexagons coloured red by hectares cleared up to a date
 // (cells that grew in the current pass pulse), optional 1 km clearing hexagons and, on demand,
 // the NISAR RGB scene of a date. The map section uses one instance in timeline mode
 // and two (synced, one clipped) in before/after mode.
@@ -11,6 +11,7 @@ import {
   FullscreenControl,
   type GeoJSONSource,
   Map as MLMap,
+  Marker,
   NavigationControl,
   setWorkerUrl,
   type StyleSpecification,
@@ -24,15 +25,29 @@ import { type Lang, lang, t } from "../i18n";
 
 setWorkerUrl(workerUrl);
 
-/** OpenFreeMap vector tiles (OpenMapTiles schema, OpenStreetMap data): the simple grey base map (water, roads, borders, names). */
-const LABELS_TILEJSON = "https://tiles.openfreemap.org/planet";
-const LABELS_ATTR = "OpenFreeMap © OpenMapTiles · © OpenStreetMap contributors";
-const GLYPHS = "https://tiles.openfreemap.org/fonts/{fontstack}/{range}.pbf";
+/** Natural Earth 1:10m layers clipped to the map (pipeline/export/basemap.py), served from public/basemap/. */
+const BASEMAP_ATTR = "Natural Earth";
+const basemapUrl = (file: string) => new URL(`basemap/${file}`, document.baseURI).href;
 const FADE_MS = 520;
 
 export const PARAGUAY_BBOX: BBox = [-62.65, -27.61, -54.25, -19.29];
 const MAX_BOUNDS: BBox = [-67, -31, -50, -16];
-const LABEL_LAYERS = ["place-country", "place-state", "place-city", "place-town"];
+/** A base-map name (public/basemap/labels.json). Labels are HTML (the site's own font): no glyph server. */
+interface BaseLabel {
+  kind: "country" | "department" | "town";
+  name_es: string;
+  name_en: string;
+  lonlat: [number, number];
+  rank?: number;
+}
+/** Zoom range of a label (same ranges as the previous base map): towns by Natural Earth rank (3 = capital). */
+function labelZooms(l: BaseLabel): [number, number] {
+  if (l.kind === "country") return [0, 9];
+  // HTML labels have no collision detection: departments and small towns only once the map is closer
+  if (l.kind === "department") return [6.3, 10];
+  const r = l.rank ?? 9;
+  return [r <= 4 ? 4.5 : r <= 6 ? 6 : r === 7 ? 7 : 7.6, 24];
+}
 
 export interface RadarMapOptions {
   container: HTMLElement;
@@ -54,7 +69,7 @@ export interface RadarMapOptions {
   bbox: BBox;
   controls: boolean;
   start: "country" | "study";
-  /** Test (lab) build only: satellite tiles shipped with the page, no OpenStreetMap labels. */
+  /** Test (lab) build only: satellite tiles shipped with the page, no base-map labels. */
   offline?: { tiles: string; attribution: string; maxzoom: number; bounds: BBox };
 }
 
@@ -75,7 +90,6 @@ export function preload(url: string): Promise<void> {
   return p;
 }
 
-const nameExpr = (l: Lang) => ["coalesce", ["get", `name:${l}`], ["get", "name"]];
 
 function style(offline?: RadarMapOptions["offline"]): StyleSpecification {
   if (offline) {
@@ -92,23 +106,24 @@ function style(offline?: RadarMapOptions["offline"]): StyleSpecification {
   }
   return {
     version: 8,
-    glyphs: GLYPHS,
     sources: {
-      osm: { type: "vector", url: LABELS_TILEJSON, attribution: LABELS_ATTR },
+      "ne-countries": { type: "geojson", data: basemapUrl("countries.geojson"), attribution: BASEMAP_ATTR },
+      "ne-departments": { type: "geojson", data: basemapUrl("departments.geojson") },
+      "ne-lakes": { type: "geojson", data: basemapUrl("lakes.geojson") },
+      "ne-rivers": { type: "geojson", data: basemapUrl("rivers.geojson") },
+      "ne-roads": { type: "geojson", data: basemapUrl("roads.geojson") },
       country: { type: "geojson", data: { type: "Feature", properties: {}, geometry: { type: "Polygon", coordinates: [paraguay as [number, number][]] } } },
     },
     // simple grey-and-white map: neighbours light grey, Paraguay white, water grey (red is kept for clearing only)
     layers: [
       { id: "bg", type: "background", paint: { "background-color": "#dedfe1" } },
       { id: "country-fill", type: "fill", source: "country", paint: { "fill-color": "#ffffff" } },
-      { id: "water", type: "fill", source: "osm", "source-layer": "water", paint: { "fill-color": "#c4c9cf" } },
+      { id: "water", type: "fill", source: "ne-lakes", paint: { "fill-color": "#c4c9cf" } },
       {
         id: "waterway",
         type: "line",
-        source: "osm",
-        "source-layer": "waterway",
-        minzoom: 6,
-        paint: { "line-color": "#c4c9cf", "line-width": ["interpolate", ["linear"], ["zoom"], 6, 0.6, 12, 2] },
+        source: "ne-rivers",
+        paint: { "line-color": "#c4c9cf", "line-width": ["interpolate", ["linear"], ["zoom"], 4, 0.8, 8, 1.6, 12, 3] },
       },
     ],
   };
@@ -138,6 +153,7 @@ export class RadarMap {
   private radarOpacity = 0.9;
   private pulseRaf = 0;
   private pulsing = false;
+  private labels: { el: HTMLElement; label: BaseLabel; zooms: [number, number] }[] = [];
 
   constructor(private opts: RadarMapOptions) {
     this.sets = (opts.imageSets ?? [{ key: "main", ds: opts.ds, always: false }]).map((s) => ({ ...s, present: new Set<number>(), visible: -1, request: 0 }));
@@ -224,19 +240,17 @@ export class RadarMap {
     m.addSource("waterminihex", { type: "geojson", data: EMPTY as never });
 
     // roads and borders (under the clearings, over the imagery)
-    if (!this.opts.offline) this.addOsmLines();
+    if (!this.opts.offline) this.addBaseLines();
     this.addOverlays();
     if (!this.opts.offline) this.addLabels();
   }
 
-  private addOsmLines() {
+  private addBaseLines() {
     const m = this.map;
     m.addLayer({
       id: "roads",
       type: "line",
-      source: "osm",
-      "source-layer": "transportation",
-      filter: ["in", ["get", "class"], ["literal", ["motorway", "trunk", "primary", "secondary"]]],
+      source: "ne-roads",
       paint: {
         "line-color": "#c3c5c9",
         "line-opacity": ["interpolate", ["linear"], ["zoom"], 5, 0.6, 10, 0.95],
@@ -246,17 +260,13 @@ export class RadarMap {
     m.addLayer({
       id: "admin-state",
       type: "line",
-      source: "osm",
-      "source-layer": "boundary",
-      filter: ["all", ["==", ["get", "admin_level"], 4], ["!=", ["get", "maritime"], 1]],
+      source: "ne-departments",
       paint: { "line-color": "#9a9ca1", "line-opacity": 0.8, "line-width": 1, "line-dasharray": [3, 2] },
     });
     m.addLayer({
       id: "admin-country",
       type: "line",
-      source: "osm",
-      "source-layer": "boundary",
-      filter: ["all", ["==", ["get", "admin_level"], 2], ["!=", ["get", "maritime"], 1]],
+      source: "ne-countries",
       paint: { "line-color": "#5f6268", "line-opacity": 0.9, "line-width": ["interpolate", ["linear"], ["zoom"], 4, 1, 10, 2.5] },
     });
 
@@ -410,69 +420,34 @@ export class RadarMap {
   }
 
   private addLabels() {
-    const m = this.map;
-    // labels on top of everything
-    const halo = { "text-halo-color": "rgba(255,255,255,0.92)", "text-halo-width": 1.6, "text-halo-blur": 0.5 };
-    const name = nameExpr(lang()) as never;
-    m.addLayer({
-      id: "place-country",
-      type: "symbol",
-      source: "osm",
-      "source-layer": "place",
-      filter: ["==", ["get", "class"], "country"],
-      layout: {
-        "text-field": name,
-        "text-font": ["Noto Sans Bold"],
-        "text-size": ["interpolate", ["linear"], ["zoom"], 3, 12, 7, 18],
-        "text-transform": "uppercase",
-        "text-letter-spacing": 0.2,
-      },
-      paint: { "text-color": "#1f2937", ...halo },
-    });
-    m.addLayer({
-      id: "place-state",
-      type: "symbol",
-      source: "osm",
-      "source-layer": "place",
-      minzoom: 5,
-      maxzoom: 10,
-      filter: ["==", ["get", "class"], "state"],
-      layout: {
-        "text-field": name,
-        "text-font": ["Noto Sans Regular"],
-        "text-size": 12,
-        "text-transform": "uppercase",
-        "text-letter-spacing": 0.15,
-      },
-      paint: { "text-color": "#6b7280", ...halo },
-    });
-    m.addLayer({
-      id: "place-city",
-      type: "symbol",
-      source: "osm",
-      "source-layer": "place",
-      minzoom: 4.5,
-      filter: ["==", ["get", "class"], "city"],
-      layout: { "text-field": name, "text-font": ["Noto Sans Bold"], "text-size": ["interpolate", ["linear"], ["zoom"], 5, 12, 12, 17] },
-      paint: { "text-color": "#1f2937", ...halo },
-    });
-    // Only towns (never villages or hamlets): no community-level labels (CLAUDE.md §4).
-    m.addLayer({
-      id: "place-town",
-      type: "symbol",
-      source: "osm",
-      "source-layer": "place",
-      minzoom: 6.5,
-      filter: ["==", ["get", "class"], "town"],
-      layout: { "text-field": name, "text-font": ["Noto Sans Regular"], "text-size": ["interpolate", ["linear"], ["zoom"], 7, 12, 13, 16] },
-      paint: { "text-color": "#1f2937", ...halo },
-    });
+    // names on top of everything, as HTML in the site's font (no glyph server); only towns, never villages (CLAUDE.md §4)
+    void fetch(basemapUrl("labels.json"))
+      .then((r) => (r.ok ? (r.json() as Promise<BaseLabel[]>) : []))
+      .then((list) => {
+        const l = lang();
+        for (const label of list) {
+          const el = document.createElement("div");
+          el.className = `map-label map-label-${label.kind}${label.kind === "town" && (label.rank ?? 9) <= 6 ? " is-city" : ""}`;
+          el.textContent = l === "en" ? label.name_en : label.name_es;
+          el.setAttribute("aria-hidden", "true");
+          new Marker({ element: el, anchor: "center" }).setLngLat(label.lonlat).addTo(this.map);
+          this.labels.push({ el, label, zooms: labelZooms(label) });
+        }
+        this.updateLabels();
+        this.map.on("zoom", () => this.updateLabels());
+      })
+      .catch(() => {
+        /* the map works without names */
+      });
+  }
+
+  private updateLabels(): void {
+    const z = this.map.getZoom();
+    for (const { el, zooms } of this.labels) el.hidden = z < zooms[0] || z >= zooms[1];
   }
 
   setLabelLang(l: Lang): void {
-    void this.ready.then(() => {
-      for (const id of LABEL_LAYERS) if (this.map.getLayer(id)) this.map.setLayoutProperty(id, "text-field", nameExpr(l) as never);
-    });
+    for (const { el, label } of this.labels) el.textContent = l === "en" ? label.name_en : label.name_es;
   }
 
   /** Radar scenes go under roads (official map) or under the hexagons (offline test map). */
