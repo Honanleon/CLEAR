@@ -5,6 +5,7 @@
 // the map: clearing red, fire orange, flooding purple; soybean yellow and beef brown for the national series.
 // Hand-made SVG (no chart library) to stay inside the bundle budget.
 
+import { arrow } from "../icons";
 import { fmt, onLang, t } from "../i18n";
 
 interface ZoneContext {
@@ -96,10 +97,10 @@ function trendCard(series: Record<string, number> | undefined, cls: string, titl
   head.textContent = title;
   const big = document.createElement("p");
   big.className = "ctx-card-value";
-  big.textContent = `${fmt.num(first)} → ${fmt.num(last)} ${unit}`;
+  big.append(`${fmt.num(first)} `, arrow(), ` ${fmt.num(last)} ${unit}`);
   const yrs = document.createElement("p");
   yrs.className = "ctx-card-years";
-  yrs.textContent = `${ys[0]} → ${ys[ys.length - 1]} · ×${fmt.num(last / Math.max(1, first), 1)}`;
+  yrs.append(`${ys[0]} `, arrow(), ` ${ys[ys.length - 1]} · ×${fmt.num(last / Math.max(1, first), 1)}`);
   card.append(head, big, svg, yrs);
   return card;
 }

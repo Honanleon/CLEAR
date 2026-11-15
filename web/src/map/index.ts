@@ -5,6 +5,7 @@
 // chosen date. Hovering shows a quick tooltip; tapping a hexagon zooms in and opens a
 // plain-language panel. Modes: timeline (one map + play) and before/after (two synced maps).
 
+import { arrow } from "../icons";
 import { LngLat, Marker } from "maplibre-gl";
 import { renderBars } from "../charts/bars";
 import { renderSeries } from "../charts/series";
@@ -651,7 +652,7 @@ export async function initMapSection(ds: Dataset): Promise<void> {
         if (after <= before) after = Math.min(last, before + 1);
         showCompare();
       }, "cmp-a"),
-      h("span", "cmp-arrow", "→"),
+      arrow("cmp-arrow"),
       mkSelect(t("map.after"), after, (i) => {
         after = i;
         if (before >= after) before = Math.max(0, after - 1);
