@@ -10,6 +10,7 @@
     "preview": "vite preview",
     "fixtures": "node scripts/make-fixtures.mjs",
     "check": "tsc --noEmit && node scripts/check-i18n.mjs && vite build && node scripts/check-size.mjs",
+    "build:artifact": "vite build --mode artifact --outDir dist-artifact --emptyOutDir && node scripts/artifact-package.mjs dist-artifact",
     "build:lab": "vite build --mode lab --outDir dist-lab --emptyOutDir && node scripts/lab-package.mjs dist-lab"
   },
   "dependencies": {

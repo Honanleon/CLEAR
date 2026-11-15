@@ -312,25 +312,29 @@ export async function initMapSection(ds: Dataset): Promise<void> {
       mm.addSource("fire-big", { type: "geojson", data: fireGeo(fires.big, HEX_RADIUS_M, FIRE_MIN.big) as never });
       mm.addSource("fire-mini", { type: "geojson", data: fireGeo(fires.mini, MINI_HEX_RADIUS_M, FIRE_MIN.mini) as never });
       mm.addLayer({ id: "fire-big", type: "fill", source: "fire-big", paint: { "fill-pattern": "fire-hatch", "fill-opacity": ["interpolate", ["linear"], ["zoom"], 5, 0.9, z0, 0.9, z1, 0] as never } }, below);
-      mm.addLayer({ id: "fire-big-line", type: "line", source: "fire-big", paint: { "line-color": "#d60000", "line-width": 0.8, "line-opacity": ["interpolate", ["linear"], ["zoom"], 5, 0.6, z0, 0.6, z1, 0] as never } }, below);
       mm.addLayer({ id: "fire-mini", type: "fill", source: "fire-mini", minzoom: z0, paint: { "fill-pattern": "fire-hatch", "fill-opacity": ["interpolate", ["linear"], ["zoom"], z0, 0, z1, 0.9] as never } }, below);
-      mm.addLayer({ id: "fire-mini-line", type: "line", source: "fire-mini", minzoom: z0, paint: { "line-color": "#d60000", "line-width": 0.8, "line-opacity": ["interpolate", ["linear"], ["zoom"], z0, 0, z1, 0.6] as never } }, below);
     }
     const on = firesOn && view !== "radar";
-    for (const id of ["fire-big", "fire-big-line", "fire-mini", "fire-mini-line"]) {
+    for (const id of ["fire-big", "fire-mini"]) {
       if (mm.getLayer(id)) mm.setLayoutProperty(id, "visibility", on ? "visible" : "none");
     }
   }
   let fireDays: { big: Map<string, number>; mini: Map<string, number> } | null = null;
+  const fireMaps = (f: FireData) => (fireDays ??= { big: new Map(f.big.map(([q, r, v]) => [`${q},${r}`, v])), mini: new Map(f.mini.map(([q, r, v]) => [`${q},${r}`, v])) });
+  /** Fire days of a hexagon cell when it is drawn hatched (enough days for its level), else 0. */
+  const cellFireDays = (cell: HexCell): number => {
+    if (!fires || !firesOn) return 0;
+    const fd = fireMaps(fires);
+    const m = isMini(cell);
+    const days = (m ? fd.mini : fd.big).get(fireKey(cell.center[0], cell.center[1], m ? MINI_HEX_RADIUS_M : HEX_RADIUS_M)) ?? 0;
+    return days >= (m ? FIRE_MIN.mini : FIRE_MIN.big) ? days : 0;
+  };
   /** Fire days of the drawn (hatched) hexagon under lon/lat at the zoom on screen, or null. */
   const fireDaysAt = (lon: number, lat: number): { days: number; mini: boolean } | null => {
     if (!fires || !firesOn) return null;
-    fireDays ??= {
-      big: new Map(fires.big.map(([q, r, v]) => [`${q},${r}`, v])),
-      mini: new Map(fires.mini.map(([q, r, v]) => [`${q},${r}`, v])),
-    };
+    const fd = fireMaps(fires);
     const isMiniLevel = mapA.map.getZoom() >= MINI_ZOOM;
-    const days = (isMiniLevel ? fireDays.mini : fireDays.big).get(fireKey(lon, lat, isMiniLevel ? MINI_HEX_RADIUS_M : HEX_RADIUS_M)) ?? 0;
+    const days = (isMiniLevel ? fd.mini : fd.big).get(fireKey(lon, lat, isMiniLevel ? MINI_HEX_RADIUS_M : HEX_RADIUS_M)) ?? 0;
     return days >= (isMiniLevel ? FIRE_MIN.mini : FIRE_MIN.big) ? { days, mini: isMiniLevel } : null;
   };
   /** Fire facts of a hexagon around a clearing date: days with fire, and the ones from 36 days before to 60 after. */
@@ -398,9 +402,11 @@ export async function initMapSection(ds: Dataset): Promise<void> {
   dock.append(timeline.el, compareBar);
   ui.append(modeBar, panel, toast, dock, zone, tip);
   if (lab) ui.append(...lab.overlay);
-  // TEST SITE: the CLEAR assistant next to the map (answers when the page runs as a claude.ai artifact)
+  // TEST SITE: the CLEAR assistant next to the map. It answers only when the page runs as a claude.ai artifact
+  // (the viewer's own Claude account), so it is built only into the artifact build (`--mode artifact`) and the
+  // dev server; the normal build (the hosted site, the bundle budget) never includes it.
   let testChat: ReturnType<typeof import("./test-chat").createTestChat> | null = null;
-  void import("./test-chat")
+  if (import.meta.env.DEV || import.meta.env.MODE === "artifact") void import("./test-chat")
     .then((m) => {
       testChat = m.createTestChat({
         ds,
@@ -408,17 +414,8 @@ export async function initMapSection(ds: Dataset): Promise<void> {
         mini,
         polygonsById: byId,
         closeZone: () => closeZone(),
-        extra: () => ({
-          note: "TEST version of the site. Besides the radar clearing it shows fire detections; answer about them only with these rules.",
-          zones: zoneSets.filter((s) => s.z).map((s) => ({ id: s.z!.id, kind: s.z!.kind, bbox: s.z!.bbox })),
-          fire_layer: {
-            source: "NASA FIRMS VIIRS S-NPP 375 m thermal anomalies (daily, Nov 2025 - Oct 2026) via NASA GIBS images; satellite-detected, not checked on the ground; the drawn extent of each fire is inflated",
-            shown_as: `red hatched hexagons, only the quarter with the most fire days (>= ${FIRE_MIN.big} days in a 24 km hexagon, >= ${FIRE_MIN.mini} in a 2 km one)`,
-            outside_study_zones: "fire hexagons outside the study zones: fire was observed, but the radar was not analysed there, so CLEAR does not know if there was clearing; the fire may be clearing with burning, or agricultural / grassland burning",
-          },
-          probable_cause_rule:
-            "in a hexagon with radar-estimated clearing: 'with fire' if VIIRS detected fire from 36 days before to 60 days after the first detection date (it may be the fire that opened the forest or the burning of the debris piles after mechanical clearing); otherwise 'no fire: mechanical clearing' (an inference: no fire was detected)",
-        }),
+        zones: zoneSets.filter((s) => s.z).map((s) => ({ id: s.z!.id, kind: s.z!.kind, bbox: s.z!.bbox })),
+        fireMin: FIRE_MIN,
       });
       ui.append(...testChat.overlay);
     })
@@ -453,15 +450,15 @@ export async function initMapSection(ds: Dataset): Promise<void> {
       before: "2025-11-21",
       after: "2026-09-17",
       center: [-61.1739, -20.7598],
-      es: "Arrastrá la barra hacia la derecha: el bloque de potreros nuevos (azul) era monte (verde amarillo). Desmonte estimado por radar.",
-      en: "Drag the bar to the right: the block of new paddocks (blue) was forest (yellow-green). Clearing estimated by radar.",
+      es: "Arrastrá la barra a la derecha: los potreros nuevos (azul) eran monte (verde amarillo). Desmonte estimado por radar.",
+      en: "Drag the bar right: the new paddocks (blue) were forest (yellow-green). Radar-estimated clearing.",
     },
     "boqueron-sur": {
       before: "2026-01-08",
       after: "2026-09-29",
       center: [-61.2487, -22.4904],
-      es: "Arrastrá la barra hacia la derecha: los potreros nuevos (lila) eran monte (verde amarillo). Desmonte estimado por radar.",
-      en: "Drag the bar to the right: the new paddocks (lilac) were forest (yellow-green). Clearing estimated by radar.",
+      es: "Arrastrá la barra a la derecha: los potreros nuevos (lila) eran monte (verde amarillo). Desmonte estimado por radar.",
+      en: "Drag the bar right: the new paddocks (lilac) were forest (yellow-green). Radar-estimated clearing.",
     },
   };
   /** Before/after on the change spot of the focused zone; false when the zone has none. */
@@ -594,8 +591,8 @@ export async function initMapSection(ds: Dataset): Promise<void> {
             "p",
             "panel-note test-note",
             es
-              ? "PRUEBA · Todo el Paraguay con vistas rápidas de NISAR (ASF). En la línea de tiempo, el país tal como NISAR lo vio por última vez hasta esa fecha (un mosaico por mes; hasta mayo de 2026 el este se completa con la primera pasada de NISAR ahí, de jun. – jul. 2026). En «Antes / después»: antes nov. 2025 – ene. 2026 (oeste y centro) y jun. – jul. 2026 (este); después 10 – 31 oct. 2026. Colores de ASF, sin calibrar; cada franja es otra pasada."
-              : "TEST · All of Paraguay in NISAR quick-looks (ASF). On the timeline, the country as NISAR last saw it up to that date (one mosaic per month; until May 2026 the east is filled with NISAR's first pass there, Jun – Jul 2026). In «Before / after»: before Nov 2025 – Jan 2026 (west and centre) and Jun – Jul 2026 (east); after 10 – 31 Oct 2026. ASF colours, not calibrated; each strip is another pass.",
+              ? "PRUEBA · Paraguay en vistas rápidas de NISAR (ASF), un mosaico por mes; hasta mayo de 2026 el este usa su primera pasada (jun. 2026). Sin calibrar: cada franja es otra pasada."
+              : "TEST · Paraguay in NISAR quick-looks (ASF), one mosaic per month; until May 2026 the east uses its first pass (Jun 2026). Not calibrated: each strip is another pass.",
           ),
         );
       }
@@ -621,8 +618,8 @@ export async function initMapSection(ds: Dataset): Promise<void> {
             "p",
             "panel-note",
             es
-              ? `PRUEBA · Rayas rojas: hexágonos con focos de incendio, nov. 2025 – oct. 2026 (desde ${FIRE_MIN.big} días en el grande y ${FIRE_MIN.mini} en el chico). Fuente: NASA FIRMS VIIRS vía GIBS; el área de cada foco se ve más grande de lo real. Estimado por satélite.`
-              : `TEST · Red stripes: hexagons with fire detections, Nov 2025 – Oct 2026 (from ${FIRE_MIN.big} days in a big one, ${FIRE_MIN.mini} in a small one). Source: NASA FIRMS VIIRS via GIBS; each fire looks bigger than it is. Satellite estimate.`,
+              ? `PRUEBA · Rayas: días con fuego, nov. 2025 – oct. 2026 (desde ${FIRE_MIN.big} en el hexágono grande, ${FIRE_MIN.mini} en el chico). NASA FIRMS VIIRS; estimado por satélite.`
+              : `TEST · Stripes: days with fire, Nov 2025 – Oct 2026 (from ${FIRE_MIN.big} in a big hexagon, ${FIRE_MIN.mini} in a small one). NASA FIRMS VIIRS; satellite estimate.`,
           ),
         );
       }
@@ -997,8 +994,8 @@ export async function initMapSection(ds: Dataset): Promise<void> {
         es ? "Focos de incendio observados" : "Fire detections observed",
         es ? `${fmt.num(fd.days)} días con fuego` : `${fmt.num(fd.days)} days with fire`,
         es
-          ? `En este hexágono ${fd.mini ? "chico (2 km)" : "grande (24 km)"}, nov. 2025 – oct. 2026, satélite VIIRS (NASA FIRMS).`
-          : `In this ${fd.mini ? "small (2 km)" : "big (24 km)"} hexagon, Nov 2025 – Oct 2026, VIIRS satellite (NASA FIRMS).`,
+          ? `Hexágono de ${fd.mini ? 2 : 24} km, nov. 2025 – oct. 2026 (VIIRS).`
+          : `${fd.mini ? 2 : 24} km hexagon, Nov 2025 – Oct 2026 (VIIRS).`,
         "fact-fire",
       ),
     );
@@ -1009,8 +1006,8 @@ export async function initMapSection(ds: Dataset): Promise<void> {
         "p",
         "zone-text",
         es
-          ? "Esta no es una zona de estudio: acá no se analizó el radar NISAR, así que no sabemos si hubo desmonte. El fuego puede ser un desmonte con quema o la quema de pastizales o cultivos. Estimado por satélite, no verificado en el terreno."
-          : "This is not a study zone: the NISAR radar was not analysed here, so we do not know whether there was clearing. The fire may be clearing with burning, or grassland or crop burning. Satellite estimate, not checked on the ground.",
+          ? "Acá no se analizó el radar NISAR: no sabemos si hubo desmonte. El fuego puede ser desmonte con quema o quema de pastizales o cultivos. Estimado por satélite."
+          : "The NISAR radar was not analysed here: we do not know if there was clearing. The fire may be clearing with burning, or grassland or crop burning. Satellite estimate.",
       ),
       button("btn btn-primary btn-sm", t("map.go_study"), () => {
         closeZone();
@@ -1069,7 +1066,19 @@ export async function initMapSection(ds: Dataset): Promise<void> {
     const head = h("div", "zone-head");
     const titles = h("div");
     titles.append(
-      h("h3", "", ha > 0 ? t("hex.title_cleared") : total > 0 ? t("hex.title_later") : t("hex.title_none")),
+      h(
+        "h3",
+        "",
+        ha > 0
+          ? t("hex.title_cleared")
+          : total > 0
+            ? t("hex.title_later")
+            : cellFireDays(cell)
+              ? lang() === "es"
+                ? "Fuego, sin desmonte detectado"
+                : "Fire, no clearing detected"
+              : t("hex.title_none"),
+      ),
       h("p", "zone-where", where),
     );
     head.append(titles, closeButton());
@@ -1108,11 +1117,11 @@ export async function initMapSection(ds: Dataset): Promise<void> {
             withFire ? (es ? "Con incendio" : "With fire") : es ? "Sin incendio: desmonte mecánico" : "No fire: mechanical clearing",
             withFire
               ? es
-                ? `El satélite VIIRS detectó focos de incendio en este hexágono ${fn.near === 1 ? `el ${fmt.date(fn.from)}` : `entre el ${fmt.date(fn.from)} y el ${fmt.date(fn.to)} (${fn.near} días)`}, cerca de la fecha del desmonte. Puede ser el fuego que abrió el monte o la quema de los restos. Estimado por satélite.`
-                : `The VIIRS satellite detected fires in this hexagon ${fn.near === 1 ? `on ${fmt.date(fn.from)}` : `between ${fmt.date(fn.from)} and ${fmt.date(fn.to)} (${fn.near} days)`}, close to the clearing date. It may be the fire that opened the forest or the burning of the debris. Satellite estimate.`
+                ? `Focos VIIRS ${fn.near === 1 ? `el ${fmt.date(fn.from)}` : `del ${fmt.date(fn.from)} al ${fmt.date(fn.to)} (${fn.near} días)`}, cerca del desmonte: el fuego que abrió el monte o la quema de los restos. Estimado.`
+                : `VIIRS fires ${fn.near === 1 ? `on ${fmt.date(fn.from)}` : `from ${fmt.date(fn.from)} to ${fmt.date(fn.to)} (${fn.near} days)`}, near the clearing: the fire that opened the forest or the debris burning. Estimate.`
               : es
-                ? `Sin focos de incendio (VIIRS) cerca de la fecha del desmonte${fn.days ? ` (hubo focos en otras fechas del año: ${fn.days} días)` : ""}: el monte se habría quitado con máquinas. Estimado por satélite.`
-                : `No fire detections (VIIRS) close to the clearing date${fn.days ? ` (there were fires on other dates of the year: ${fn.days} days)` : ""}: the forest was probably removed with machines. Satellite estimate.`,
+                ? `Sin focos VIIRS cerca del desmonte${fn.days ? ` (${fn.days} días con fuego en otras fechas)` : ""}: monte quitado con máquinas, probablemente. Estimado.`
+                : `No VIIRS fires near the clearing${fn.days ? ` (${fn.days} fire days on other dates)` : ""}: probably removed with machines. Estimate.`,
             withFire ? "fact-fire" : "",
           ),
         );
@@ -1123,6 +1132,21 @@ export async function initMapSection(ds: Dataset): Promise<void> {
       );
     } else {
       facts.append(fact(t("zone.status"), t("zone.status_forest")));
+    }
+    // TEST SITE: a hatched (fire) hexagon with no radar clearing up to this date
+    const fdays = ha > 0 ? 0 : cellFireDays(cell);
+    if (fdays) {
+      const es = lang() === "es";
+      facts.append(
+        fact(
+          es ? "Focos de incendio observados" : "Fire detections observed",
+          es ? `${fmt.num(fdays)} días con fuego` : `${fmt.num(fdays)} days with fire`,
+          es
+            ? "VIIRS, nov. 2025 – oct. 2026. El radar no vio desmonte acá: quema de pastizales o cultivos, o fuego que no tumbó el monte. Estimado."
+            : "VIIRS, Nov 2025 – Oct 2026. The radar saw no clearing here: grassland or crop burning, or a fire that left the forest standing. Estimate.",
+          "fact-fire",
+        ),
+      );
     }
     zone.append(facts);
 

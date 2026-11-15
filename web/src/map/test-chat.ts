@@ -24,9 +24,28 @@ export interface TestChatHost {
   hex: HexGrid;
   mini: HexGrid;
   polygonsById: Map<number, PolygonFeature>;
-  /** What the test site adds to the study data (fire layer, rules of the probable cause). */
-  extra: () => Record<string, unknown>;
+  /** The zones and the fire layer's thresholds (days) that the test site shows. */
+  zones: { id: string; kind: string; bbox: number[] }[];
+  fireMin: { big: number; mini: number };
   closeZone(): void;
+}
+
+/** What the test site adds to the study data the assistant reads (fire layer, rule of the probable cause). */
+function testSiteData(host: TestChatHost) {
+  return {
+    note: "TEST version of the site. Besides the radar clearing it shows fire detections; answer about them only with these rules.",
+    zones: host.zones,
+    fire_layer: {
+      source:
+        "NASA FIRMS VIIRS S-NPP 375 m thermal anomalies (daily, Nov 2025 - Oct 2026) via NASA GIBS images; satellite-detected, not checked on the ground; the drawn extent of each fire is inflated",
+      shown_as: `red hatched hexagons, only the quarter with the most fire days (>= ${host.fireMin.big} days in a 24 km hexagon, >= ${host.fireMin.mini} in a 2 km one)`,
+      outside_study_zones:
+        "fire hexagons outside the study zones: fire was observed, but the radar was not analysed there, so CLEAR does not know if there was clearing; the fire may be clearing with burning, or agricultural / grassland burning",
+      inside_without_clearing: "fire hexagons with no radar clearing: fire was observed but the radar saw the forest standing; it may be grassland or crop burning, or a fire that did not take the forest down",
+    },
+    probable_cause_rule:
+      "in a hexagon with radar-estimated clearing: 'with fire' if VIIRS detected fire from 36 days before to 60 days after the first detection date (it may be the fire that opened the forest or the burning of the debris piles after mechanical clearing); otherwise 'no fire: mechanical clearing' (an inference: no fire was detected)",
+  };
 }
 
 export function createTestChat(host: TestChatHost) {
@@ -34,7 +53,7 @@ export function createTestChat(host: TestChatHost) {
   const last = host.ds.index.scenes.length - 1;
   let studyCtx: Promise<StudyContext> | null = null;
   const deps: ChatDeps = {
-    study: () => (studyCtx ??= buildStudyContext(host.ds, host.hex).then((s) => ({ ...s, test_site: host.extra() }) as StudyContext)),
+    study: () => (studyCtx ??= buildStudyContext(host.ds, host.hex).then((s) => ({ ...s, test_site: testSiteData(host) }) as StudyContext)),
     signalAt: (lon, lat) => signalAt(host.ds, lon, lat),
     hexagon: async (id) => {
       const cell = id >= MINI_ID ? host.mini.cells[id - MINI_ID] : host.hex.cells[id];

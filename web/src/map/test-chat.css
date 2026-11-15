@@ -403,3 +403,8 @@
   background: var(--accent);
   color: #04121f;
 }
+
+/* the assistant's box inside the hexagon panel */
+.test-chat-hex {
+  margin-block: 14px;
+}

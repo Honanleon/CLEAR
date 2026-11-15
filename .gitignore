@@ -35,4 +35,5 @@ web/fixtures/
 
 # Test (lab) build and its tile cache
 web/dist-lab/
+web/dist-artifact/
 web/.lab-cache/
