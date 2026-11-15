@@ -72,13 +72,13 @@
         -26.6
       ],
       "orbit": {
-        "relative_orbit": 60,
-        "flight_direction": "ASCENDING",
-        "frame": 164
+        "relative_orbit": 10,
+        "flight_direction": "DESCENDING",
+        "frame": 102
       },
-      "n_scenes": 11,
-      "first_date": "2025-11-02",
-      "last_date": "2026-10-28",
+      "n_scenes": 10,
+      "first_date": "2026-06-26",
+      "last_date": "2026-10-24",
       "n_polygons": null,
       "area_ha_total": null
     },

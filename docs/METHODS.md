@@ -71,7 +71,21 @@ NISAR L2 GCOV, frequency A (20 MHz, ~20 m), HH and HV, γ⁰ linear with radiome
 
 - **`boqueron-sur`** (`[-61.7, -22.8, -61.1, -22.4]`, track 161 frame 166, 11 dates; baseline 2025-12-27 and 2026-01-08 because the frame has no data from 2026-01-08 to 2026-06-25; **both baseline dates are BETA products** (CRID X05010, collection `NISAR_L2_GCOV_BETA_V1`, not calibrated; checked in NASA CMR), so this zone's baseline relies on the per-date normalization to absorb the calibration difference): **24 clearings, 1,600 ha**, published as 60 hexagons. Most are dated 2026-06-25, which means **between 2026-01-08 and 2026-06-25** (`prev_date` → `first_date` in the data), not "±12 days". DIST-ALERT: coverage 81.6 %, agreement 20.1 %, 7 of 24 confirmed. Visual HLS review (2026-01-08 vs 2026-11-04): about 19–20 of 24 are new paddock blocks (≈ 90 ha squares and one new centre pivot) in forest; about 4 are next to existing paddocks. **Sanity check:** the forest median jumped 2.09 dB between 2026-10-11 and 2026-10-23 (limit 2 dB). The cause was rain, not the product version: NASA POWER gives 116.7 mm on 2026-10-05 and rain until 10-11 (the 10-11 median is +2 dB above the usual level), while 10-23 (VALIDATED) is in line with 09-29 (PROVISIONAL). The per-date normalization corrects it, so the run continued with `--ignore-sanity`.
 - **`mbaracayu`** (control, `[-55.7, -24.4, -55.2, -24.0]`, track 82 descending frame 101, 11 dates Jun–Oct 2026): **1 polygon of 6 ha**. Forest that should not change does not change, as expected. Note that this series has only 4 months.
-- **`neembucu`** (chapter 2, water, track 60 frame 164): radar images, time series and rain only. Its first date, 2025-11-02, is a BETA product (CRID X05009, not calibrated). 2026-09-22 was left out because that product has no HV channel. Water classification is still to do.
+- **`neembucu`** (chapter 2, water, `[-57.9, -27.3, -57.3, -26.6]`): track 10 descending, frame 102, 10 dates (2026-06-26 → 2026-10-24). Track 60 ascending, frame 164 was tried first and **rejected**: the 2026-07-12 product is empty over the zone and 2026-07-24 is striped with a no-data band, both with whole-scene shifts of about −20 and +12 dB in both channels (HH−HV stayed at ~8 dB, so this is a gain/product problem, not flooding); on 2026-06-18 and 06-30 the Paraguay river does not look like water and 06-18 shows block artefacts; 2026-09-22 has no HV. These problems led to the **quality gate** below.
+
+## Chapter 2: water classes (`kind: water`)
+
+On the 50 m grid of the RGB (speckle-filtered, averaged in linear γ⁰, then dB):
+
+- **open water**: HH < −18 dB and HV < −24 dB. Smooth water reflects the radar away from the sensor (specular reflection), so both channels are very dark;
+- **flooded vegetation**: HH > −4 dB and HH − HV > 10 dB. Water under plants adds a water-to-stem double bounce that brightens HH much more than HV;
+- everything else: other.
+
+The thresholds are estimates checked by eye on 2026-11-14 (the Paraguay river and lagoons come out as open water; esteros as flooded vegetation) and every result is labelled "estimado". Known confusions: smooth bare or ploughed fields and flooded rice can look like open water; wind roughens water and makes it brighter. Implementation: `pipeline/process/water.py`, export stage in `pipeline/run.py`.
+
+## Quality gate (all zones)
+
+Before exporting, each scene's forest HV median (WorldCover tree pixels on the 50 m grid) is compared with the median of all the zone's scenes. If it differs by more than `quality.max_ref_deviation_db` (4 dB), the scene is left out and listed in `index.json` → `excluded_scenes` with the reason. Real changes on the ground are local; a whole-scene jump of several dB in stable forest means a product problem.
 
 ## Default parameters
 

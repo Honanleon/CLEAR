@@ -1,6 +1,6 @@
 {
   "schema_version": 3,
-  "generated_at": "2026-11-14T21:14:34-03:00",
+  "generated_at": "2026-11-14T22:25:41-03:00",
   "aoi": {
     "id": "boqueron-sur",
     "bbox": [
@@ -157,5 +157,6 @@
       "en": "Southern Boquerón"
     },
     "primary": false
-  }
+  },
+  "excluded_scenes": []
 }

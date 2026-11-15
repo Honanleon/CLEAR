@@ -41,11 +41,14 @@ aois:
     orbit: {relative_orbit: 161, flight_direction: ASCENDING, frame: 166}
     detection: {baseline_dates: 2}
   neembucu:
-    bbox: [-57.9, -27.3, -57.3, -26.6] # Chapter 2 (water). Track 60 ascending, frame 164: 12 dates, Nov 2025 - Oct 2026
-    kind: water # RGB and time series only for now; water classification (process/water.py) still to do
+    # Chapter 2 (water). Track 10 descending, frame 102 (Jun - Oct 2026). Track 60 ascending, frame 164 was tried first:
+    # its 2026-07-12 product is empty and 2026-07-24 striped (gain off by -20 / +12 dB), and in 2026-06-18 / 06-30 the
+    # Paraguay river does not look like water; frame 102 is consistent on every date (checked 2026-11-14).
+    bbox: [-57.9, -27.3, -57.3, -26.6]
+    kind: water
     chapter: 2
     name: {es: "Ñeembucú", en: "Ñeembucú"}
-    orbit: {relative_orbit: 60, flight_direction: ASCENDING, frame: 164}
+    orbit: {relative_orbit: 10, flight_direction: DESCENDING, frame: 102}
   mbaracayu:
     # Chapter 3 (control: forest that should not change). The CLAUDE.md box [-55.7, -24.3, -55.2, -23.9] does not fit
     # inside any single frame; shifted 0.1 deg south to fit track 82 descending, frame 101 (11 dates, Jun - Oct 2026).
@@ -101,6 +104,18 @@ detection:
   persistence_window: 3 # 2 of 3: tolerates one wet date that bounces bare soil back (e.g. 2026-04-26)
   min_area_ha: 5 # matches the DIST-ALERT comparison filter
   normalize: forest_median # per-date median HV of forest pixels in the AOI
+
+quality:
+  max_ref_deviation_db: 4.0 # drop a date whose forest HV median is this far from the zone's median of all dates
+                            # (whole-scene jumps of 9-20 dB seen in Neembucu T60A F164, July 2026: product problems)
+
+water:
+  # Chapter 2 thresholds (dB, on the 50 m speckle-filtered grid). Estimates checked by eye on 2026-11-14
+  # (river and lagoons as open water; esteros as flooded vegetation); results are labelled "estimado".
+  open_water_hh_db: -18.0
+  open_water_hv_db: -24.0
+  flooded_hh_db: -4.0
+  flooded_ratio_db: 10.0
 
 validation:
   reference_statuses: [6, 8] # DIST-ALERT confirmed >=50% vegetation loss (ongoing, finished)

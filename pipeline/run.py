@@ -405,19 +405,51 @@ def stage_export(cfg: dict[str, Any]) -> bool:
         log.error("no crops to export")
         return False
 
+    # Quality gate: a whole-scene jump of several dB in the forest level is a product problem, not a change
+    from rasterio.transform import from_bounds
+
+    from pipeline.process import water
+
+    gw, gh = rgb_png.grid_4326(bbox, exp["rgb_res_deg"])
+    forest_g = worldcover.cached_forest_mask(
+        interim / aoi_id / "forest_worldcover2021_rgbgrid.tif", bbox, from_bounds(*bbox, gw, gh), (gh, gw), "EPSG:4326"
+    )
+    kept = list(channels)
+    levels = [float(np.nanmedian(channels[d]["hv_db"][forest_g])) if forest_g.any() else float("nan") for d in kept]
+    med = float(np.nanmedian(levels))
+    excluded = []
+    for i in water.bad_dates(levels, cfg["quality"]["max_ref_deviation_db"]):
+        d = kept[i]
+        reason = f"forest HV median {levels[i]:.1f} dB vs zone median {med:.1f} dB (product problem)"
+        log.warning("%s: excluded by the quality gate: %s", d, reason)
+        excluded.append({"date": d, "reason": reason})
+        del channels[d]
+
     pooled = {c: np.concatenate([ch[c].ravel() for ch in channels.values()]) for c in rgb_png.CHANNELS}
     stretch = rgb_png.fit_stretch(pooled, *exp["rgb_percentiles"])
     rgb_png.save_stretch(stretch, interim / aoi_id / "rgb_stretch.json")
     log.info("RGB stretch (dB) over %d dates: %s", len(channels), stretch)
 
     exported = []
+    water_rows: list[dict[str, Any]] = []
     for s in scenes:
         if s.date not in channels:
             continue
         rel = f"rgb/{s.date}.webp"
         rgb_png.write_webp(rgb_png.to_rgba(channels[s.date], stretch), web_data / rel, exp["rgb_webp_quality"])
         log.info("%s: wrote %s (%.0f KB)", s.date, web_data / rel, (web_data / rel).stat().st_size / 1e3)
-        exported.append({**asdict(s), "rgb": prefix + rel})
+        entry = {**asdict(s), "rgb": prefix + rel}
+        if cfg["zone"]["kind"] == "water":
+            classes = water.classify(channels[s.date]["hh_db"], channels[s.date]["hv_db"], **cfg["water"])
+            wrel = f"water/{s.date}.png"
+            (web_data / "water").mkdir(parents=True, exist_ok=True)
+            from PIL import Image
+
+            Image.fromarray(water.class_rgba(classes)).save(web_data / wrel, optimize=True)
+            areas = water.class_areas_ha(classes, water.pixel_area_ha(bbox, classes.shape))
+            water_rows.append({"date": s.date, **areas})
+            entry["water"] = prefix + wrel
+        exported.append(entry)
 
     # Time series for the chart (grid_500m.json); speckle filter not needed at 500 m
     dates, hv, hh = [], [], []
@@ -469,6 +501,28 @@ def stage_export(cfg: dict[str, Any]) -> bool:
 
     index = to_json.build_index(aoi_id, bbox, cfg["nisar"], exported, cfg["detection"], summary=summary)
     index["zone"] = {k: cfg["zone"][k] for k in ("kind", "chapter", "name", "primary")}
+    index["excluded_scenes"] = excluded
+    if water_rows:
+        to_json.write_json(
+            {
+                "dates": [r["date"] for r in water_rows],
+                "open_water_ha": [r["open_water_ha"] for r in water_rows],
+                "flooded_veg_ha": [r["flooded_veg_ha"] for r in water_rows],
+                "thresholds_db": cfg["water"],
+                "status": "estimado",
+                "source": f"{to_json.NISAR_SOURCE}, HH and HV",
+            },
+            web_data / "water.json",
+        )
+        index["water"] = {"json": prefix + "water.json", "status": "estimado"}
+        index["provenance"].append(
+            {"layer": "water", "type": "satellite", "source": f"CLEAR water classes on {to_json.NISAR_SOURCE}"}
+        )
+        log.info(
+            "water: open water %s ha, flooded vegetation %s ha (per date)",
+            [round(r["open_water_ha"]) for r in water_rows],
+            [round(r["flooded_veg_ha"]) for r in water_rows],
+        )
     to_json.write_json(index, web_data / "index.json")
     log.info("wrote %s (%d scenes)", web_data / "index.json", len(exported))
     return True
