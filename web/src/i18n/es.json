@@ -331,7 +331,7 @@
     "label": "Zona de estudio",
     "kind_clearing": "Desmonte",
     "kind_water": "Inundación",
-    "kind_control": "Control: bosque estable",
+    "kind_control": "Control: bosque protegido",
     "note_water": "Zona de inundación (capítulo 2): agua abierta y vegetación inundada estimadas por radar en cada fecha, en hexágonos violeta. No hay detección de desmonte.",
     "note_control": "Zona de control (capítulo 3): la Reserva Mbaracayú y sus alrededores, en la zona de deforestación cero. No es un desastre: sirve para comprobar que el método no da falsas alarmas en bosque protegido. El recuadro también tiene cultivos y pérdidas de bosque anteriores, así que si aparece algo en rojo, es una detección para revisar."
   },
