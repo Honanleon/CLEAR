@@ -13,7 +13,7 @@ Results are **radar-estimated land-cover change, dated to the radar pass (±12 d
 |---|---|
 | `pipeline/` | Python: download, process, detect and export (runs offline, on laptops or Colab) |
 | `web/` | Static site: Vite + TypeScript + MapLibre GL JS |
-| `docs/` | [Methods](docs/METHODS.md), [data contract](docs/DATA_CONTRACT.md), [references](docs/REFERENCES.md), [AI usage](docs/AI_USAGE.md) |
+| `docs/` | [Methods](docs/METHODS.md), [data contract](docs/DATA_CONTRACT.md), [references](docs/REFERENCES.md), [context of the zones](docs/CONTEXT.md), [AI usage](docs/AI_USAGE.md) |
 
 ## Data credit
 NISAR data courtesy of NASA/JPL, distributed by the ASF DAAC. Full list of data sources and libraries in [docs/REFERENCES.md](docs/REFERENCES.md).

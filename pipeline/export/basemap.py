@@ -44,10 +44,13 @@ def _write(gdf, props: dict[str, str], path: Path) -> int:
         if row.geometry is None or row.geometry.is_empty:
             continue
         geom = json.loads(json.dumps(row.geometry.__geo_interface__))
-        # missing values (pandas NaN, e.g. unnamed lakes) become null: NaN is not valid JSON and the browser rejects the file
-        feats.append({"type": "Feature", "properties": {o: _clean(row[s]) for s, o in props.items()}, "geometry": _round(geom)})
+        # missing values (pandas NaN, e.g. unnamed lakes) become null:
+        # NaN is not valid JSON and the browser rejects the file
+        props_out = {o: _clean(row[s]) for s, o in props.items()}
+        feats.append({"type": "Feature", "properties": props_out, "geometry": _round(geom)})
     path.parent.mkdir(parents=True, exist_ok=True)
-    text = json.dumps({"type": "FeatureCollection", "features": feats}, ensure_ascii=False, separators=(",", ":"), allow_nan=False)
+    fc = {"type": "FeatureCollection", "features": feats}
+    text = json.dumps(fc, ensure_ascii=False, separators=(",", ":"), allow_nan=False)
     path.write_text(text, encoding="utf-8")
     return len(text.encode("utf-8"))
 
