@@ -123,6 +123,7 @@ Earlier attempts (same day), kept for the record:
 ## Limitations and next steps
 
 - Change in cover is not proof of illegality; we have no cadastre or permits.
-- PROVISIONAL products may change in calibration.
-- About 11 months of data (one wet and one dry season, a single year); wet dates such as 2026-04-26 still add noise, and year-to-year variation is not covered.
+- PROVISIONAL products may change in calibration. BETA products (not calibrated) are used only where nothing else exists: the two baseline dates of `boqueron-sur` and the first date of `neembucu`.
+- Dates are ±12 days only when the previous pass is 12 days earlier. After a missing pass or the instrument gap the window is longer (in `boqueron-norte`: 24 days on 2026-04-26, 36 days on 2026-08-24; in `boqueron-sur`: 168 days on 2026-06-25). The data carry `prev_date` and the web shows the real window.
+- About 11 months of data in `boqueron-norte` (one wet and one dry season, a single year), fewer in the other zones (`mbaracayu`: 4 months); wet dates such as 2026-04-26 still add noise, and year-to-year variation is not covered.
 - Out of scope this weekend: interferometry (GUNW, coherence), polarimetric decomposition, machine learning.
