@@ -52,19 +52,38 @@ export const MINI_HEX_RADIUS_M = 2000;
 /** Map zoom from which the mini hexagons replace the big ones (cross-fade ±0.4 around it). */
 export const MINI_ZOOM = 8.4;
 
-/**
- * @param country optional outer ring (lon, lat) of the country: hexagons whose centre falls inside it
- * are added around the study area, with no data, so the grid covers the whole map.
- */
-export function buildHexGrid(aoi: BBox, polygons: PolygonCollection, nScenes: number, radiusM = HEX_RADIUS_M, country?: XY[]): HexGrid {
-  const R = radiusM;
-  const { toXY, toLL } = projection(aoi);
+/** One study area or several (zones.json): the first one anchors the projection, so every grid lines up. */
+type Areas = BBox | BBox[];
+const areasOf = (a: Areas): BBox[] => (typeof a[0] === "number" ? [a as BBox] : (a as BBox[]));
 
-  const [xmin, ymin] = toXY(aoi[0], aoi[1]);
-  const [xmax, ymax] = toXY(aoi[2], aoi[3]);
+/** The study areas in projected metres, and a test "does a hexagon at (cx, cy) of radius R overlap one?". */
+function studiedTest(areas: BBox[], toXY: (lon: number, lat: number) => XY) {
+  const boxes = areas.map((b) => [...toXY(b[0], b[1]), ...toXY(b[2], b[3])] as [number, number, number, number]);
+  return {
+    boxes,
+    overlaps: (cx: number, cy: number, R: number) => boxes.some(([x0, y0, x1, y1]) => !(cx < x0 - R || cx > x1 + R || cy < y0 - R || cy > y1 + R)),
+  };
+}
+
+/**
+ * @param aoi the study area, or several (one per zone): hexagons that overlap any of them carry data.
+ * @param country optional outer ring (lon, lat) of the country: hexagons whose centre falls inside it
+ * are added around the study areas, with no data, so the grid covers the whole map.
+ */
+export function buildHexGrid(aoi: Areas, polygons: PolygonCollection, nScenes: number, radiusM = HEX_RADIUS_M, country?: XY[]): HexGrid {
+  const R = radiusM;
+  const areas = areasOf(aoi);
+  const { toXY, toLL } = projection(areas[0]!);
+  const { boxes, overlaps } = studiedTest(areas, toXY);
   const countryXY = country?.map(([lon, lat]) => toXY(lon, lat));
-  // extent of the loop: the country when given, else the study area
-  let [ex0, ey0, ex1, ey1] = [xmin, ymin, xmax, ymax];
+  // extent of the loop: the study areas, plus the country when given
+  let [ex0, ey0, ex1, ey1] = [Infinity, Infinity, -Infinity, -Infinity];
+  for (const [x0, y0, x1, y1] of boxes) {
+    ex0 = Math.min(ex0, x0);
+    ey0 = Math.min(ey0, y0);
+    ex1 = Math.max(ex1, x1);
+    ey1 = Math.max(ey1, y1);
+  }
   for (const [x, y] of countryXY ?? []) {
     ex0 = Math.min(ex0, x);
     ey0 = Math.min(ey0, y);
@@ -83,8 +102,8 @@ export function buildHexGrid(aoi: BBox, polygons: PolygonCollection, nScenes: nu
     const qMax = Math.ceil(ex1 / (R * SQRT3) - r / 2) + 1;
     for (let q = qMin; q <= qMax; q++) {
       const [cx, cy] = center(q, r);
-      // every hexagon that overlaps the study area (centre within one radius of it) has data
-      const studied = !(cx < xmin - R || cx > xmax + R || cy < ymin - R || cy > ymax + R);
+      // every hexagon that overlaps a study area (centre within one radius of it) has data
+      const studied = overlaps(cx, cy, R);
       if (!studied && !(countryXY && insideRings(cx, cy, [countryXY]))) continue;
       const ring = hexRing(cx, cy, R, toLL);
       const cell: HexCell = {
@@ -217,11 +236,11 @@ function hexRing(cx: number, cy: number, R: number, toLL: (x: number, y: number)
  * rest of the country (centre inside `country`, not overlapping the study area: those have no data).
  * Used to draw the mini hexagons all over Paraguay only where the map is looking.
  */
-export function hexOutlineIn(view: BBox, aoi: BBox, radiusM: number, country: XY[], maxCells = 30_000): GeoJSON {
+export function hexOutlineIn(view: BBox, aoi: Areas, radiusM: number, country: XY[], maxCells = 30_000): GeoJSON {
   const R = radiusM;
-  const { toXY, toLL } = projection(aoi);
-  const [xmin, ymin] = toXY(aoi[0], aoi[1]);
-  const [xmax, ymax] = toXY(aoi[2], aoi[3]);
+  const areas = areasOf(aoi);
+  const { toXY, toLL } = projection(areas[0]!);
+  const { overlaps } = studiedTest(areas, toXY);
   const countryXY = country.map(([lon, lat]) => toXY(lon, lat));
   let [cx0, cy0, cx1, cy1] = [Infinity, Infinity, -Infinity, -Infinity];
   for (const [x, y] of countryXY) {
@@ -246,8 +265,7 @@ export function hexOutlineIn(view: BBox, aoi: BBox, radiusM: number, country: XY
       const cx = R * SQRT3 * (q + r / 2);
       const cy = R * 1.5 * r;
       if (cx < x0 - R || cx > x1 + R || cy < y0 - R || cy > y1 + R) continue;
-      const studied = !(cx < xmin - R || cx > xmax + R || cy < ymin - R || cy > ymax + R);
-      if (studied || !insideRings(cx, cy, [countryXY])) continue;
+      if (overlaps(cx, cy, R) || !insideRings(cx, cy, [countryXY])) continue;
       features.push({ type: "Feature", properties: {}, geometry: { type: "Polygon", coordinates: [hexRing(cx, cy, R, toLL)] } });
     }
   }

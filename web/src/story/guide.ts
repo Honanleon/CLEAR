@@ -15,12 +15,6 @@ export function initGuide(ds: Dataset | null): void {
     stats?.remove();
     return;
   }
-  // the water zone has no clearing: no totals and no hexagon colour scale
-  if (ds.kind === "water") {
-    stats.remove();
-    ramp.closest(".guide-card")?.remove();
-    return;
-  }
   let fc: PolygonCollection | null = null;
 
   function render() {

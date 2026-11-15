@@ -114,15 +114,6 @@ export function initValidation(ds: Dataset | null): void {
   let counted = false;
 
   function render() {
-    // the water zone has no detection: nothing to compare with optical alerts
-    if (ds?.kind === "water") {
-      gauges!.innerHTML = `<div class="pending"><b>${t("trust.na_water")}</b><p>${t("trust.na_water_desc")}</p></div>`;
-      gauges!.classList.add("is-in");
-      sentence!.textContent = "";
-      casesEl!.innerHTML = "";
-      casesEl!.previousElementSibling?.setAttribute("hidden", "");
-      return;
-    }
     const v = ds?.index.validation;
     const pending = !v || (v.agreement_pct === null && v.coverage_pct === null);
     // schema v2: spatial (any-date) headline numbers plus the ±24-day ones. median_lead_days is not shown:

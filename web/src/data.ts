@@ -74,7 +74,7 @@ export interface ZoneInfo {
   area_ha_total: number | null;
 }
 
-/** URL parameter that selects the zone (?zona=<id>). */
+/** URL parameter of the zone the map opens on (?zona=<id>). */
 export const ZONE_PARAM = "zona";
 
 export interface PolygonProps {
@@ -156,6 +156,13 @@ export class Dataset {
     return new URL(path, this.base).href;
   }
 
+  /** The same data source for another zone of zones.json (its own index.json, in its folder). */
+  async withZone(z: ZoneInfo): Promise<Dataset> {
+    if (z.id === this.zone?.id) return this;
+    const index = await fetchJson<IndexData>(this.url(`${z.path}index.json`));
+    return new Dataset(index, this.base, this.synthetic, z, this.zones);
+  }
+
   get kind(): ZoneKind {
     return this.zone?.kind ?? this.index.zone?.kind ?? "clearing";
   }
@@ -210,12 +217,12 @@ export async function loadDataset(): Promise<Dataset | null> {
   if (!forceFixtures) candidates.push([new URL("data/", document.baseURI).href, false]);
   if (import.meta.env.DEV) candidates.push([new URL("/fixtures/data/", location.origin).href, true]);
 
-  const wanted = new URLSearchParams(location.search).get(ZONE_PARAM);
   for (const [base, fromFixtures] of candidates) {
     try {
-      // schema v3: zones.json lists the zones; without it there is one zone at the root
+      // schema v3: zones.json lists the zones; without it there is one zone at the root. The page's
+      // chapters use the primary zone; the map loads the others itself (Dataset.withZone).
       const zones = (await fetchJson<{ zones: ZoneInfo[] }>(`${base}zones.json`).catch(() => null))?.zones ?? [];
-      const zone = zones.find((z) => z.id === wanted) ?? zones.find((z) => z.primary) ?? zones[0] ?? null;
+      const zone = zones.find((z) => z.primary) ?? zones[0] ?? null;
       const index = await fetchJson<IndexData>(`${base}${zone?.path ?? ""}index.json`);
       if (!Array.isArray(index.scenes) || index.scenes.length === 0) continue;
       if (index.schema_version > SUPPORTED_SCHEMA) {
