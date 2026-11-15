@@ -27,6 +27,7 @@ import { buildHexGrid, HEX_RADIUS_M, type HexCell, type HexGrid, hexOutlineIn, M
 import paraguay from "./paraguay.json";
 import { PARAGUAY_BBOX, RadarMap } from "./radar-map";
 import { center, nearestTown, SOCCER_FIELD_HA } from "./zone";
+import { goToZone, zoneName } from "../story/zones";
 
 type Mode = "timeline" | "compare";
 type View = "satellite" | "radar";
@@ -75,6 +76,15 @@ export async function initMapSection(ds: Dataset): Promise<void> {
   const aoi = index.aoi.bbox;
   /** Water zone (chapter 2): radar images, time series and rain only; no detection, no hexagons. */
   const water = ds.kind === "water";
+  /** The other study zones of zones.json (schema v3), drawn on the map so every zone can be opened from it. */
+  const otherZones = ds.zones.filter((z) => z.id !== ds.zone?.id);
+  const otherZonesGeo = {
+    type: "FeatureCollection" as const,
+    features: otherZones.map((z) => {
+      const [x0, y0, x1, y1] = z.bbox;
+      return { type: "Feature", properties: { id: z.id, kind: z.kind }, geometry: { type: "Polygon", coordinates: [[[x0, y0], [x1, y0], [x1, y1], [x0, y1], [x0, y0]]] } };
+    }),
+  };
 
   let polygons: PolygonCollection;
   try {
@@ -117,7 +127,7 @@ export async function initMapSection(ds: Dataset): Promise<void> {
         })
       : null;
 
-  const mapA = new RadarMap({ container: containerA, ds, polygons, hex, mini, miniOutline: water ? undefined : miniOutline, hexagons: !water, bbox: aoi, controls: true, start: "country", offline: lab?.offline });
+  const mapA = new RadarMap({ container: containerA, ds, polygons, hex, mini, miniOutline: water ? undefined : miniOutline, hexagons: !water, otherZones: otherZonesGeo, bbox: aoi, controls: true, start: "country", offline: lab?.offline });
   let mapB: RadarMap | null = null;
   let swipe: Swipe | null = null;
   let mode: Mode = "timeline";
@@ -137,8 +147,22 @@ export async function initMapSection(ds: Dataset): Promise<void> {
   ui.hidden = false;
 
   // "Study area" tag pinned to the top-left corner of the box.
-  const aoiTag = h("div", "aoi-tag", t("map.study_area"));
+  const aoiTagText = () => (ds.zone ? `${t("map.study_area")} · ${zoneName(ds.zone)}` : t("map.study_area"));
+  const aoiTag = h("div", "aoi-tag", aoiTagText());
   new Marker({ element: aoiTag, anchor: "bottom-left", offset: [-2, -6] }).setLngLat([aoi[0], aoi[3]]).addTo(mapA.map);
+  // the other zones on the map: a tag that opens each one
+  const otherTags = otherZones.map((z) => {
+    const tag = button(`zone-tag zone-tag-${z.kind}`, "", () => goToZone(z));
+    new Marker({ element: tag, anchor: "bottom-left", offset: [-2, -6] }).setLngLat([z.bbox[0], z.bbox[3]]).addTo(mapA.map);
+    return { tag, z };
+  });
+  const paintZoneTags = () => {
+    for (const { tag, z } of otherTags) {
+      tag.textContent = `${zoneName(z)} · ${t(`zones.kind_${z.kind}`)}`;
+      tag.title = t("zones.go");
+    }
+  };
+  paintZoneTags();
 
   // ------------------------------------------------------------------ UI skeleton
   const modeBar = h("div", "map-modes seg");
@@ -223,6 +247,18 @@ export async function initMapSection(ds: Dataset): Promise<void> {
     panel.classList.toggle("is-open", wasOpen);
 
     const body = h("div", "panel-body");
+    if (ds.zones.length > 1) {
+      body.append(h("p", "panel-label", t("zones.label")));
+      const list = h("div", "panel-zones");
+      for (const z of ds.zones) {
+        const b = button(`panel-zone zone-kind-${z.kind}`, zoneName(z), () => {
+          if (z.id !== ds.zone?.id) goToZone(z);
+        });
+        b.setAttribute("aria-pressed", String(z.id === ds.zone?.id));
+        list.append(b);
+      }
+      body.append(list);
+    }
     body.append(h("p", "panel-label", t("map.view")));
     const seg = h("div", "seg seg-block");
     for (const v of ["satellite", "radar"] as const) {
@@ -379,7 +415,7 @@ export async function initMapSection(ds: Dataset): Promise<void> {
       containerB.hidden = false;
       swipeEl.hidden = false;
       if (!mapB) {
-        mapB = new RadarMap({ container: containerB, ds, polygons, hex, mini, miniOutline: water ? undefined : miniOutline, hexagons: !water, bbox: aoi, controls: false, start: "study", offline: lab?.offline });
+        mapB = new RadarMap({ container: containerB, ds, polygons, hex, mini, miniOutline: water ? undefined : miniOutline, hexagons: !water, otherZones: otherZonesGeo, bbox: aoi, controls: false, start: "study", offline: lab?.offline });
         mapB.map.on("click", (e) => focusZone(e.lngLat));
         mapB.setPulse(true);
       }
@@ -459,7 +495,7 @@ export async function initMapSection(ds: Dataset): Promise<void> {
     }
     const cell = gridAt(mapA).locate(lngLat.lng, lngLat.lat);
     if (!cell) {
-      renderOutside();
+      renderOutside(lngLat);
       return;
     }
     zone.hidden = false;
@@ -480,7 +516,7 @@ export async function initMapSection(ds: Dataset): Promise<void> {
   function renderPoint(lngLat: LngLat) {
     const [x0, y0, x1, y1] = aoi;
     if (lngLat.lng < x0 || lngLat.lng > x1 || lngLat.lat < y0 || lngLat.lat > y1) {
-      renderOutside();
+      renderOutside(lngLat);
       return;
     }
     closeZone();
@@ -504,9 +540,20 @@ export async function initMapSection(ds: Dataset): Promise<void> {
     void drawSignal([lngLat.lng, lngLat.lat], null, reading, chart, legend, true);
   }
 
-  function renderOutside() {
+  function renderOutside(at?: LngLat) {
     closeZone();
     zone.hidden = false;
+    const other = at ? otherZones.find(({ bbox: [x0, y0, x1, y1] }) => at.lng >= x0 && at.lng <= x1 && at.lat >= y0 && at.lat <= y1) : undefined;
+    if (other) {
+      const head = h("div", "zone-head");
+      head.append(h("h3", "", zoneName(other)), closeButton());
+      zone.append(
+        head,
+        h("p", "zone-text", t("zones.other_body", { kind: t(`zones.kind_${other.kind}`).toLowerCase() })),
+        button("btn btn-primary btn-sm", t("zones.go"), () => goToZone(other)),
+      );
+      return;
+    }
     const head = h("div", "zone-head");
     head.append(h("h3", "", t("zone.title_outside")), closeButton());
     zone.append(
@@ -737,7 +784,8 @@ export async function initMapSection(ds: Dataset): Promise<void> {
   ).observe(shell);
 
   onLang(() => {
-    aoiTag.textContent = t("map.study_area");
+    aoiTag.textContent = aoiTagText();
+    paintZoneTags();
     mapA.setLabelLang(lang());
     mapB?.setLabelLang(lang());
     renderModes();

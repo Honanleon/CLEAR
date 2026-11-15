@@ -1120,6 +1120,59 @@ button {
   margin: 12px 0 0;
   max-width: 70ch;
 }
+/* the other zones on the map (HTML markers that open them) */
+.zone-tag {
+  font-family: var(--font);
+  font-size: 13px;
+  font-weight: 600;
+  color: #1f2937;
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px dashed #4b5563;
+  padding: 4px 10px;
+  border-radius: 999px;
+  white-space: nowrap;
+  cursor: pointer;
+  box-shadow: 0 6px 18px -8px rgba(0, 0, 0, 0.5);
+}
+.zone-tag:hover {
+  background: #ffffff;
+  border-style: solid;
+}
+.zone-tag:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+/* zone list in the Layers panel */
+.panel-zones {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+.panel-zone {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--line-2);
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 14px;
+  text-align: left;
+  cursor: pointer;
+}
+.panel-zone:hover {
+  border-color: var(--muted);
+}
+.panel-zone[aria-pressed="true"] {
+  background: #ffffff;
+  border-color: #ffffff;
+  color: #0a0d12;
+  font-weight: 600;
+  cursor: default;
+}
 /* water zone: no clearing totals on the timeline */
 body[data-zone-kind="water"] .tl-stats {
   display: none;

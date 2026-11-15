@@ -340,7 +340,9 @@
     "kind_water": "Agua",
     "kind_control": "Control",
     "note_water": "Zona de agua (capítulo 2): por ahora solo imágenes de radar, la señal en el tiempo y la lluvia. No hay detección.",
-    "note_control": "Zona de control (capítulo 3): bosque que no debería cambiar. Se esperan pocas detecciones o ninguna."
+    "note_control": "Zona de control (capítulo 3): bosque que no debería cambiar. Se esperan pocas detecciones o ninguna.",
+    "go": "Ver esta zona",
+    "other_body": "Es otra zona de estudio ({kind}). Abrila para ver sus datos en el mapa."
   },
   "point": {
     "title": "Señal del radar en este punto",

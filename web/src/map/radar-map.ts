@@ -45,6 +45,8 @@ export interface RadarMapOptions {
   miniOutline?: (view: BBox) => GeoJSON;
   /** false for the water zone: no detection, so no hexagon grid at all. */
   hexagons?: boolean;
+  /** Boxes of the other study zones (zones.json), drawn so every zone shows on the map. */
+  otherZones?: GeoJSON;
   bbox: BBox;
   controls: boolean;
   start: "country" | "study";
@@ -350,6 +352,15 @@ export class RadarMap {
       type: "line",
       source: "aoi",
       paint: { "line-color": "#1f2937", "line-width": 1.8, "line-opacity": 0.95, "line-dasharray": [3, 2] },
+    });
+    // the other study zones: a light box each (their name tag is an HTML marker, see map/index.ts)
+    m.addSource("zones", { type: "geojson", data: (this.opts.otherZones ?? EMPTY) as never });
+    m.addLayer({ id: "zones-fill", type: "fill", source: "zones", paint: { "fill-color": "#1f2937", "fill-opacity": 0.06 } });
+    m.addLayer({
+      id: "zones-line",
+      type: "line",
+      source: "zones",
+      paint: { "line-color": "#4b5563", "line-width": 1.5, "line-opacity": 0.9, "line-dasharray": [2, 2] },
     });
 
   }

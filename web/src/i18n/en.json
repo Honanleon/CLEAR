@@ -340,7 +340,9 @@
     "kind_water": "Water",
     "kind_control": "Control",
     "note_water": "Water zone (chapter 2): for now only radar images, the signal over time and rain. No detection.",
-    "note_control": "Control zone (chapter 3): forest that should not change. Few or no detections are expected."
+    "note_control": "Control zone (chapter 3): forest that should not change. Few or no detections are expected.",
+    "go": "Open this zone",
+    "other_body": "This is another study zone ({kind}). Open it to see its data on the map."
   },
   "point": {
     "title": "Radar signal at this point",

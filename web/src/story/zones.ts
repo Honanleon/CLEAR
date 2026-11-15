@@ -4,7 +4,7 @@
 // reloads the page with ?zona=<id>, so every chapter (map, guide, validation) reads that zone's files
 // and the link can be shared. Also swaps the map chapter's texts for the water and control zones.
 
-import { type Dataset, ZONE_PARAM } from "../data";
+import { type Dataset, ZONE_PARAM, type ZoneInfo } from "../data";
 import { applyStatic, lang, onLang, t } from "../i18n";
 
 function el(tag: string, cls: string, text?: string): HTMLElement {
@@ -12,6 +12,19 @@ function el(tag: string, cls: string, text?: string): HTMLElement {
   n.className = cls;
   if (text !== undefined) n.textContent = text;
   return n;
+}
+
+export function zoneName(z: ZoneInfo): string {
+  return z.name[lang()] ?? z.name.es;
+}
+
+/** Opens a zone: reloads with ?zona=<id> (none for the primary zone) and jumps to the map. */
+export function goToZone(z: ZoneInfo): void {
+  const u = new URL(location.href);
+  if (z.primary) u.searchParams.delete(ZONE_PARAM);
+  else u.searchParams.set(ZONE_PARAM, z.id);
+  u.hash = "map";
+  location.assign(u.href);
 }
 
 export function initZones(ds: Dataset | null): void {
@@ -43,14 +56,9 @@ export function initZones(ds: Dataset | null): void {
       b.type = "button";
       const current = z.id === ds.zone?.id;
       b.setAttribute("aria-pressed", String(current));
-      b.append(el("b", "zone-name", z.name[lang()] ?? z.name.es), el("span", `zone-kind zone-kind-${z.kind}`, t(`zones.kind_${z.kind}`)));
+      b.append(el("b", "zone-name", zoneName(z)), el("span", `zone-kind zone-kind-${z.kind}`, t(`zones.kind_${z.kind}`)));
       b.addEventListener("click", () => {
-        if (current) return;
-        const u = new URL(location.href);
-        if (z.primary) u.searchParams.delete(ZONE_PARAM);
-        else u.searchParams.set(ZONE_PARAM, z.id);
-        u.hash = "map";
-        location.assign(u.href);
+        if (!current) goToZone(z);
       });
       row.append(b);
     }
