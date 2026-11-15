@@ -16,10 +16,10 @@ const SQRT3 = Math.sqrt(3);
 const HOLD_MS = 2600;
 
 type RGB = [number, number, number];
-// alarm palette: dark forest, cleared land that stays blood red, a white-hot red flash on detection,
-// flood water in purple (same meanings as the map's hexagons)
-const FOREST_DARK: RGB = [9, 30, 22];
-const FOREST_LIGHT: RGB = [30, 66, 46];
+// alarm palette: forest in neutral greys (no colour, so only the changes carry colour), cleared land that
+// stays blood red, a white-hot red flash on detection, flood water in purple (the map's meanings)
+const FOREST_DARK: RGB = [22, 24, 28];
+const FOREST_LIGHT: RGB = [48, 51, 58];
 const PASTURE_DARK: RGB = [104, 10, 18];
 const PASTURE_LIGHT: RGB = [168, 20, 30];
 const FLASH: RGB = [255, 150, 130];

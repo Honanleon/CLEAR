@@ -388,13 +388,13 @@ button {
   font-size: clamp(88px, 22vw, 300px);
   font-weight: 700;
   letter-spacing: -0.06em;
-  background: linear-gradient(100deg, #ffffff 0%, #ffd2d2 35%, #ff2a2a 55%, #ffe3e3 70%, #ffffff 100%);
+  background: linear-gradient(100deg, #ffffff 0%, #e6e6e6 35%, #bdbdbd 55%, #ececec 70%, #ffffff 100%);
   background-size: 250% 100%;
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
   animation: sheen 7s linear infinite;
-  filter: drop-shadow(0 0 44px rgba(255, 30, 30, 0.35));
+  filter: drop-shadow(0 4px 30px rgba(0, 0, 0, 0.55));
 }
 @keyframes sheen {
   to {
