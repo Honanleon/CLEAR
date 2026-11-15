@@ -86,7 +86,6 @@ export class Timeline {
           <div class="tl-when">
             <b class="tl-date"></b>
             <span class="tl-pm"></span>
-            <span class="badge tl-maturity"></span>
           </div>
           <div class="tl-stats">
             <span class="tl-area"><b></b> <small></small></span>
@@ -158,10 +157,8 @@ export class Timeline {
     const prev = scenes[this.i - 1];
     this.el.querySelector(".tl-pm")!.textContent =
       prev && daysBetween(prev.date, s.date) > REPEAT_DAYS ? t("map.date_since", { date: fmt.date(prev.date) }) : t("map.date_pm");
-    const badge = this.el.querySelector<HTMLElement>(".tl-maturity")!;
-    badge.textContent = t(`prov.${s.maturity}`);
-    badge.dataset.maturity = s.maturity;
-    badge.title = `${t("prov.maturity")}: ${s.maturity} · ${s.crid}`;
+    // the maturity chip (PROVISIONAL / VALIDATED) was taken out on the team's request (15 Nov): each scene's
+    // maturity and CRID stay in the Layers panel's sources ("Más opciones")
     const fill = this.el.querySelector<HTMLElement>(".tl-fill")!;
     fill.style.width = `${this.pos(s.date)}%`;
     this.el.querySelectorAll<HTMLElement>(".tl-tick").forEach((b) => {

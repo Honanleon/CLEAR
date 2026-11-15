@@ -17,7 +17,7 @@ import {
   type StyleSpecification,
 } from "maplibre-gl";
 import workerUrl from "maplibre-gl/dist/maplibre-gl-worker.mjs?url";
-import "maplibre-gl/dist/maplibre-gl.css";
+import "./maplibre-slim.css";
 import { type BBox, type Dataset, HEX_STOPS, type PolygonCollection, stepEnd, WATER_STOPS } from "../data";
 import { type GeoJSON, type HexGrid, MINI_ZOOM } from "./hexgrid";
 import paraguay from "./paraguay.json";
