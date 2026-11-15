@@ -866,13 +866,14 @@
    "until": "2026-07-31",
    "file": "m_2026-07.webp",
    "dates": [
-    "2026-07-15",
+    "2026-06-30",
     "2026-07-27"
    ],
    "filled_with": [],
-   "coverage_of_paraguay": 0.999,
+   "coverage_of_paraguay": 1.0,
    "frames": 54,
-   "skipped": 1
+   "skipped": 1,
+   "excluded": "track 60 pass of 2026-07-24 (corrupted browse images); its 5 frames use their last good pass, 2026-06-30"
   },
   {
    "until": "2026-08-31",
