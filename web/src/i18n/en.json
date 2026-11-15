@@ -270,7 +270,7 @@
     "use_wetlands_body": "Radar also sees water under vegetation: it can follow floods like the one in Ñeembucú in July 2026.",
     "limits_title": "Limits of the method",
     "limits": [
-      "The date is the date of the satellite pass: ±12 days.",
+      "The date is the date of the satellite pass: ±12 days, or more after a missing pass (we say so).",
       "We only see clearings of 5 hectares or more.",
       "Most data is provisional and the last date is validated: we adjust every date so they can be compared.",
       "We only look at what was forest on a 2021 map (ESA WorldCover) and that radar also saw as forest at the start.",

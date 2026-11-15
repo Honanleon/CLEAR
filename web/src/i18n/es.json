@@ -270,7 +270,7 @@
     "use_wetlands_body": "El radar también ve agua debajo de la vegetación: sirve para seguir inundaciones como la de Ñeembucú en julio de 2026.",
     "limits_title": "Límites del método",
     "limits": [
-      "La fecha es la de la pasada del satélite: ±12 días.",
+      "La fecha es la de la pasada del satélite: ±12 días, o más si faltó una pasada (lo indicamos).",
       "Solo vemos desmontes de 5 hectáreas o más.",
       "Casi todos los datos son provisionales y el último está validado: ajustamos cada fecha para poder compararlas.",
       "Solo miramos lo que era bosque según un mapa de 2021 (ESA WorldCover) y que el radar también veía como bosque al principio.",
